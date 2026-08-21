@@ -1,0 +1,2928 @@
+{
+    "clinics": [
+        {
+            "id": 1,
+            "name": "Clínica Central",
+            "cnpj": "00.000.000\/0001-00",
+            "address": "Rua das Flores, 120",
+            "phone": "(11) 4000-1000",
+            "whatsapp": "551140001000",
+            "email": "contato@clinicacentral.local"
+        },
+        {
+            "id": 2,
+            "name": "Clínica Norte",
+            "cnpj": "00.000.000\/0002-00",
+            "address": "Avenida Norte, 850",
+            "phone": "(11) 4000-2000",
+            "whatsapp": "551140002000",
+            "email": "contato@clinicanorte.local"
+        }
+    ],
+    "specialties": [
+        {
+            "id": 1,
+            "name": "Clínico geral",
+            "description": "Atendimento médico inicial e acompanhamento."
+        },
+        {
+            "id": 2,
+            "name": "Cardiologia",
+            "description": "Consultas e acompanhamento cardiológico."
+        },
+        {
+            "id": 3,
+            "name": "Dermatologia",
+            "description": "Consultas dermatológicas."
+        },
+        {
+            "id": 4,
+            "name": "Pediatria",
+            "description": "Atendimento infantil."
+        }
+    ],
+    "users": [
+        {
+            "id": 1,
+            "name": "Administrador da Clínica",
+            "email": "admin@clinica.local",
+            "password_hash": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC\/.og\/at2.uheWG\/igi",
+            "role": "admin",
+            "phone": "(11) 90000-0001",
+            "document": null,
+            "birth_date": null,
+            "address": null,
+            "clinic_id": 1,
+            "status": "active",
+            "created_at": "2026-08-14 22:57:21",
+            "updated_at": "2026-08-21 19:26:41",
+            "last_login_at": "2026-08-21 19:26:41"
+        },
+        {
+            "id": 2,
+            "name": "Dra. Ana Souza",
+            "email": "medico@clinica.local",
+            "password_hash": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC\/.og\/at2.uheWG\/igi",
+            "role": "doctor",
+            "phone": "(11) 90000-0002",
+            "document": null,
+            "birth_date": null,
+            "address": null,
+            "clinic_id": 1,
+            "status": "active",
+            "created_at": "2026-08-14 22:57:21",
+            "updated_at": "2026-08-21 19:26:15",
+            "last_login_at": "2026-08-21 19:26:15"
+        },
+        {
+            "id": 3,
+            "name": "Paciente de Demonstração",
+            "email": "paciente.demo@clinica.local",
+            "password_hash": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC\/.og\/at2.uheWG\/igi",
+            "role": "patient",
+            "phone": "(11) 90000-0003",
+            "document": null,
+            "birth_date": "1995-05-10",
+            "address": "Endereço de demonstração",
+            "clinic_id": 1,
+            "status": "active",
+            "created_at": "2026-08-14 22:57:21",
+            "updated_at": null,
+            "last_login_at": null
+        }
+    ],
+    "doctors": [
+        {
+            "id": 1,
+            "user_id": 2,
+            "clinic_id": 1,
+            "specialty_id": 1,
+            "crm": "CRM-SP 123456",
+            "bio": "Atendimento clínico com foco em acompanhamento preventivo.",
+            "appointment_duration": 30,
+            "active": 1,
+            "created_at": "2026-08-14 22:57:21"
+        }
+    ],
+    "doctor_schedules": [
+        {
+            "id": 1,
+            "doctor_id": 1,
+            "weekday": 1,
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "active": 1
+        },
+        {
+            "id": 2,
+            "doctor_id": 1,
+            "weekday": 1,
+            "start_time": "14:00:00",
+            "end_time": "18:00:00",
+            "active": 1
+        },
+        {
+            "id": 3,
+            "doctor_id": 1,
+            "weekday": 2,
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "active": 1
+        },
+        {
+            "id": 4,
+            "doctor_id": 1,
+            "weekday": 2,
+            "start_time": "14:00:00",
+            "end_time": "18:00:00",
+            "active": 1
+        },
+        {
+            "id": 5,
+            "doctor_id": 1,
+            "weekday": 3,
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "active": 1
+        },
+        {
+            "id": 6,
+            "doctor_id": 1,
+            "weekday": 3,
+            "start_time": "14:00:00",
+            "end_time": "18:00:00",
+            "active": 1
+        },
+        {
+            "id": 7,
+            "doctor_id": 1,
+            "weekday": 4,
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "active": 1
+        },
+        {
+            "id": 8,
+            "doctor_id": 1,
+            "weekday": 4,
+            "start_time": "14:00:00",
+            "end_time": "18:00:00",
+            "active": 1
+        },
+        {
+            "id": 9,
+            "doctor_id": 1,
+            "weekday": 5,
+            "start_time": "08:00:00",
+            "end_time": "12:00:00",
+            "active": 1
+        },
+        {
+            "id": 10,
+            "doctor_id": 1,
+            "weekday": 5,
+            "start_time": "14:00:00",
+            "end_time": "18:00:00",
+            "active": 1
+        }
+    ],
+    "schedule_blocks": [],
+    "appointment_slots": [
+        {
+            "id": 1,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 09:00:00",
+            "slot_end": "2026-08-17 09:30:00",
+            "status": "booked",
+            "block_reason": null
+        },
+        {
+            "id": 2,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 08:00:00",
+            "slot_end": "2026-08-19 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 3,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 08:30:00",
+            "slot_end": "2026-08-19 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 4,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 09:00:00",
+            "slot_end": "2026-08-19 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 5,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 09:30:00",
+            "slot_end": "2026-08-19 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 6,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 10:00:00",
+            "slot_end": "2026-08-19 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 7,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 10:30:00",
+            "slot_end": "2026-08-19 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 8,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 11:00:00",
+            "slot_end": "2026-08-19 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 9,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 11:30:00",
+            "slot_end": "2026-08-19 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 10,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 14:00:00",
+            "slot_end": "2026-08-19 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 11,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 14:30:00",
+            "slot_end": "2026-08-19 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 12,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 15:00:00",
+            "slot_end": "2026-08-19 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 13,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 15:30:00",
+            "slot_end": "2026-08-19 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 14,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 16:00:00",
+            "slot_end": "2026-08-19 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 15,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 16:30:00",
+            "slot_end": "2026-08-19 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 16,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 17:00:00",
+            "slot_end": "2026-08-19 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 17,
+            "doctor_id": 1,
+            "slot_start": "2026-08-19 17:30:00",
+            "slot_end": "2026-08-19 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 18,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 08:00:00",
+            "slot_end": "2026-08-03 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 19,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 08:30:00",
+            "slot_end": "2026-08-03 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 20,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 09:00:00",
+            "slot_end": "2026-08-03 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 21,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 09:30:00",
+            "slot_end": "2026-08-03 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 22,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 10:00:00",
+            "slot_end": "2026-08-03 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 23,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 10:30:00",
+            "slot_end": "2026-08-03 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 24,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 11:00:00",
+            "slot_end": "2026-08-03 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 25,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 11:30:00",
+            "slot_end": "2026-08-03 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 26,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 14:00:00",
+            "slot_end": "2026-08-03 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 27,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 14:30:00",
+            "slot_end": "2026-08-03 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 28,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 15:00:00",
+            "slot_end": "2026-08-03 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 29,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 15:30:00",
+            "slot_end": "2026-08-03 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 30,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 16:00:00",
+            "slot_end": "2026-08-03 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 31,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 16:30:00",
+            "slot_end": "2026-08-03 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 32,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 17:00:00",
+            "slot_end": "2026-08-03 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 33,
+            "doctor_id": 1,
+            "slot_start": "2026-08-03 17:30:00",
+            "slot_end": "2026-08-03 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 34,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 08:00:00",
+            "slot_end": "2026-08-04 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 35,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 08:30:00",
+            "slot_end": "2026-08-04 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 36,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 09:00:00",
+            "slot_end": "2026-08-04 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 37,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 09:30:00",
+            "slot_end": "2026-08-04 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 38,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 10:00:00",
+            "slot_end": "2026-08-04 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 39,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 10:30:00",
+            "slot_end": "2026-08-04 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 40,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 11:00:00",
+            "slot_end": "2026-08-04 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 41,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 11:30:00",
+            "slot_end": "2026-08-04 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 42,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 14:00:00",
+            "slot_end": "2026-08-04 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 43,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 14:30:00",
+            "slot_end": "2026-08-04 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 44,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 15:00:00",
+            "slot_end": "2026-08-04 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 45,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 15:30:00",
+            "slot_end": "2026-08-04 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 46,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 16:00:00",
+            "slot_end": "2026-08-04 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 47,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 16:30:00",
+            "slot_end": "2026-08-04 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 48,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 17:00:00",
+            "slot_end": "2026-08-04 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 49,
+            "doctor_id": 1,
+            "slot_start": "2026-08-04 17:30:00",
+            "slot_end": "2026-08-04 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 50,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 08:00:00",
+            "slot_end": "2026-08-05 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 51,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 08:30:00",
+            "slot_end": "2026-08-05 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 52,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 09:00:00",
+            "slot_end": "2026-08-05 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 53,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 09:30:00",
+            "slot_end": "2026-08-05 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 54,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 10:00:00",
+            "slot_end": "2026-08-05 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 55,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 10:30:00",
+            "slot_end": "2026-08-05 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 56,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 11:00:00",
+            "slot_end": "2026-08-05 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 57,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 11:30:00",
+            "slot_end": "2026-08-05 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 58,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 14:00:00",
+            "slot_end": "2026-08-05 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 59,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 14:30:00",
+            "slot_end": "2026-08-05 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 60,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 15:00:00",
+            "slot_end": "2026-08-05 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 61,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 15:30:00",
+            "slot_end": "2026-08-05 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 62,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 16:00:00",
+            "slot_end": "2026-08-05 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 63,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 16:30:00",
+            "slot_end": "2026-08-05 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 64,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 17:00:00",
+            "slot_end": "2026-08-05 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 65,
+            "doctor_id": 1,
+            "slot_start": "2026-08-05 17:30:00",
+            "slot_end": "2026-08-05 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 66,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 08:00:00",
+            "slot_end": "2026-08-06 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 67,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 08:30:00",
+            "slot_end": "2026-08-06 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 68,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 09:00:00",
+            "slot_end": "2026-08-06 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 69,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 09:30:00",
+            "slot_end": "2026-08-06 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 70,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 10:00:00",
+            "slot_end": "2026-08-06 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 71,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 10:30:00",
+            "slot_end": "2026-08-06 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 72,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 11:00:00",
+            "slot_end": "2026-08-06 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 73,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 11:30:00",
+            "slot_end": "2026-08-06 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 74,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 14:00:00",
+            "slot_end": "2026-08-06 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 75,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 14:30:00",
+            "slot_end": "2026-08-06 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 76,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 15:00:00",
+            "slot_end": "2026-08-06 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 77,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 15:30:00",
+            "slot_end": "2026-08-06 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 78,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 16:00:00",
+            "slot_end": "2026-08-06 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 79,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 16:30:00",
+            "slot_end": "2026-08-06 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 80,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 17:00:00",
+            "slot_end": "2026-08-06 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 81,
+            "doctor_id": 1,
+            "slot_start": "2026-08-06 17:30:00",
+            "slot_end": "2026-08-06 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 82,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 08:00:00",
+            "slot_end": "2026-08-07 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 83,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 08:30:00",
+            "slot_end": "2026-08-07 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 84,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 09:00:00",
+            "slot_end": "2026-08-07 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 85,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 09:30:00",
+            "slot_end": "2026-08-07 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 86,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 10:00:00",
+            "slot_end": "2026-08-07 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 87,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 10:30:00",
+            "slot_end": "2026-08-07 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 88,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 11:00:00",
+            "slot_end": "2026-08-07 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 89,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 11:30:00",
+            "slot_end": "2026-08-07 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 90,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 14:00:00",
+            "slot_end": "2026-08-07 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 91,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 14:30:00",
+            "slot_end": "2026-08-07 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 92,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 15:00:00",
+            "slot_end": "2026-08-07 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 93,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 15:30:00",
+            "slot_end": "2026-08-07 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 94,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 16:00:00",
+            "slot_end": "2026-08-07 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 95,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 16:30:00",
+            "slot_end": "2026-08-07 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 96,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 17:00:00",
+            "slot_end": "2026-08-07 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 97,
+            "doctor_id": 1,
+            "slot_start": "2026-08-07 17:30:00",
+            "slot_end": "2026-08-07 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 98,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 08:00:00",
+            "slot_end": "2026-08-10 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 99,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 08:30:00",
+            "slot_end": "2026-08-10 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 100,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 09:00:00",
+            "slot_end": "2026-08-10 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 101,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 09:30:00",
+            "slot_end": "2026-08-10 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 102,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 10:00:00",
+            "slot_end": "2026-08-10 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 103,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 10:30:00",
+            "slot_end": "2026-08-10 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 104,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 11:00:00",
+            "slot_end": "2026-08-10 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 105,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 11:30:00",
+            "slot_end": "2026-08-10 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 106,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 14:00:00",
+            "slot_end": "2026-08-10 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 107,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 14:30:00",
+            "slot_end": "2026-08-10 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 108,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 15:00:00",
+            "slot_end": "2026-08-10 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 109,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 15:30:00",
+            "slot_end": "2026-08-10 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 110,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 16:00:00",
+            "slot_end": "2026-08-10 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 111,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 16:30:00",
+            "slot_end": "2026-08-10 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 112,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 17:00:00",
+            "slot_end": "2026-08-10 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 113,
+            "doctor_id": 1,
+            "slot_start": "2026-08-10 17:30:00",
+            "slot_end": "2026-08-10 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 114,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 08:00:00",
+            "slot_end": "2026-08-11 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 115,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 08:30:00",
+            "slot_end": "2026-08-11 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 116,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 09:00:00",
+            "slot_end": "2026-08-11 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 117,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 09:30:00",
+            "slot_end": "2026-08-11 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 118,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 10:00:00",
+            "slot_end": "2026-08-11 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 119,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 10:30:00",
+            "slot_end": "2026-08-11 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 120,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 11:00:00",
+            "slot_end": "2026-08-11 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 121,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 11:30:00",
+            "slot_end": "2026-08-11 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 122,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 14:00:00",
+            "slot_end": "2026-08-11 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 123,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 14:30:00",
+            "slot_end": "2026-08-11 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 124,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 15:00:00",
+            "slot_end": "2026-08-11 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 125,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 15:30:00",
+            "slot_end": "2026-08-11 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 126,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 16:00:00",
+            "slot_end": "2026-08-11 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 127,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 16:30:00",
+            "slot_end": "2026-08-11 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 128,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 17:00:00",
+            "slot_end": "2026-08-11 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 129,
+            "doctor_id": 1,
+            "slot_start": "2026-08-11 17:30:00",
+            "slot_end": "2026-08-11 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 130,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 08:00:00",
+            "slot_end": "2026-08-12 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 131,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 08:30:00",
+            "slot_end": "2026-08-12 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 132,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 09:00:00",
+            "slot_end": "2026-08-12 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 133,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 09:30:00",
+            "slot_end": "2026-08-12 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 134,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 10:00:00",
+            "slot_end": "2026-08-12 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 135,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 10:30:00",
+            "slot_end": "2026-08-12 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 136,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 11:00:00",
+            "slot_end": "2026-08-12 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 137,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 11:30:00",
+            "slot_end": "2026-08-12 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 138,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 14:00:00",
+            "slot_end": "2026-08-12 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 139,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 14:30:00",
+            "slot_end": "2026-08-12 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 140,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 15:00:00",
+            "slot_end": "2026-08-12 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 141,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 15:30:00",
+            "slot_end": "2026-08-12 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 142,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 16:00:00",
+            "slot_end": "2026-08-12 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 143,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 16:30:00",
+            "slot_end": "2026-08-12 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 144,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 17:00:00",
+            "slot_end": "2026-08-12 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 145,
+            "doctor_id": 1,
+            "slot_start": "2026-08-12 17:30:00",
+            "slot_end": "2026-08-12 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 146,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 08:00:00",
+            "slot_end": "2026-08-13 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 147,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 08:30:00",
+            "slot_end": "2026-08-13 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 148,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 09:00:00",
+            "slot_end": "2026-08-13 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 149,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 09:30:00",
+            "slot_end": "2026-08-13 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 150,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 10:00:00",
+            "slot_end": "2026-08-13 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 151,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 10:30:00",
+            "slot_end": "2026-08-13 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 152,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 11:00:00",
+            "slot_end": "2026-08-13 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 153,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 11:30:00",
+            "slot_end": "2026-08-13 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 154,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 14:00:00",
+            "slot_end": "2026-08-13 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 155,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 14:30:00",
+            "slot_end": "2026-08-13 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 156,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 15:00:00",
+            "slot_end": "2026-08-13 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 157,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 15:30:00",
+            "slot_end": "2026-08-13 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 158,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 16:00:00",
+            "slot_end": "2026-08-13 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 159,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 16:30:00",
+            "slot_end": "2026-08-13 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 160,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 17:00:00",
+            "slot_end": "2026-08-13 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 161,
+            "doctor_id": 1,
+            "slot_start": "2026-08-13 17:30:00",
+            "slot_end": "2026-08-13 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 162,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 08:00:00",
+            "slot_end": "2026-08-14 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 163,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 08:30:00",
+            "slot_end": "2026-08-14 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 164,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 09:00:00",
+            "slot_end": "2026-08-14 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 165,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 09:30:00",
+            "slot_end": "2026-08-14 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 166,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 10:00:00",
+            "slot_end": "2026-08-14 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 167,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 10:30:00",
+            "slot_end": "2026-08-14 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 168,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 11:00:00",
+            "slot_end": "2026-08-14 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 169,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 11:30:00",
+            "slot_end": "2026-08-14 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 170,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 14:00:00",
+            "slot_end": "2026-08-14 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 171,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 14:30:00",
+            "slot_end": "2026-08-14 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 172,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 15:00:00",
+            "slot_end": "2026-08-14 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 173,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 15:30:00",
+            "slot_end": "2026-08-14 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 174,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 16:00:00",
+            "slot_end": "2026-08-14 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 175,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 16:30:00",
+            "slot_end": "2026-08-14 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 176,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 17:00:00",
+            "slot_end": "2026-08-14 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 177,
+            "doctor_id": 1,
+            "slot_start": "2026-08-14 17:30:00",
+            "slot_end": "2026-08-14 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 178,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 08:00:00",
+            "slot_end": "2026-08-17 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 179,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 08:30:00",
+            "slot_end": "2026-08-17 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 180,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 09:30:00",
+            "slot_end": "2026-08-17 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 181,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 10:00:00",
+            "slot_end": "2026-08-17 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 182,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 10:30:00",
+            "slot_end": "2026-08-17 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 183,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 11:00:00",
+            "slot_end": "2026-08-17 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 184,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 11:30:00",
+            "slot_end": "2026-08-17 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 185,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 14:00:00",
+            "slot_end": "2026-08-17 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 186,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 14:30:00",
+            "slot_end": "2026-08-17 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 187,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 15:00:00",
+            "slot_end": "2026-08-17 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 188,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 15:30:00",
+            "slot_end": "2026-08-17 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 189,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 16:00:00",
+            "slot_end": "2026-08-17 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 190,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 16:30:00",
+            "slot_end": "2026-08-17 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 191,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 17:00:00",
+            "slot_end": "2026-08-17 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 192,
+            "doctor_id": 1,
+            "slot_start": "2026-08-17 17:30:00",
+            "slot_end": "2026-08-17 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 193,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 08:00:00",
+            "slot_end": "2026-08-18 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 194,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 08:30:00",
+            "slot_end": "2026-08-18 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 195,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 09:00:00",
+            "slot_end": "2026-08-18 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 196,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 09:30:00",
+            "slot_end": "2026-08-18 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 197,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 10:00:00",
+            "slot_end": "2026-08-18 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 198,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 10:30:00",
+            "slot_end": "2026-08-18 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 199,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 11:00:00",
+            "slot_end": "2026-08-18 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 200,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 11:30:00",
+            "slot_end": "2026-08-18 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 201,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 14:00:00",
+            "slot_end": "2026-08-18 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 202,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 14:30:00",
+            "slot_end": "2026-08-18 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 203,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 15:00:00",
+            "slot_end": "2026-08-18 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 204,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 15:30:00",
+            "slot_end": "2026-08-18 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 205,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 16:00:00",
+            "slot_end": "2026-08-18 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 206,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 16:30:00",
+            "slot_end": "2026-08-18 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 207,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 17:00:00",
+            "slot_end": "2026-08-18 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 208,
+            "doctor_id": 1,
+            "slot_start": "2026-08-18 17:30:00",
+            "slot_end": "2026-08-18 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 209,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 08:00:00",
+            "slot_end": "2026-08-20 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 210,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 08:30:00",
+            "slot_end": "2026-08-20 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 211,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 09:00:00",
+            "slot_end": "2026-08-20 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 212,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 09:30:00",
+            "slot_end": "2026-08-20 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 213,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 10:00:00",
+            "slot_end": "2026-08-20 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 214,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 10:30:00",
+            "slot_end": "2026-08-20 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 215,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 11:00:00",
+            "slot_end": "2026-08-20 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 216,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 11:30:00",
+            "slot_end": "2026-08-20 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 217,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 14:00:00",
+            "slot_end": "2026-08-20 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 218,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 14:30:00",
+            "slot_end": "2026-08-20 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 219,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 15:00:00",
+            "slot_end": "2026-08-20 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 220,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 15:30:00",
+            "slot_end": "2026-08-20 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 221,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 16:00:00",
+            "slot_end": "2026-08-20 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 222,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 16:30:00",
+            "slot_end": "2026-08-20 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 223,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 17:00:00",
+            "slot_end": "2026-08-20 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 224,
+            "doctor_id": 1,
+            "slot_start": "2026-08-20 17:30:00",
+            "slot_end": "2026-08-20 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 225,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 08:00:00",
+            "slot_end": "2026-08-21 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 226,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 08:30:00",
+            "slot_end": "2026-08-21 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 227,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 09:00:00",
+            "slot_end": "2026-08-21 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 228,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 09:30:00",
+            "slot_end": "2026-08-21 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 229,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 10:00:00",
+            "slot_end": "2026-08-21 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 230,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 10:30:00",
+            "slot_end": "2026-08-21 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 231,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 11:00:00",
+            "slot_end": "2026-08-21 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 232,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 11:30:00",
+            "slot_end": "2026-08-21 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 233,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 14:00:00",
+            "slot_end": "2026-08-21 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 234,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 14:30:00",
+            "slot_end": "2026-08-21 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 235,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 15:00:00",
+            "slot_end": "2026-08-21 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 236,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 15:30:00",
+            "slot_end": "2026-08-21 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 237,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 16:00:00",
+            "slot_end": "2026-08-21 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 238,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 16:30:00",
+            "slot_end": "2026-08-21 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 239,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 17:00:00",
+            "slot_end": "2026-08-21 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 240,
+            "doctor_id": 1,
+            "slot_start": "2026-08-21 17:30:00",
+            "slot_end": "2026-08-21 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 241,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 08:00:00",
+            "slot_end": "2026-08-24 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 242,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 08:30:00",
+            "slot_end": "2026-08-24 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 243,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 09:00:00",
+            "slot_end": "2026-08-24 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 244,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 09:30:00",
+            "slot_end": "2026-08-24 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 245,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 10:00:00",
+            "slot_end": "2026-08-24 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 246,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 10:30:00",
+            "slot_end": "2026-08-24 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 247,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 11:00:00",
+            "slot_end": "2026-08-24 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 248,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 11:30:00",
+            "slot_end": "2026-08-24 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 249,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 14:00:00",
+            "slot_end": "2026-08-24 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 250,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 14:30:00",
+            "slot_end": "2026-08-24 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 251,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 15:00:00",
+            "slot_end": "2026-08-24 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 252,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 15:30:00",
+            "slot_end": "2026-08-24 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 253,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 16:00:00",
+            "slot_end": "2026-08-24 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 254,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 16:30:00",
+            "slot_end": "2026-08-24 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 255,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 17:00:00",
+            "slot_end": "2026-08-24 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 256,
+            "doctor_id": 1,
+            "slot_start": "2026-08-24 17:30:00",
+            "slot_end": "2026-08-24 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 257,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 08:00:00",
+            "slot_end": "2026-08-25 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 258,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 08:30:00",
+            "slot_end": "2026-08-25 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 259,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 09:00:00",
+            "slot_end": "2026-08-25 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 260,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 09:30:00",
+            "slot_end": "2026-08-25 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 261,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 10:00:00",
+            "slot_end": "2026-08-25 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 262,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 10:30:00",
+            "slot_end": "2026-08-25 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 263,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 11:00:00",
+            "slot_end": "2026-08-25 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 264,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 11:30:00",
+            "slot_end": "2026-08-25 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 265,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 14:00:00",
+            "slot_end": "2026-08-25 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 266,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 14:30:00",
+            "slot_end": "2026-08-25 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 267,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 15:00:00",
+            "slot_end": "2026-08-25 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 268,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 15:30:00",
+            "slot_end": "2026-08-25 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 269,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 16:00:00",
+            "slot_end": "2026-08-25 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 270,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 16:30:00",
+            "slot_end": "2026-08-25 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 271,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 17:00:00",
+            "slot_end": "2026-08-25 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 272,
+            "doctor_id": 1,
+            "slot_start": "2026-08-25 17:30:00",
+            "slot_end": "2026-08-25 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 273,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 08:00:00",
+            "slot_end": "2026-08-26 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 274,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 08:30:00",
+            "slot_end": "2026-08-26 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 275,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 09:00:00",
+            "slot_end": "2026-08-26 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 276,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 09:30:00",
+            "slot_end": "2026-08-26 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 277,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 10:00:00",
+            "slot_end": "2026-08-26 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 278,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 10:30:00",
+            "slot_end": "2026-08-26 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 279,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 11:00:00",
+            "slot_end": "2026-08-26 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 280,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 11:30:00",
+            "slot_end": "2026-08-26 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 281,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 14:00:00",
+            "slot_end": "2026-08-26 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 282,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 14:30:00",
+            "slot_end": "2026-08-26 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 283,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 15:00:00",
+            "slot_end": "2026-08-26 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 284,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 15:30:00",
+            "slot_end": "2026-08-26 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 285,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 16:00:00",
+            "slot_end": "2026-08-26 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 286,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 16:30:00",
+            "slot_end": "2026-08-26 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 287,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 17:00:00",
+            "slot_end": "2026-08-26 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 288,
+            "doctor_id": 1,
+            "slot_start": "2026-08-26 17:30:00",
+            "slot_end": "2026-08-26 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 289,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 08:00:00",
+            "slot_end": "2026-08-27 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 290,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 08:30:00",
+            "slot_end": "2026-08-27 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 291,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 09:00:00",
+            "slot_end": "2026-08-27 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 292,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 09:30:00",
+            "slot_end": "2026-08-27 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 293,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 10:00:00",
+            "slot_end": "2026-08-27 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 294,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 10:30:00",
+            "slot_end": "2026-08-27 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 295,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 11:00:00",
+            "slot_end": "2026-08-27 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 296,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 11:30:00",
+            "slot_end": "2026-08-27 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 297,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 14:00:00",
+            "slot_end": "2026-08-27 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 298,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 14:30:00",
+            "slot_end": "2026-08-27 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 299,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 15:00:00",
+            "slot_end": "2026-08-27 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 300,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 15:30:00",
+            "slot_end": "2026-08-27 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 301,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 16:00:00",
+            "slot_end": "2026-08-27 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 302,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 16:30:00",
+            "slot_end": "2026-08-27 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 303,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 17:00:00",
+            "slot_end": "2026-08-27 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 304,
+            "doctor_id": 1,
+            "slot_start": "2026-08-27 17:30:00",
+            "slot_end": "2026-08-27 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 305,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 08:00:00",
+            "slot_end": "2026-08-28 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 306,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 08:30:00",
+            "slot_end": "2026-08-28 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 307,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 09:00:00",
+            "slot_end": "2026-08-28 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 308,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 09:30:00",
+            "slot_end": "2026-08-28 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 309,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 10:00:00",
+            "slot_end": "2026-08-28 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 310,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 10:30:00",
+            "slot_end": "2026-08-28 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 311,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 11:00:00",
+            "slot_end": "2026-08-28 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 312,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 11:30:00",
+            "slot_end": "2026-08-28 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 313,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 14:00:00",
+            "slot_end": "2026-08-28 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 314,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 14:30:00",
+            "slot_end": "2026-08-28 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 315,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 15:00:00",
+            "slot_end": "2026-08-28 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 316,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 15:30:00",
+            "slot_end": "2026-08-28 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 317,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 16:00:00",
+            "slot_end": "2026-08-28 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 318,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 16:30:00",
+            "slot_end": "2026-08-28 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 319,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 17:00:00",
+            "slot_end": "2026-08-28 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 320,
+            "doctor_id": 1,
+            "slot_start": "2026-08-28 17:30:00",
+            "slot_end": "2026-08-28 18:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 321,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 08:00:00",
+            "slot_end": "2026-08-31 08:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 322,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 08:30:00",
+            "slot_end": "2026-08-31 09:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 323,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 09:00:00",
+            "slot_end": "2026-08-31 09:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 324,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 09:30:00",
+            "slot_end": "2026-08-31 10:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 325,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 10:00:00",
+            "slot_end": "2026-08-31 10:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 326,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 10:30:00",
+            "slot_end": "2026-08-31 11:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 327,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 11:00:00",
+            "slot_end": "2026-08-31 11:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 328,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 11:30:00",
+            "slot_end": "2026-08-31 12:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 329,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 14:00:00",
+            "slot_end": "2026-08-31 14:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 330,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 14:30:00",
+            "slot_end": "2026-08-31 15:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 331,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 15:00:00",
+            "slot_end": "2026-08-31 15:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 332,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 15:30:00",
+            "slot_end": "2026-08-31 16:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 333,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 16:00:00",
+            "slot_end": "2026-08-31 16:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 334,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 16:30:00",
+            "slot_end": "2026-08-31 17:00:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 335,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 17:00:00",
+            "slot_end": "2026-08-31 17:30:00",
+            "status": "available",
+            "block_reason": null
+        },
+        {
+            "id": 336,
+            "doctor_id": 1,
+            "slot_start": "2026-08-31 17:30:00",
+            "slot_end": "2026-08-31 18:00:00",
+            "status": "available",
+            "block_reason": null
+        }
+    ],
+    "appointments": [
+        {
+            "id": 1,
+            "slot_id": 1,
+            "patient_id": 3,
+            "doctor_id": 1,
+            "clinic_id": 1,
+            "specialty_id": 1,
+            "status": "confirmed",
+            "notes": "Consulta de demonstração.",
+            "cancel_reason": null,
+            "confirmed_at": "2026-08-14 22:57:21",
+            "cancelled_at": null,
+            "completed_at": null,
+            "created_at": "2026-08-14 22:57:21",
+            "updated_at": "2026-08-14 22:57:21"
+        }
+    ],
+    "notifications": [
+        {
+            "id": 1,
+            "user_id": 2,
+            "appointment_id": 1,
+            "type": "in_app",
+            "title": "Agenda de demonstração",
+            "message": "Esta consulta é um exemplo para apresentar o sistema.",
+            "status": "sent",
+            "send_at": "2026-08-14 22:57:21",
+            "sent_at": "2026-08-14 22:57:21",
+            "read_at": null,
+            "created_at": "2026-08-14 22:57:21"
+        }
+    ],
+    "medical_records": [],
+    "payments": [
+        {
+            "id": 1,
+            "appointment_id": 1,
+            "patient_id": 3,
+            "clinic_id": 1,
+            "amount": 250,
+            "method": null,
+            "status": "pending",
+            "paid_at": null,
+            "created_at": "2026-08-14 22:57:21",
+            "updated_at": null
+        }
+    ]
+}
