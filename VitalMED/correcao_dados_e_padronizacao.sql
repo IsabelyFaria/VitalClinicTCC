@@ -1,18 +1,5 @@
--- =====================================================================
--- VITAL CLINIC — CORREÇÃO DE DADOS E PADRONIZAÇÃO DE CREDENCIAIS
--- Rodar depois de vitalclinic_schema.sql e (se estiver usando) seed_data_extra.sql
---   mysql -u root -p vitalclinic < correcao_dados_e_padronizacao.sql
--- Todo o script roda dentro de uma única transação: se algo falhar no
--- meio do caminho, nada é aplicado.
--- =====================================================================
-
 USE vitalclinic;
 START TRANSACTION;
-
--- ---------------------------------------------------------------------
--- PARTE 1 — DIAGNÓSTICO (somente leitura, não altera nada)
--- Rode essas consultas ANTES da correção para ver o que será afetado.
--- ---------------------------------------------------------------------
 
 -- 1.1 E-mails duplicados na tabela users (não deveria haver, já que a
 --     coluna é UNIQUE — mas serve como checagem de sanidade caso o
