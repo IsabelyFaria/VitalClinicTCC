@@ -44,28 +44,41 @@ function require_role($roles): array
     return $user;
 }
 
-function login_user(string $email, string $password, string $expectedRole = ''): bool
+/**
+ * Tenta autenticar o usuário e devolve o MOTIVO da falha (ou null se
+ * deu certo). Isso existe porque, neste painel, quem loga é sempre uma
+ * conta provisionada pela própria clínica (admin/médico) — diferente
+ * do "esqueci minha senha" (que é intencionalmente genérico pra não
+ * permitir descobrir quais e-mails existem), aqui não há motivo pra
+ * esconder qual foi o problema: ajuda a clínica a se auto-corrigir sem
+ * precisar abrir o banco de dados.
+ */
+function attempt_login(string $email, string $password, string $expectedRole = ''): ?string
 {
+    $email = strtolower(trim($email));
     $candidate = find_user_by_email($email);
-    if ($candidate && (!in_array($candidate['status'], ['active'], true) || !in_array($candidate['role'], ['admin', 'doctor'], true))) {
-        $candidate = null;
-    }
 
-    // Seleção de perfil (Clínica/Médico) na tela de login: além da senha
-    // correta, a role do usuário precisa bater com o botão escolhido.
-    // Isso evita, por exemplo, que a conta de um médico entre pela opção
-    // "Clínica" (ADM) só porque acertou usuário/senha.
-    if ($candidate && $expectedRole !== '' && $candidate['role'] !== $expectedRole) {
-        $candidate = null;
+    if (!$candidate || !in_array($candidate['role'], ['admin', 'doctor'], true)) {
+        return 'not_found';
     }
-
-    if (!$candidate || !password_verify($password, $candidate['password_hash'])) {
-        return false;
+    if ($candidate['status'] !== 'active') {
+        return 'inactive';
+    }
+    if ($expectedRole !== '' && $candidate['role'] !== $expectedRole) {
+        return 'wrong_role';
+    }
+    if (!password_verify($password, $candidate['password_hash'])) {
+        return 'wrong_password';
     }
 
     $_SESSION['user_id'] = (int) $candidate['id'];
     repository_update_user((int) $candidate['id'], ['last_login_at' => now_sql()]);
-    return true;
+    return null;
+}
+
+function login_user(string $email, string $password, string $expectedRole = ''): bool
+{
+    return attempt_login($email, $password, $expectedRole) === null;
 }
 
 function logout_user(): void
