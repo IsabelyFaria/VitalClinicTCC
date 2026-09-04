@@ -815,6 +815,11 @@ function verify_user_security_answer(int $userId, string $answer): bool
     return password_verify(normalize_security_answer($answer), $user['security_answer_hash']);
 }
 
+    function mark_tutorial_seen(int $userId): void
+{
+    repository_update_user($userId, ['tutorial_seen' => 1]);
+}
+
 function update_profile(int $userId, array $data): void
 {
     repository_update_user($userId, [

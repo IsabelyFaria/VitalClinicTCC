@@ -196,6 +196,11 @@ function handle_post(): void
             flash('success', 'Sessao encerrada.');
             redirect(['page' => 'login']);
 
+        case 'mark_tutorial_seen':
+            $user = require_role(['doctor', 'admin']);
+            mark_tutorial_seen((int) $user['id']);
+            redirect(['page' => $_GET['page'] ?? 'dashboard']);
+
         case 'update_staff_profile':
             $user = require_role(['doctor', 'admin']);
             update_staff_profile((int) $user['id'], [
@@ -426,6 +431,8 @@ function render_layout(string $page, ?array $user): void
 
         <?php render_page($page, $user); ?>
     </main>
+
+    <?php render_tutorial_modal($user); ?>
 
     <footer class="app-footer">
         <span>VitalClinic <?= h(app_version()) ?></span>
