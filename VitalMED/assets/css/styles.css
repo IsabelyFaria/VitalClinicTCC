@@ -848,6 +848,72 @@ td small {
     color: var(--text);
 }
 
+/* Tutorial de primeiro acesso — tour guiado (destaque + balão) */
+
+/* Escurece a página inteira por trás do tour; a "luz" ao redor do item
+   destacado é feita pelo box-shadow gigante do .tour-highlight abaixo,
+   não por um recorte real — é o truque mais simples e leve de fazer um
+   efeito "spotlight" sem depender de SVG/canvas. */
+.tour-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(15, 23, 42, 0.15);
+    pointer-events: none;
+}
+
+.tour-highlight {
+    position: fixed;
+    z-index: 999;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55), 0 0 0 3px var(--primary-strong, #0aa6bd);
+    transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+    pointer-events: none;
+}
+
+.tour-tooltip {
+    position: fixed;
+    z-index: 1000;
+    width: min(320px, calc(100vw - 28px));
+    padding: 16px;
+}
+
+.tour-tooltip p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.tutorial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 16px 0;
+}
+
+.tutorial-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+}
+
+.tutorial-dot.is-active {
+    background: var(--primary-strong, #0aa6bd);
+}
+
+.tutorial-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tutorial-nav-buttons {
+    display: flex;
+    gap: 8px;
+}
+
 .slot-picker {
     display: flex;
     flex-wrap: wrap;
