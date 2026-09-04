@@ -131,65 +131,6 @@
      * Em telas >= 1024px o CSS já força o menu visível (ver styles.css),
      * então este JS não interfere no desktop.
      */
-    /**
-     * Alterna entre modo claro/escuro. O tema já é aplicado antes disso
-     * (script inline no <head> de index.php, pra não piscar claro por
-     * uma fração de segundo antes de escurecer) — esta função só cuida
-     * do clique no botão, salvando a escolha em localStorage pra
-     * lembrar na próxima visita.
-     */
-    function setupThemeToggle() {
-        var button = qs('[data-theme-toggle]');
-        if (!button) {
-            return;
-        }
-
-        var STORAGE_KEY = 'vitalclinic-theme';
-        var favicon = document.getElementById('favicon');
-        var LIGHT_ICON = 'assets/brand/vital-clinic-mark.svg';
-        var DARK_ICON = 'assets/brand/vital-clinic-mark-dark.svg';
-
-        function updateButton(isDark) {
-            button.textContent = isDark ? '☀️' : '🌙';
-            button.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
-        }
-
-        function updateFavicon(isDark) {
-            if (!favicon) {
-                return;
-            }
-            // Mantém a versão (?v=...) que já estava no href atual, pra
-            // não perder o "quebra-cache" que asset_url() adicionou.
-            var query = favicon.href.split('?')[1];
-            var base = isDark ? DARK_ICON : LIGHT_ICON;
-            favicon.href = base + (query ? '?' + query : '');
-        }
-
-        var startsDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        updateButton(startsDark);
-        updateFavicon(startsDark);
-
-        button.addEventListener('click', function () {
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            var next = isDark ? 'light' : 'dark';
-
-            if (next === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-            }
-            updateButton(next === 'dark');
-            updateFavicon(next === 'dark');
-
-            try {
-                localStorage.setItem(STORAGE_KEY, next);
-            } catch (e) {
-                // localStorage indisponível — o tema ainda funciona
-                // nesta sessão, só não vai lembrar na próxima visita.
-            }
-        });
-    }
-
     function setupMobileNav() {
         var toggle = qs('[data-nav-toggle]');
         var nav = qs('[data-nav]');
@@ -1077,7 +1018,6 @@
         setupNetworkBanner();
         setupRolePicker();
         setupRoleSwitches();
-        setupThemeToggle();
         setupMobileNav();
         setupResponsiveTables();
         setupTermsGate();

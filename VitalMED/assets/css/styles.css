@@ -14,28 +14,6 @@
     --shadow: 0 12px 32px rgba(23, 58, 112, 0.1);
 }
 
-/* Modo escuro — ativado via [data-theme="dark"] no <html>, alternado
-   pelo botão no topo (ver setupThemeToggle() em app.js) e lembrado
-   entre visitas com localStorage. Como quase todo o resto do CSS já
-   usa estas variáveis (em vez de cores fixas) para fundos e textos,
-   trocar só estes valores já escurece o site inteiro de forma
-   consistente. */
-[data-theme="dark"] {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface-alt: #273449;
-    --text: #e7edf7;
-    --muted: #9fb0c9;
-    --line: #334155;
-    --primary: #22d3ee;
-    --primary-strong: #7dd3fc;
-    --accent: #22d3ee;
-    --danger: #f87171;
-    --warning: #fb923c;
-    --success: #34d399;
-    --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-}
-
 * {
     box-sizing: border-box;
 }
@@ -54,12 +32,6 @@ body {
     line-height: 1.5;
     overflow-x: hidden;
     width: 100%;
-    color-scheme: light;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-[data-theme="dark"] body {
-    color-scheme: dark;
 }
 
 a {
@@ -93,14 +65,6 @@ textarea {
     backdrop-filter: blur(10px);
 }
 
-[data-theme="dark"] .topbar {
-    background: rgba(15, 23, 42, 0.92);
-}
-
-[data-theme="dark"] .nav a.active {
-    color: #0f172a;
-}
-
 .brand {
     display: inline-flex;
     align-items: center;
@@ -120,22 +84,6 @@ textarea {
     height: 58px;
     object-fit: contain;
     object-position: center;
-}
-
-/* Duas versões da logo (clara/escura) ficam as duas no HTML; o CSS
-   só decide qual mostrar, conforme o tema ativo — assim a troca é
-   instantânea, sem depender de JavaScript rodar a tempo (o que
-   evitaria uma "piscada" da logo errada por uma fração de segundo). */
-.brand-logo-dark {
-    display: none;
-}
-
-[data-theme="dark"] .brand-logo-light {
-    display: none;
-}
-
-[data-theme="dark"] .brand-logo-dark {
-    display: block;
 }
 
 .topbar-actions {
@@ -164,25 +112,6 @@ textarea {
 
 .topbar-logout .button:hover {
     background: #b91c1c;
-}
-
-.theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 17px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.theme-toggle:hover {
-    background: var(--surface-alt);
 }
 
 .nav-toggle {

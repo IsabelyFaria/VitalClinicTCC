@@ -461,26 +461,9 @@ function render_layout(string $page, ?array $user): void
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
-    <script>
-        // Aplica o tema salvo ANTES do resto da página carregar, pra
-        // não piscar claro por uma fração de segundo e só depois
-        // escurecer (esse script fica aqui no <head>, não em app.js,
-        // justamente por isso — precisa rodar antes do <body> desenhar).
-        (function () {
-            try {
-                var saved = localStorage.getItem('vitalclinic-theme');
-                if (saved === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                }
-            } catch (e) {
-                // localStorage indisponível (modo privado restrito etc.) —
-                // segue no tema claro, sem travar a página por causa disso.
-            }
-        })();
-    </script>
     <link rel="manifest" href="manifest.webmanifest">
     <title><?= h($title) ?></title>
-    <link rel="icon" id="favicon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
+    <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
@@ -489,10 +472,8 @@ function render_layout(string $page, ?array $user): void
 <body>
     <header class="topbar">
         <a class="brand" href="<?= h(app_url(['page' => 'dashboard'])) ?>">
-            <img class="brand-logo brand-logo-light" src="<?= asset_url('assets/brand/vital-clinic-logo.svg') ?>" alt="<?= h($title) ?>">
-            <img class="brand-logo brand-logo-dark" src="<?= asset_url('assets/brand/vital-clinic-logo-dark.svg') ?>" alt="<?= h($title) ?>">
+            <img class="brand-logo" src="<?= asset_url('assets/brand/vital-clinic-logo.svg') ?>" alt="<?= h($title) ?>">
         </a>
-        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Alternar modo escuro">🌙</button>
         <?php render_nav($page, $user); ?>
     </header>
 
@@ -1083,16 +1064,6 @@ function render_install_error(Throwable $e): void
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
-    <script>
-        (function () {
-            try {
-                var saved = localStorage.getItem('vitalclinic-theme');
-                if (saved === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                }
-            } catch (e) { /* segue no tema claro */ }
-        })();
-    </script>
     <link rel="manifest" href="manifest.webmanifest">
     <title>Erro de conexão</title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
