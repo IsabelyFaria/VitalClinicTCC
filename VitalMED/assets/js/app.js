@@ -213,30 +213,118 @@
      * passos e de avisar o servidor quando o usuário termina ou pula,
      * para o modal nunca mais aparecer para essa conta.
      */
+    /**
+     * Tutorial de primeiro acesso — tour guiado: em vez de um modal com
+     * texto solto, cada passo destaca (com uma "luz" ao redor) o item
+     * de menu real que está sendo explicado, e um balão de texto aparece
+     * ao lado dele. Passos sem alvo (a boas-vindas inicial) aparecem
+     * centralizados na tela.
+     */
     function setupTutorial() {
-        var modal = qs('[data-tutorial]');
-        if (!modal) {
+        var dataScript = document.getElementById('tutorial-steps-data');
+        var tooltip = qs('[data-tour-tooltip]');
+        var highlight = qs('[data-tour-highlight]');
+        var overlay = qs('[data-tour-overlay]');
+        if (!dataScript || !tooltip || !highlight || !overlay) {
             return;
         }
 
-        var steps = qsa('[data-tutorial-step]', modal);
-        var dots = qsa('.tutorial-dot', modal);
-        var prevButton = qs('[data-tutorial-prev]', modal);
-        var nextButton = qs('[data-tutorial-next]', modal);
-        var skipButtons = qsa('[data-tutorial-skip]', modal);
-        var csrfInput = qs('[data-tutorial-csrf]', modal);
+        var steps;
+        try {
+            steps = JSON.parse(dataScript.textContent);
+        } catch (error) {
+            console.error('[tutorial] dados dos passos inválidos:', error);
+            return;
+        }
+        if (!steps || !steps.length) {
+            return;
+        }
+
+        var titleEl = qs('[data-tour-title]', tooltip);
+        var textEl = qs('[data-tour-text]', tooltip);
+        var dots = qsa('.tutorial-dot', tooltip);
+        var prevButton = qs('[data-tutorial-prev]', tooltip);
+        var nextButton = qs('[data-tutorial-next]', tooltip);
+        var skipButtons = qsa('[data-tutorial-skip]', tooltip);
+        var csrfInput = qs('[data-tutorial-csrf]', tooltip);
+        var nav = qs('[data-nav]');
         var current = 0;
+        var navWasOpen = nav ? nav.classList.contains('is-open') : false;
+
+        function findTargetElement(pageKey) {
+            if (!pageKey || !nav) {
+                return null;
+            }
+            return nav.querySelector('a[href*="page=' + pageKey + '"]');
+        }
+
+        function positionCentered() {
+            highlight.hidden = true;
+            tooltip.style.transform = 'translate(-50%, -50%)';
+            tooltip.style.top = '50%';
+            tooltip.style.left = '50%';
+        }
+
+        function positionNear(target) {
+            var rect = target.getBoundingClientRect();
+            var padding = 6;
+
+            highlight.hidden = false;
+            highlight.style.top = (rect.top - padding) + 'px';
+            highlight.style.left = (rect.left - padding) + 'px';
+            highlight.style.width = (rect.width + padding * 2) + 'px';
+            highlight.style.height = (rect.height + padding * 2) + 'px';
+
+            // Tenta posicionar o balão abaixo do item destacado; se não
+            // couber (perto do fim da tela), posiciona acima dele.
+            var tooltipHeight = tooltip.offsetHeight || 220;
+            var spaceBelow = window.innerHeight - rect.bottom;
+            var top = spaceBelow > tooltipHeight + 24
+                ? rect.bottom + 14
+                : Math.max(14, rect.top - tooltipHeight - 14);
+            var left = Math.min(
+                Math.max(14, rect.left),
+                window.innerWidth - tooltip.offsetWidth - 14
+            );
+
+            tooltip.style.transform = 'none';
+            tooltip.style.top = top + 'px';
+            tooltip.style.left = left + 'px';
+        }
+
+        function reposition() {
+            var step = steps[current];
+            var target = findTargetElement(step.target);
+            if (target) {
+                target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                positionNear(target);
+            } else {
+                positionCentered();
+            }
+        }
 
         function showStep(index) {
             current = index;
-            steps.forEach(function (step, i) {
-                step.hidden = i !== index;
-            });
+            var step = steps[index];
+
+            titleEl.textContent = step.title;
+            textEl.textContent = step.text;
             dots.forEach(function (dot, i) {
                 dot.classList.toggle('is-active', i === index);
             });
             prevButton.disabled = index === 0;
             nextButton.textContent = index === steps.length - 1 ? 'Concluir' : 'Próximo';
+
+            // Passos com alvo no menu precisam do menu aberto — no
+            // mobile/tablet ele começa escondido dentro da gaveta
+            // hambúrguer (ver setupMobileNav).
+            if (step.target && nav && !nav.classList.contains('is-open')) {
+                nav.classList.add('is-open');
+            }
+
+            // Espera o layout assentar (ex.: menu acabou de abrir) antes
+            // de medir a posição real do elemento-alvo na tela.
+            requestAnimationFrame(reposition);
         }
 
         function finish() {
@@ -250,7 +338,15 @@
             }).catch(function (error) {
                 console.error('[tutorial] falha ao registrar conclusão:', error);
             });
-            modal.close();
+
+            overlay.hidden = true;
+            highlight.hidden = true;
+            tooltip.hidden = true;
+            window.removeEventListener('resize', reposition);
+            window.removeEventListener('scroll', reposition, true);
+            if (nav && !navWasOpen) {
+                nav.classList.remove('is-open');
+            }
         }
 
         nextButton.addEventListener('click', function () {
@@ -271,8 +367,12 @@
             button.addEventListener('click', finish);
         });
 
+        window.addEventListener('resize', reposition);
+        window.addEventListener('scroll', reposition, true);
+
+        overlay.hidden = false;
+        tooltip.hidden = false;
         showStep(0);
-        modal.showModal();
     }
 
     function setupModals() {
