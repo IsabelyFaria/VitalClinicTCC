@@ -208,6 +208,14 @@ function handle_post(): void
             mark_tutorial_seen((int) $user['id']);
             redirect(['page' => $_GET['page'] ?? 'dashboard']);
 
+        case 'accept_terms':
+            $user = require_role(['doctor', 'admin']);
+            if (post_value('agree') !== '1') {
+                throw new RuntimeException('É necessário marcar a caixa de aceite para continuar.');
+            }
+            accept_terms((int) $user['id']);
+            redirect(['page' => $_GET['page'] ?? 'dashboard']);
+
         case 'update_staff_profile':
             $user = require_role(['doctor', 'admin']);
             update_staff_profile((int) $user['id'], [
@@ -439,7 +447,15 @@ function render_layout(string $page, ?array $user): void
         <?php render_page($page, $user); ?>
     </main>
 
-    <?php render_tutorial_modal($user); ?>
+    <?php
+    // O modal de Termos de Uso é bloqueante e tem prioridade: só
+    // desenhamos o tutorial depois que os termos já foram aceitos.
+    if ($user && (int) ($user['terms_accepted'] ?? 0) === 0 && in_array($user['role'], ['admin', 'doctor'], true)) {
+        render_terms_modal($user);
+    } else {
+        render_tutorial_modal($user);
+    }
+    ?>
 
     <footer class="app-footer">
         <span>VitalClinic <?= h(app_version()) ?></span>
@@ -510,11 +526,110 @@ function render_nav(string $page, ?array $user): void
 }
 
 /**
- * Tutorial de primeiro acesso: só é desenhado quando o usuário logado
- * ainda não viu (users.tutorial_seen = 0). O conteúdo dos passos muda
- * conforme o perfil (admin ou médico) — pacientes não logam neste
- * painel, então não precisam de um roteiro aqui.
+ * Modal bloqueante de aceite dos Termos de Uso e Política de
+ * Privacidade — aparece assim que users.terms_accepted = 0 e só
+ * libera o uso do sistema depois que o usuário marca a caixa "Li e
+ * aceito" e clica em "Prosseguir" (ver setupTermsGate() em app.js).
+ * Diferente do tutorial, este modal NÃO tem botão de pular, X, nem
+ * fecha ao clicar fora — é obrigatório para continuar usando o painel.
  */
+function render_terms_modal(array $user): void
+{
+    ?>
+    <div class="terms-overlay" data-terms-overlay></div>
+    <div class="terms-modal panel" data-terms-modal role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+        <div class="modal-head">
+            <h2 id="terms-modal-title">Termos de Uso e Política de Privacidade</h2>
+        </div>
+        <p class="muted">Antes de continuar, leia e aceite os termos abaixo. Isso é necessário apenas uma vez.</p>
+
+        <div class="terms-text" tabindex="0">
+            <h3>Termo de Uso da Clínica e Médicos – Vital Clinic</h3>
+
+            <h4>1. Objetivo</h4>
+            <p>Este Termo regula a utilização da plataforma Vital Clinic por clínicas, consultórios, médicos e demais profissionais de saúde cadastrados.</p>
+
+            <h4>2. Responsabilidades da clínica</h4>
+            <ul>
+                <li>Manter seus dados cadastrais atualizados;</li>
+                <li>Garantir a veracidade das informações fornecidas;</li>
+                <li>Proteger os dados dos pacientes;</li>
+                <li>Respeitar integralmente a LGPD;</li>
+                <li>Controlar os acessos realizados por colaboradores autorizados.</li>
+            </ul>
+
+            <h4>3. Responsabilidades dos médicos</h4>
+            <ul>
+                <li>Possuir registro profissional ativo junto ao órgão competente;</li>
+                <li>Informar corretamente sua especialidade e número de registro profissional;</li>
+                <li>Manter a agenda atualizada e cumprir os horários disponibilizados;</li>
+                <li>Respeitar o sigilo profissional e a legislação aplicável.</li>
+            </ul>
+
+            <h4>4. Uso indevido</h4>
+            <p>É considerado uso indevido da plataforma: fornecer informações falsas; compartilhar dados de pacientes sem autorização; tentar invadir ou comprometer a segurança do sistema; ou utilizar a plataforma para fins ilícitos.</p>
+
+            <h4>5. Penalidades</h4>
+            <p>O descumprimento deste Termo pode acarretar, de forma progressiva ou imediata conforme a gravidade: advertência formal; suspensão temporária do acesso; cancelamento definitivo da conta; e, quando cabível, aplicação das medidas judiciais cabíveis, com colaboração da Vital Clinic junto às autoridades competentes.</p>
+
+            <h4>6. Proteção de dados</h4>
+            <p>A clínica e os profissionais de saúde comprometem-se a usar os dados dos pacientes exclusivamente para fins de prestação de serviços de saúde, observando a Lei Geral de Proteção de Dados (LGPD).</p>
+
+            <h4>7. Vigência</h4>
+            <p>Este Termo permanece válido enquanto houver vínculo de utilização da plataforma Vital Clinic.</p>
+
+            <h4>8. Aceite</h4>
+            <p>Ao realizar o cadastro e utilizar a plataforma, a clínica e os profissionais de saúde declaram estar de acordo com todas as condições previstas neste Termo.</p>
+
+            <h3>Política de Privacidade e Proteção de Dados (LGPD)</h3>
+
+            <h4>1. Introdução</h4>
+            <p>O Vital Clinic valoriza a privacidade e a proteção dos dados pessoais de seus usuários.</p>
+
+            <h4>2. Dados coletados</h4>
+            <p><strong>Pacientes:</strong> nome completo, CPF, data de nascimento, telefone, e-mail, histórico de agendamentos.<br>
+            <strong>Clínicas:</strong> razão social, CNPJ, endereço, dados dos responsáveis.<br>
+            <strong>Médicos:</strong> nome, CRM, especialidade, contatos profissionais.</p>
+
+            <h4>3. Finalidades do tratamento</h4>
+            <p>Cadastro de usuários; agendamento e confirmação de consultas; envio de notificações; atendimento ao usuário; cumprimento de obrigações legais.</p>
+
+            <h4>4. Compartilhamento de dados</h4>
+            <p>Os dados podem ser compartilhados entre pacientes e clínicas, entre pacientes e médicos, com fornecedores tecnológicos, ou mediante obrigação legal.</p>
+
+            <h4>5. Segurança</h4>
+            <p>O Vital Clinic adota medidas técnicas e administrativas para proteger os dados contra acesso não autorizado, perda, vazamento e alteração indevida.</p>
+
+            <h4>6. Direitos dos titulares</h4>
+            <p>O usuário pode solicitar confirmação do tratamento, acesso aos dados, correção, portabilidade, anonimização, exclusão e revogação do consentimento.</p>
+
+            <h4>7. Retenção dos dados</h4>
+            <p>Os dados são mantidos apenas pelo período necessário para cumprimento das finalidades legais e contratuais.</p>
+
+            <h4>8. Canal LGPD</h4>
+            <p>Solicitações relacionadas à proteção de dados podem ser encaminhadas para: <strong>privacidade@vitalclinic.com</strong></p>
+
+            <h4>9. Alterações</h4>
+            <p>Esta Política pode ser atualizada a qualquer momento para adequação legal ou melhoria dos serviços.</p>
+
+            <p class="muted">Versão 1.0 – Vital Clinic</p>
+        </div>
+
+        <form method="post" data-terms-form>
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="accept_terms">
+            <input type="hidden" name="page_after" value="dashboard">
+            <input type="hidden" name="agree" value="0" data-terms-agree-value>
+            <label class="terms-checkbox">
+                <input type="checkbox" data-terms-checkbox>
+                Li e aceito os Termos de Uso e a Política de Privacidade.
+            </label>
+            <button class="button primary" type="submit" data-terms-submit disabled>Prosseguir</button>
+        </form>
+    </div>
+    <?php
+}
+
 /**
  * Tutorial de primeiro acesso: só é desenhado quando o usuário logado
  * ainda não viu (users.tutorial_seen = 0). Diferente de um modal comum,

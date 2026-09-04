@@ -220,6 +220,70 @@
      * ao lado dele. Passos sem alvo (a boas-vindas inicial) aparecem
      * centralizados na tela.
      */
+    /**
+     * Aceite obrigatório dos Termos de Uso/Privacidade no primeiro
+     * acesso. Diferente do tutorial, este modal é bloqueante de
+     * verdade: sem X, sem Esc, sem clique fora — só libera com a caixa
+     * marcada + "Prosseguir". Enquanto estiver visível, trava também a
+     * rolagem da página por trás dele.
+     */
+    function setupTermsGate() {
+        var modal = qs('[data-terms-modal]');
+        var overlay = qs('[data-terms-overlay]');
+        if (!modal || !overlay) {
+            return;
+        }
+
+        var form = qs('[data-terms-form]', modal);
+        var checkbox = qs('[data-terms-checkbox]', modal);
+        var agreeValue = qs('[data-terms-agree-value]', modal);
+        var submitButton = qs('[data-terms-submit]', modal);
+
+        document.documentElement.style.overflow = 'hidden';
+
+        checkbox.addEventListener('change', function () {
+            submitButton.disabled = !checkbox.checked;
+            agreeValue.value = checkbox.checked ? '1' : '0';
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            if (!checkbox.checked) {
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando...';
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data };
+                    });
+                })
+                .then(function (result) {
+                    if (!result.ok || !result.data || result.data.success === false) {
+                        throw new Error((result.data && result.data.flash && result.data.flash.message) || 'Não foi possível registrar o aceite.');
+                    }
+                    // Recarrega a página: o servidor agora sabe que os
+                    // termos foram aceitos, então o modal não é mais
+                    // desenhado no próximo carregamento.
+                    document.documentElement.style.overflow = '';
+                    window.location.reload();
+                })
+                .catch(function (error) {
+                    console.error('[termos] falha ao registrar aceite:', error);
+                    alert('Não foi possível registrar seu aceite agora. Tente novamente.');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Prosseguir';
+                });
+        });
+    }
+
     function setupTutorial() {
         var dataScript = document.getElementById('tutorial-steps-data');
         var tooltip = qs('[data-tour-tooltip]');
@@ -819,6 +883,7 @@
         setupRoleSwitches();
         setupMobileNav();
         setupResponsiveTables();
+        setupTermsGate();
         setupTutorial();
         setupModals();
         setupSlots();

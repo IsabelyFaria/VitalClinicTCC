@@ -868,6 +868,78 @@ td small {
     color: var(--text);
 }
 
+/* Termos de Uso — modal bloqueante de primeiro acesso */
+.terms-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.terms-modal {
+    position: fixed;
+    z-index: 2001;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(640px, calc(100% - 32px));
+    max-height: min(720px, calc(100vh - 32px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.terms-modal .modal-head h2 {
+    font-size: 20px;
+}
+
+.terms-text {
+    overflow-y: auto;
+    padding: 4px 12px 4px 0;
+    margin: 8px 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+}
+
+.terms-text h3,
+.terms-text h4 {
+    margin: 16px 12px 6px;
+    color: var(--primary-strong, #173a70);
+}
+
+.terms-text h3:first-child {
+    margin-top: 12px;
+}
+
+.terms-text p,
+.terms-text ul {
+    margin: 0 12px 10px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.terms-text ul {
+    padding-left: 20px;
+}
+
+.terms-checkbox {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 8px 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.terms-checkbox input {
+    width: auto;
+    min-height: auto;
+    margin-top: 3px;
+}
+
 /* Tutorial de primeiro acesso — tour guiado (destaque + balão) */
 
 /* Escurece a página inteira por trás do tour; a "luz" ao redor do item
