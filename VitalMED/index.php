@@ -439,8 +439,6 @@ function render_layout(string $page, ?array $user): void
         <?php render_page($page, $user); ?>
     </main>
 
-    <?php render_tutorial_modal($user); ?>
-
     <footer class="app-footer">
         <span>VitalClinic <?= h(app_version()) ?></span>
     </footer>
