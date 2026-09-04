@@ -86,6 +86,27 @@ textarea {
     object-position: center;
 }
 
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-logout .button {
+    min-height: 40px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3);
+}
+
+.topbar-logout .button:hover {
+    background: #b91c1c;
+}
+
 .nav-toggle {
     display: inline-flex;
     flex-direction: column;
@@ -143,14 +164,6 @@ textarea {
     background: var(--surface-alt);
     color: var(--primary-strong);
     font-weight: 700;
-}
-
-.nav .inline {
-    display: flex;
-}
-
-.nav .inline .button {
-    width: 100%;
 }
 
 .shell {
@@ -920,6 +933,29 @@ td small {
     gap: 8px;
 }
 
+/* Barra de pesquisa padronizada (Pacientes/Médicos — admin e médico) */
+.search-field {
+    position: relative;
+    display: block;
+}
+
+.search-field input {
+    min-height: 44px;
+    padding-left: 40px;
+    border-radius: 999px;
+}
+
+.search-field .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
 .slot-picker label {
     display: inline-flex;
     align-items: center;
@@ -1386,35 +1422,47 @@ code {
 }
 
 @media (min-width: 1024px) {
-    /* Menu volta a ficar sempre visível, na horizontal, sem o botão
-       hambúrguer (que só existe para telas pequenas/tablet). */
+    /* Menu volta a ficar sempre visível, sem o botão hambúrguer (que só
+       existe para telas pequenas/tablet) — agora como uma pílula
+       flutuante centralizada no topo, separada da logo. */
     .nav-toggle {
         display: none;
     }
 
     .nav {
         display: flex !important;
-        position: static;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         flex-direction: row;
         align-items: center;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: 4px;
+        flex-wrap: nowrap;
+        gap: 2px;
         margin: 0;
-        padding: 0;
+        padding: 6px;
         max-height: none;
         overflow: visible;
-        background: transparent;
-        border: none;
-        box-shadow: none;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
     }
 
     .nav a {
-        padding: 8px 10px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        white-space: nowrap;
+        transition: background 0.15s ease, color 0.15s ease;
     }
 
-    .nav .inline .button {
-        width: auto;
+    .nav a:hover {
+        background: var(--surface-alt);
+    }
+
+    .nav a.active {
+        background: var(--primary-strong);
+        color: #fff;
     }
 
     .stats {

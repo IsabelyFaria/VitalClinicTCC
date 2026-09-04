@@ -32,7 +32,12 @@ function render_admin_doctors(): void
             <h2>Médicos ativos</h2>
             <form method="get" class="filters">
                 <input type="hidden" name="page" value="admin_doctors">
-                <label>Buscar médico <input name="q" value="<?= h($search) ?>" placeholder="Nome, CRM ou especialidade"></label>
+                <label>Buscar médico
+                    <span class="search-field">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input name="q" value="<?= h($search) ?>" placeholder="Nome, CRM ou especialidade">
+                    </span>
+                </label>
                 <button class="button" type="submit">Buscar</button>
             </form>
             <div class="accordion-list">
