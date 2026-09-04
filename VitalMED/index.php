@@ -57,6 +57,11 @@ function run_app(): void
         return;
     }
 
+    if (($_GET['action'] ?? '') === 'doctor_weekdays') {
+        doctor_weekdays_endpoint();
+        return;
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             handle_post();
@@ -151,6 +156,36 @@ function slots_endpoint(): void
             ];
         }, available_slots($doctorId, $date)),
     ]);
+}
+
+/**
+ * Devolve os dias da semana (0=domingo ... 6=sábado) em que o médico
+ * tem agenda cadastrada (doctor_schedules). Usado pelo calendário
+ * visual do modal "Nova consulta" para esmaecer, com antecedência, os
+ * dias em que aquele médico normalmente não atende — antes mesmo de
+ * o usuário escolher uma data e disparar a busca de horários daquele
+ * dia específico.
+ */
+function doctor_weekdays_endpoint(): void
+{
+    $user = current_user();
+    if (!$user) {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Nao autenticado.']);
+        return;
+    }
+
+    $doctorId = (int) ($_GET['doctor_id'] ?? 0);
+    if (!$doctorId) {
+        http_response_code(422);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Dados invalidos.']);
+        return;
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['weekdays' => doctor_working_weekdays($doctorId)]);
 }
 
 function handle_post(): void
@@ -426,6 +461,23 @@ function render_layout(string $page, ?array $user): void
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
+    <script>
+        // Aplica o tema salvo ANTES do resto da página carregar, pra
+        // não piscar claro por uma fração de segundo e só depois
+        // escurecer (esse script fica aqui no <head>, não em app.js,
+        // justamente por isso — precisa rodar antes do <body> desenhar).
+        (function () {
+            try {
+                var saved = localStorage.getItem('vitalclinic-theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) {
+                // localStorage indisponível (modo privado restrito etc.) —
+                // segue no tema claro, sem travar a página por causa disso.
+            }
+        })();
+    </script>
     <link rel="manifest" href="manifest.webmanifest">
     <title><?= h($title) ?></title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
@@ -439,6 +491,7 @@ function render_layout(string $page, ?array $user): void
         <a class="brand" href="<?= h(app_url(['page' => 'dashboard'])) ?>">
             <img class="brand-logo" src="<?= asset_url('assets/brand/vital-clinic-logo.svg') ?>" alt="<?= h($title) ?>">
         </a>
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Alternar modo escuro">🌙</button>
         <?php render_nav($page, $user); ?>
     </header>
 
@@ -1029,6 +1082,16 @@ function render_install_error(Throwable $e): void
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('vitalclinic-theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { /* segue no tema claro */ }
+        })();
+    </script>
     <link rel="manifest" href="manifest.webmanifest">
     <title>Erro de conexão</title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">

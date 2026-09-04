@@ -131,6 +131,48 @@
      * Em telas >= 1024px o CSS já força o menu visível (ver styles.css),
      * então este JS não interfere no desktop.
      */
+    /**
+     * Alterna entre modo claro/escuro. O tema já é aplicado antes disso
+     * (script inline no <head> de index.php, pra não piscar claro por
+     * uma fração de segundo antes de escurecer) — esta função só cuida
+     * do clique no botão, salvando a escolha em localStorage pra
+     * lembrar na próxima visita.
+     */
+    function setupThemeToggle() {
+        var button = qs('[data-theme-toggle]');
+        if (!button) {
+            return;
+        }
+
+        var STORAGE_KEY = 'vitalclinic-theme';
+
+        function updateButton(isDark) {
+            button.textContent = isDark ? '☀️' : '🌙';
+            button.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
+        }
+
+        updateButton(document.documentElement.getAttribute('data-theme') === 'dark');
+
+        button.addEventListener('click', function () {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            var next = isDark ? 'light' : 'dark';
+
+            if (next === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            updateButton(next === 'dark');
+
+            try {
+                localStorage.setItem(STORAGE_KEY, next);
+            } catch (e) {
+                // localStorage indisponível — o tema ainda funciona
+                // nesta sessão, só não vai lembrar na próxima visita.
+            }
+        });
+    }
+
     function setupMobileNav() {
         var toggle = qs('[data-nav-toggle]');
         var nav = qs('[data-nav]');
@@ -462,6 +504,134 @@
                     modal.close();
                 }
             });
+        });
+    }
+
+    /**
+     * Calendário visual do modal "Nova consulta": substitui o
+     * <input type="date"> nativo por uma grade de dias clicável, ao
+     * lado dos outros campos, e esmaece os dias em que o médico
+     * escolhido não tem agenda cadastrada (ver doctor_working_weekdays()
+     * em app/repository.php e a ação "doctor_weekdays" em index.php).
+     * O input escondido #new-appointment-date continua existindo e
+     * recebendo um evento "change" normal a cada clique — é assim que
+     * setupSlots() (que não foi alterado) continua funcionando sem
+     * precisar saber que a data agora vem de um calendário, e não mais
+     * de um <input type="date"> nativo.
+     */
+    function setupAppointmentCalendar() {
+        var MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        qsa('[data-appt-calendar]').forEach(function (calendar) {
+            var form = calendar.closest('form');
+            var dateInput = qs('#new-appointment-date', calendar);
+            var label = qs('[data-cal-label]', calendar);
+            var daysBox = qs('[data-cal-days]', calendar);
+            var hint = qs('[data-cal-hint]', calendar);
+            var prevButton = qs('[data-cal-prev]', calendar);
+            var nextButton = qs('[data-cal-next]', calendar);
+            var doctorInput = form ? qs('[data-appointment-doctor]', form) : null;
+            if (!dateInput || !daysBox || !doctorInput) {
+                return;
+            }
+
+            var minDate = calendar.getAttribute('data-min-date'); // 'YYYY-MM-DD'
+            var maxDays = parseInt(calendar.getAttribute('data-max-days'), 10) || 60;
+            var minDateObj = new Date(minDate + 'T00:00:00');
+            var maxDateObj = new Date(minDateObj.getTime());
+            maxDateObj.setDate(maxDateObj.getDate() + maxDays);
+
+            var viewMonth = new Date(minDateObj.getFullYear(), minDateObj.getMonth(), 1);
+            var selectedDate = null;
+            var workingWeekdays = null; // null = nenhum médico selecionado ainda
+
+            function toIso(date) {
+                var y = date.getFullYear();
+                var m = String(date.getMonth() + 1).padStart(2, '0');
+                var d = String(date.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + d;
+            }
+
+            function render() {
+                label.textContent = MONTHS[viewMonth.getMonth()] + ' de ' + viewMonth.getFullYear();
+
+                var firstWeekday = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1).getDay();
+                var daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+
+                var html = '';
+                for (var i = 0; i < firstWeekday; i++) {
+                    html += '<span class="appointment-calendar-blank"></span>';
+                }
+                for (var day = 1; day <= daysInMonth; day++) {
+                    var dayDate = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
+                    var iso = toIso(dayDate);
+                    var weekday = dayDate.getDay();
+
+                    var outOfRange = dayDate < minDateObj || dayDate > maxDateObj;
+                    var offDay = workingWeekdays !== null && workingWeekdays.indexOf(weekday) === -1;
+                    var disabled = outOfRange || offDay || workingWeekdays === null;
+                    var classes = ['appointment-calendar-day'];
+                    if (disabled) classes.push('is-disabled');
+                    if (iso === selectedDate) classes.push('is-selected');
+
+                    html += '<button type="button" class="' + classes.join(' ') + '" data-cal-date="' + iso + '"' + (disabled ? ' disabled' : '') + '>' + day + '</button>';
+                }
+                daysBox.innerHTML = html;
+
+                qsa('[data-cal-date]', daysBox).forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        selectedDate = button.getAttribute('data-cal-date');
+                        dateInput.value = selectedDate;
+                        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        render();
+                    });
+                });
+
+                prevButton.disabled = viewMonth.getFullYear() === minDateObj.getFullYear() && viewMonth.getMonth() === minDateObj.getMonth();
+            }
+
+            prevButton.addEventListener('click', function () {
+                viewMonth.setMonth(viewMonth.getMonth() - 1);
+                render();
+            });
+            nextButton.addEventListener('click', function () {
+                viewMonth.setMonth(viewMonth.getMonth() + 1);
+                render();
+            });
+
+            doctorInput.addEventListener('change', function () {
+                selectedDate = null;
+                dateInput.value = '';
+                dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                var doctorId = doctorInput.value;
+                if (!doctorId) {
+                    workingWeekdays = null;
+                    hint.textContent = 'Selecione o médico para ver os dias de atendimento.';
+                    render();
+                    return;
+                }
+
+                hint.textContent = 'Carregando dias de atendimento...';
+                fetch('index.php?action=doctor_weekdays&doctor_id=' + encodeURIComponent(doctorId), {
+                    headers: { 'Accept': 'application/json' },
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        workingWeekdays = data.weekdays || [];
+                        hint.textContent = workingWeekdays.length
+                            ? 'Dias em destaque: quando esse médico atende. Clique em um dia para ver os horários.'
+                            : 'Este médico ainda não tem agenda semanal cadastrada.';
+                        render();
+                    })
+                    .catch(function () {
+                        workingWeekdays = [];
+                        hint.textContent = 'Não foi possível carregar a agenda deste médico agora.';
+                        render();
+                    });
+            });
+
+            render();
         });
     }
 
@@ -857,7 +1027,16 @@
                         refreshAppointmentsPanel();
                         form.reset();
                         if (patientInput) { patientInput.value = ''; }
-                        if (doctorInput) { doctorInput.value = ''; }
+                        if (doctorInput) {
+                            doctorInput.value = '';
+                            // Dispara "change" pra o calendário do modal (ver
+                            // setupAppointmentCalendar) também resetar sua
+                            // própria seleção de dia/dias-de-atendimento —
+                            // senão ele ficaria mostrando o médico/data da
+                            // consulta anterior na próxima vez que o modal
+                            // abrir.
+                            doctorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
                         if (slotInput) { slotInput.value = ''; }
                     })
                     .catch(function (error) {
@@ -881,11 +1060,13 @@
         setupNetworkBanner();
         setupRolePicker();
         setupRoleSwitches();
+        setupThemeToggle();
         setupMobileNav();
         setupResponsiveTables();
         setupTermsGate();
         setupTutorial();
         setupModals();
+        setupAppointmentCalendar();
         setupSlots();
         setupAutocomplete();
         setupNewAppointmentForm();
