@@ -161,8 +161,15 @@ function handle_post(): void
 
     switch ($action) {
         case 'login':
-            if (!login_user(post_value('email'), (string) ($_POST['password'] ?? ''), post_value('role_context'))) {
-                throw new RuntimeException('E-mail ou senha invalidos.');
+            $loginFailure = attempt_login(post_value('email'), (string) ($_POST['password'] ?? ''), post_value('role_context'));
+            if ($loginFailure !== null) {
+                $loginMessages = [
+                    'not_found' => 'Não encontramos uma conta de administrador/médico com esse e-mail (confira também se não é um e-mail de paciente — pacientes não logam neste painel).',
+                    'inactive' => 'Esta conta está inativa. Fale com um administrador da clínica.',
+                    'wrong_role' => 'Esse e-mail existe, mas não é desse perfil. Tente entrar pelo outro botão (Clínica/Médico).',
+                    'wrong_password' => 'Senha incorreta para esse e-mail.',
+                ];
+                throw new RuntimeException($loginMessages[$loginFailure] ?? 'E-mail ou senha invalidos.');
             }
             flash('success', 'Login realizado.');
             redirect(['page' => 'dashboard']);
