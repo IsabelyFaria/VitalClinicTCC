@@ -87,6 +87,8 @@ veja a seção de scripts para isso).
 Todos os usuários abaixo já vêm cadastrados quando você roda
 `vitalclinic_schema.sql`. A senha de todos é **`password`**.
 
+### Contas fixas de demonstração
+
 | Perfil | E-mail | Senha | Observação |
 |---|---|---|---|
 | Administrador | `admin@clinica.local` | `password` | Clínica Central |
@@ -106,10 +108,82 @@ antes — veja a [seção 7](#7-recuperação-de-senha)):
 | `medico@clinica.local` | Qual foi o nome da sua primeira escola? | `Colégio Santa Rita` |
 | `carlos.lima@clinicanorte.local` | Qual é a sua cidade natal? | `Recife` |
 
-Se você rodou `seed_populacao.sql` ou `scripts/seed_producao.php`, há
-dezenas de outros administradores e médicos fictícios, todos com senha
-`password` e e-mail terminado em `@seed4.local` ou `@seed3.local` —
-veja a [seção 9](#9-scripts-de-população-dados-fictícios).
+### Contas geradas por `seed_populacao.sql`
+
+Só existem se você rodou esse script (veja a [seção 9](#9-scripts-de-população-dados-fictícios)). Senha de todas: **`password`**.
+
+**Administradores (9):**
+
+| Nome | E-mail |
+|---|---|
+| Carlos Almeida Cardoso | `carlos.almeida.cardoso.5607@seed4.local` |
+| Carlos Barbosa Cavalcanti | `carlos.barbosa.cavalcanti.9449@seed4.local` |
+| Daniel Cavalcanti Rocha | `daniel.cavalcanti.rocha.5903@seed4.local` |
+| Fábio Ramos Ribeiro | `fabio.ramos.ribeiro.5722@seed4.local` |
+| Henrique Pinto Gomes | `henrique.pinto.gomes.6619@seed4.local` |
+| Paulo Cardoso Fernandes | `paulo.cardoso.fernandes.4648@seed4.local` |
+| Priscila Lima Gomes | `priscila.lima.gomes.8220@seed4.local` |
+| Sandra Almeida Vieira | `sandra.almeida.vieira.7638@seed4.local` |
+| Sérgio Lima Andrade | `sergio.lima.andrade.4718@seed4.local` |
+
+**Médicos (12):**
+
+| Nome | E-mail |
+|---|---|
+| Dr. Cristiano Castro Alves | `cristiano.castro.alves.3413@seed4.local` |
+| Dr. Roberto Alves Monteiro | `roberto.alves.monteiro.8729@seed4.local` |
+| Dr. Thiago Ramos Fernandes | `thiago.ramos.fernandes.6758@seed4.local` |
+| Dr. Vinícius Ribeiro Vieira | `vinicius.ribeiro.vieira.9365@seed4.local` |
+| Dra. Adriana Lopes Nascimento | `adriana.lopes.nascimento.6231@seed4.local` |
+| Dra. Amanda Ribeiro Gomes | `amanda.ribeiro.gomes.9408@seed4.local` |
+| Dra. Debora Reis Fernandes | `debora.reis.fernandes.9883@seed4.local` |
+| Dra. Gabriela Soares Teixeira | `gabriela.soares.teixeira.9631@seed4.local` |
+| Dra. Leticia Santos Martins | `leticia.santos.martins.6725@seed4.local` |
+| Dra. Maria Cavalcanti Fernandes | `maria.cavalcanti.fernandes.9536@seed4.local` |
+| Dra. Talita Reis Ferreira | `talita.reis.ferreira.2357@seed4.local` |
+| Dra. Talita Ribeiro Nunes | `talita.ribeiro.nunes.8398@seed4.local` |
+
+### Contas geradas por `seed_data_extra.sql`
+
+Só existem se você rodou esse script. Senha de todas: **`password`**.
+
+**Administradores (4):**
+
+| Nome | E-mail |
+|---|---|
+| Carlos Martins Rocha | `carlos.martins.rocha.adm.383@seed2.local` |
+| Cristiano Pereira Ramos | `cristiano.pereira.ramos.adm.309@seed2.local` |
+| Eliane Rodrigues Pinto | `eliane.rodrigues.pinto.adm.465@seed2.local` |
+| Marcelo Ferreira Ribeiro | `marcelo.ferreira.ribeiro.adm.161@seed2.local` |
+
+**Médicos (12):**
+
+| Nome | E-mail |
+|---|---|
+| Dr(a). Adriana Silva Pinto | `adriana.silva.pinto.915@seed2.local` |
+| Dr(a). Daniel Marques Soares | `daniel.marques.soares.365@seed2.local` |
+| Dr(a). Gustavo Oliveira Vieira | `gustavo.oliveira.vieira.973@seed2.local` |
+| Dr(a). Igor Cavalcanti Andrade | `igor.cavalcanti.andrade.427@seed2.local` |
+| Dr(a). Leonardo Freitas Marques | `leonardo.freitas.marques.290@seed2.local` |
+| Dr(a). Otávio Nascimento Marques | `otavio.nascimento.marques.780@seed2.local` |
+| Dr(a). Paulo Almeida Santos | `paulo.almeida.santos.745@seed2.local` |
+| Dr(a). Roberto Fernandes Carvalho | `roberto.fernandes.carvalho.156@seed2.local` |
+| Dr(a). Sérgio Lopes Martins | `sergio.lopes.martins.611@seed2.local` |
+| Dr(a). Sérgio Ramos Andrade | `sergio.ramos.andrade.716@seed2.local` |
+| Dr(a). Talita Lima Machado | `talita.lima.machado.471@seed2.local` |
+| Dr(a). Viviane Dias Cavalcanti | `viviane.dias.cavalcanti.307@seed2.local` |
+
+### Contas geradas por `scripts/seed_producao.php`
+
+Esse script gera nomes e e-mails **aleatórios a cada execução**
+(diferente dos dois arquivos SQL acima, que têm uma lista fixa), então
+não dá pra listar aqui de antemão. Todas usam e-mail terminado em
+`@seed3.local` e senha **`password`** — depois de rodar, veja os e-mails
+gerados direto no painel (Médicos / em Perfil de cada administrador) ou com:
+
+```sql
+SELECT name, email, role FROM users WHERE email LIKE '%@seed3.local';
+```
 
 **Cadastrando o primeiro admin de uma clínica nova:** não existe tela
 de "criar conta" — o primeiro administrador é inserido direto no banco.
@@ -194,8 +268,6 @@ uma consulta):
   celular/tablet vira uma gaveta acionada pelo botão ☰.
 - **Botão "Sair"** fixo no canto superior direito, em vermelho, sempre
   visível.
-- **Modo escuro** — botão 🌙/☀️ ao lado da logo. A escolha fica salva
-  no navegador (`localStorage`) e é lembrada nas próximas visitas.
 - **Tutorial guiado de primeiro acesso** — na primeira vez que um
   admin ou médico loga, um tour destaca (com uma "luz" ao redor) os
   itens do menu, explicando o que cada um faz. Diferente por perfil.
@@ -352,6 +424,3 @@ Duas ações do tipo `GET` (não gravam nada, só consultam):
   antigo fluxo de recuperação de senha por e-mail; o segundo é a base
   para um modo alternativo de operação via API central, ainda não
   ativado).
-- Os selos coloridos de status (pendente/confirmada/cancelada etc.)
-  não têm uma versão 100% redesenhada para o modo escuro — continuam
-  legíveis, só não são "nativamente escuros".
