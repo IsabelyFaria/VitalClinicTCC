@@ -439,6 +439,8 @@ function render_layout(string $page, ?array $user): void
         <?php render_page($page, $user); ?>
     </main>
 
+    <?php render_tutorial_modal($user); ?>
+
     <footer class="app-footer">
         <span>VitalClinic <?= h(app_version()) ?></span>
     </footer>
@@ -502,6 +504,107 @@ function render_nav(string $page, ?array $user): void
             <button class="button ghost" type="submit">Sair</button>
         </form>
     </nav>
+    <?php
+}
+
+/**
+ * Tutorial de primeiro acesso: só é desenhado quando o usuário logado
+ * ainda não viu (users.tutorial_seen = 0). O conteúdo dos passos muda
+ * conforme o perfil (admin ou médico) — pacientes não logam neste
+ * painel, então não precisam de um roteiro aqui.
+ */
+/**
+ * Tutorial de primeiro acesso: só é desenhado quando o usuário logado
+ * ainda não viu (users.tutorial_seen = 0). Diferente de um modal comum,
+ * este é um "tour guiado" — cada passo aponta (com destaque + balão de
+ * texto) para o item de menu real que ele está explicando, em vez de só
+ * descrever em texto solto. O conteúdo muda conforme o perfil (admin ou
+ * médico) — pacientes não logam neste painel, então não precisam de
+ * roteiro aqui.
+ *
+ * "target" é a chave de página usada em render_nav() (ex.: 'admin_doctors')
+ * — o JavaScript usa isso pra encontrar o link correspondente no menu e
+ * desenhar o destaque em cima dele. Um passo sem "target" aparece
+ * centralizado na tela (usado só na boas-vindas inicial).
+ */
+function render_tutorial_modal(?array $user): void
+{
+    if (!$user || (int) ($user['tutorial_seen'] ?? 0) === 1) {
+        return;
+    }
+    if (!in_array($user['role'], ['admin', 'doctor'], true)) {
+        return;
+    }
+
+    if ($user['role'] === 'admin') {
+        $steps = [
+            [
+                'target' => null,
+                'title' => 'Bem-vindo(a) à Vital Clinic!',
+                'text' => 'Vamos te mostrar rapidinho os principais pontos do painel. Use "Próximo" para avançar.',
+            ],
+            [
+                'target' => 'admin_doctors',
+                'title' => 'Cadastre seus médicos',
+                'text' => 'Aqui em "Médicos" você cadastra a equipe da clínica, com especialidade, CRM e horários de atendimento.',
+            ],
+            [
+                'target' => 'admin_calendar',
+                'title' => 'Acompanhe a agenda',
+                'text' => 'Aqui em "Calendário" você vê todas as consultas do mês. Em "Consultas", use o botão "Nova consulta" para agendar um paciente.',
+            ],
+            [
+                'target' => 'admin_reports',
+                'title' => 'Gerencie o sistema',
+                'text' => 'Aqui em "Relatórios" você acompanha os números da clínica. Em "Pacientes", cadastra e edita quem é atendido.',
+            ],
+        ];
+    } else {
+        $steps = [
+            [
+                'target' => null,
+                'title' => 'Bem-vindo(a), Doutor(a)!',
+                'text' => 'Vamos te mostrar rapidinho onde encontrar sua agenda e seus pacientes. Use "Próximo" para avançar.',
+            ],
+            [
+                'target' => 'dashboard',
+                'title' => 'Veja sua agenda do dia',
+                'text' => 'Aqui em "Geral" já aparece sua agenda de hoje. Em "Calendário", veja o mês inteiro; em "Consultas", filtre por status ou data.',
+            ],
+            [
+                'target' => 'doctor_patients',
+                'title' => 'Busque seus pacientes',
+                'text' => 'Aqui em "Pacientes" você encontra rapidamente quem já atendeu e acessa o histórico de prontuários com um clique.',
+            ],
+        ];
+    }
+    ?>
+    <div class="tour-overlay" data-tour-overlay hidden></div>
+    <div class="tour-highlight" data-tour-highlight hidden></div>
+    <div class="tour-tooltip panel" data-tour-tooltip hidden>
+        <div class="modal-head">
+            <h2 data-tour-title>Primeiros passos</h2>
+            <button type="button" class="modal-close" data-tutorial-skip aria-label="Pular tutorial">&times;</button>
+        </div>
+        <p data-tour-text></p>
+
+        <div class="tutorial-dots" data-tutorial-dots>
+            <?php foreach ($steps as $index => $step): ?>
+                <span class="tutorial-dot<?= $index === 0 ? ' is-active' : '' ?>"></span>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="actions tutorial-actions">
+            <button type="button" class="button ghost" data-tutorial-skip>Pular</button>
+            <div class="tutorial-nav-buttons">
+                <button type="button" class="button" data-tutorial-prev disabled>Anterior</button>
+                <button type="button" class="button primary" data-tutorial-next>Próximo</button>
+            </div>
+        </div>
+
+        <input type="hidden" data-tutorial-csrf value="<?= h(csrf_token()) ?>">
+    </div>
+    <script type="application/json" id="tutorial-steps-data"><?= json_encode($steps, JSON_UNESCAPED_UNICODE) ?></script>
     <?php
 }
 

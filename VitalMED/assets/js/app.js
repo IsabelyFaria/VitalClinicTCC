@@ -206,6 +206,75 @@
         });
     }
 
+    /**
+     * Tutorial de primeiro acesso (modal com passos "Anterior/Próximo/
+     * Concluir"). O PHP só desenha o <dialog> quando
+     * users.tutorial_seen = 0 — aqui só cuidamos da navegação entre os
+     * passos e de avisar o servidor quando o usuário termina ou pula,
+     * para o modal nunca mais aparecer para essa conta.
+     */
+    function setupTutorial() {
+        var modal = qs('[data-tutorial]');
+        if (!modal) {
+            return;
+        }
+
+        var steps = qsa('[data-tutorial-step]', modal);
+        var dots = qsa('.tutorial-dot', modal);
+        var prevButton = qs('[data-tutorial-prev]', modal);
+        var nextButton = qs('[data-tutorial-next]', modal);
+        var skipButtons = qsa('[data-tutorial-skip]', modal);
+        var csrfInput = qs('[data-tutorial-csrf]', modal);
+        var current = 0;
+
+        function showStep(index) {
+            current = index;
+            steps.forEach(function (step, i) {
+                step.hidden = i !== index;
+            });
+            dots.forEach(function (dot, i) {
+                dot.classList.toggle('is-active', i === index);
+            });
+            prevButton.disabled = index === 0;
+            nextButton.textContent = index === steps.length - 1 ? 'Concluir' : 'Próximo';
+        }
+
+        function finish() {
+            var body = new FormData();
+            body.append('action', 'mark_tutorial_seen');
+            body.append('csrf_token', csrfInput ? csrfInput.value : '');
+            fetch(window.location.href, {
+                method: 'POST',
+                body: body,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            }).catch(function (error) {
+                console.error('[tutorial] falha ao registrar conclusão:', error);
+            });
+            modal.close();
+        }
+
+        nextButton.addEventListener('click', function () {
+            if (current === steps.length - 1) {
+                finish();
+                return;
+            }
+            showStep(current + 1);
+        });
+
+        prevButton.addEventListener('click', function () {
+            if (current > 0) {
+                showStep(current - 1);
+            }
+        });
+
+        skipButtons.forEach(function (button) {
+            button.addEventListener('click', finish);
+        });
+
+        showStep(0);
+        modal.showModal();
+    }
+
     function setupModals() {
         qsa('[data-open-modal]').forEach(function (trigger) {
             var modal = document.getElementById(trigger.getAttribute('data-open-modal'));
@@ -573,7 +642,13 @@
                 hideError();
                 setLoading(true);
 
-                fetch(form.action || window.location.href, {
+                // IMPORTANTE: não usar "form.action" aqui — como o
+                // formulário tem um campo <input name="action">, o
+                // navegador substitui a propriedade nativa form.action
+                // pelo próprio elemento <input> (em vez da URL), e o
+                // fetch() tentava enviar para "[object HTMLInputElement]"
+                // (gerando 404). Por isso usamos sempre a URL atual.
+                fetch(window.location.href, {
                     method: 'POST',
                     body: new FormData(form),
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -644,6 +719,7 @@
         setupRoleSwitches();
         setupMobileNav();
         setupResponsiveTables();
+        setupTutorial();
         setupModals();
         setupSlots();
         setupAutocomplete();
