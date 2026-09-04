@@ -59,7 +59,7 @@ textarea {
     justify-content: space-between;
     gap: 12px;
     min-height: 60px;
-    padding: 10px 12px;
+    padding: 10px 100px 10px 12px;
     border-bottom: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(10px);
@@ -92,11 +92,18 @@ textarea {
     gap: 12px;
 }
 
+.topbar-logout {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 1002;
+}
+
 .topbar-logout .button {
-    min-height: 40px;
-    padding: 9px 18px;
+    min-height: 60px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 999px;
+    border-radius: 500px;
     background: #dc2626;
     color: #fff;
     font-weight: 800;
@@ -1377,7 +1384,7 @@ code {
     .topbar {
         gap: 20px;
         min-height: 68px;
-        padding: 12px 28px;
+        padding: 12px 110px 12px 28px;
     }
 
     .brand-logo {

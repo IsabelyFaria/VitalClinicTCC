@@ -27,6 +27,7 @@ function render_admin_reports(): void
             <label>Até <input type="date" name="to" value="<?= h($to) ?>"></label>
             <button class="button" type="submit">Atualizar</button>
         </form>
+        <h1>  </h1>
         <div class="grid stats">
             <div class="stat"><span>Consultas</span><strong><?= $total ?></strong></div>
             <div class="stat"><span>Faltas</span><strong><?= $noShowRate ?>%</strong></div>

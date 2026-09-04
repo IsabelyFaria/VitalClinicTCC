@@ -820,6 +820,16 @@ function verify_user_security_answer(int $userId, string $answer): bool
     repository_update_user($userId, ['tutorial_seen' => 1]);
 }
 
+/**
+ * Registra o aceite dos Termos de Uso e Política de Privacidade
+ * (chamado ao clicar "Prosseguir" no modal bloqueante — ver
+ * render_terms_modal() em index.php).
+ */
+function accept_terms(int $userId): void
+{
+    repository_update_user($userId, ['terms_accepted' => 1]);
+}
+
 function update_profile(int $userId, array $data): void
 {
     repository_update_user($userId, [

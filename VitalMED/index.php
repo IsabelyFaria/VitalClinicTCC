@@ -487,22 +487,24 @@ function render_nav(string $page, ?array $user): void
 
     $unread = unread_notifications_count((int) $user['id']);
     ?>
-    <button type="button" class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menu">
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-    </button>
+    <form method="post" class="topbar-logout inline">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="logout">
+        <button class="button" type="submit">Sair</button>
+    </form>
+    <div class="topbar-actions">
+        <button type="button" class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+        </button>
+    </div>
     <nav class="nav" id="primary-nav" data-nav>
         <?php foreach ($items as $key => $label): ?>
             <a class="<?= $page === $key ? 'active' : '' ?>" href="<?= h(app_url(['page' => $key])) ?>">
                 <?= h($label) ?><?= $key === 'notifications' && $unread ? ' (' . (int) $unread . ')' : '' ?>
             </a>
         <?php endforeach; ?>
-        <form method="post" class="inline">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="logout">
-            <button class="button ghost" type="submit">Sair</button>
-        </form>
     </nav>
     <?php
 }
