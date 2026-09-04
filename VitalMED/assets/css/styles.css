@@ -27,7 +27,7 @@ body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Nunito", Arial, Helvetica, sans-serif;
     font-size: 16px;
     line-height: 1.5;
     overflow-x: hidden;
@@ -341,6 +341,7 @@ small {
 .form-card,
 .subform {
     display: grid;
+    align-content: start;
     gap: 14px;
 }
 

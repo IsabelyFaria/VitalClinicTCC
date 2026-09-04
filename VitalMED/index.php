@@ -429,6 +429,9 @@ function render_layout(string $page, ?array $user): void
     <link rel="manifest" href="manifest.webmanifest">
     <title><?= h($title) ?></title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
     <link rel="stylesheet" href="<?= asset_url('assets/css/styles.css') ?>">
 </head>
 <body>
@@ -1029,6 +1032,9 @@ function render_install_error(Throwable $e): void
     <link rel="manifest" href="manifest.webmanifest">
     <title>Erro de conexão</title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
     <link rel="stylesheet" href="<?= asset_url('assets/css/styles.css') ?>">
 </head>
 <body>
