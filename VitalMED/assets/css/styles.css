@@ -101,10 +101,6 @@ textarea {
     color: #0f172a;
 }
 
-[data-theme="dark"] .brand-logo {
-    filter: brightness(0) invert(1);
-}
-
 .brand {
     display: inline-flex;
     align-items: center;
@@ -124,6 +120,22 @@ textarea {
     height: 58px;
     object-fit: contain;
     object-position: center;
+}
+
+/* Duas versões da logo (clara/escura) ficam as duas no HTML; o CSS
+   só decide qual mostrar, conforme o tema ativo — assim a troca é
+   instantânea, sem depender de JavaScript rodar a tempo (o que
+   evitaria uma "piscada" da logo errada por uma fração de segundo). */
+.brand-logo-dark {
+    display: none;
+}
+
+[data-theme="dark"] .brand-logo-light {
+    display: none;
+}
+
+[data-theme="dark"] .brand-logo-dark {
+    display: block;
 }
 
 .topbar-actions {

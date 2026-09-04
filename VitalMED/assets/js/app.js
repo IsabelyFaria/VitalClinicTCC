@@ -145,13 +145,29 @@
         }
 
         var STORAGE_KEY = 'vitalclinic-theme';
+        var favicon = document.getElementById('favicon');
+        var LIGHT_ICON = 'assets/brand/vital-clinic-mark.svg';
+        var DARK_ICON = 'assets/brand/vital-clinic-mark-dark.svg';
 
         function updateButton(isDark) {
             button.textContent = isDark ? '☀️' : '🌙';
             button.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
         }
 
-        updateButton(document.documentElement.getAttribute('data-theme') === 'dark');
+        function updateFavicon(isDark) {
+            if (!favicon) {
+                return;
+            }
+            // Mantém a versão (?v=...) que já estava no href atual, pra
+            // não perder o "quebra-cache" que asset_url() adicionou.
+            var query = favicon.href.split('?')[1];
+            var base = isDark ? DARK_ICON : LIGHT_ICON;
+            favicon.href = base + (query ? '?' + query : '');
+        }
+
+        var startsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        updateButton(startsDark);
+        updateFavicon(startsDark);
 
         button.addEventListener('click', function () {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -163,6 +179,7 @@
                 document.documentElement.removeAttribute('data-theme');
             }
             updateButton(next === 'dark');
+            updateFavicon(next === 'dark');
 
             try {
                 localStorage.setItem(STORAGE_KEY, next);
