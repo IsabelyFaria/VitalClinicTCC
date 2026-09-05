@@ -1,13 +1,8 @@
 -- =====================================================================
--- VITAL CLINIC (VCTCC) — MODELO RELACIONAL MySQL
--- Projetado a partir da análise do código-fonte do site de referência
--- (app/repository.php, data/demo-state.json, páginas admin/médico)
---
--- Este script já inclui todas as alterações aprovadas até o momento:
---   - Recuperação de senha 100% por Pergunta de Segurança (não há mais
---     envio de código por e-mail; a antiga tabela `password_resets`
---     foi removida por não ser mais usada pela aplicação).
---   - Coluna `modality` em `appointments` (presencial/teleconsulta).
+-- VITAL CLINIC (VCTCC) — ESTRUTURA DO BANCO (CREATE DATABASE / CREATE TABLE)
+-- Só a estrutura: banco, tabelas, chaves estrangeiras e índices.
+-- Os dados (INSERT) ficam em um arquivo separado: vitalclinic_dados.sql
+-- (rode este arquivo primeiro, e só depois o de dados).
 -- =====================================================================
 
 DROP DATABASE IF EXISTS vitalclinic;
@@ -64,6 +59,12 @@ CREATE TABLE users (
     -- (password_hash), assim como a senha do usuário.
     security_question      VARCHAR(255) NULL,
     security_answer_hash   VARCHAR(255) NULL,
+    -- 0 = ainda não viu o tutorial de primeiro acesso; 1 = já viu/pulou.
+    tutorial_seen   TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+    -- 0 = ainda não aceitou os Termos de Uso/Privacidade; 1 = já aceitou.
+    -- Bloqueia o uso do painel até ser marcado como 1 (ver modal em
+    -- render_terms_modal(), em index.php).
+    terms_accepted  TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
     created_at      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP           NULL     ON UPDATE CURRENT_TIMESTAMP,
     last_login_at   TIMESTAMP           NULL,
@@ -279,88 +280,3 @@ CREATE INDEX idx_appt_patient            ON appointments(patient_id);
 CREATE INDEX idx_appt_doctor_status      ON appointments(doctor_id, status);
 CREATE INDEX idx_payments_status         ON payments(status);
 CREATE INDEX idx_notifications_user      ON notifications(user_id, status);
-
--- =====================================================================
--- DADOS DE EXEMPLO (INSERT INTO)
--- =====================================================================
-
--- 1. clinics
-INSERT INTO clinics (name, cnpj, address, phone, whatsapp, email) VALUES
-('Clínica Central', '00.000.000/0001-00', 'Rua das Flores, 120', '(11) 4000-1000', '551140001000', 'contato@clinicacentral.local'),
-('Clínica Norte', '00.000.000/0002-00', 'Avenida Norte, 850', '(11) 4000-2000', '551140002000', 'contato@clinicanorte.local'),
-('Clínica Sul', '00.000.000/0003-00', 'Rua do Sul, 45', '(11) 4000-3000', '551140003000', 'contato@clinicasul.local'),
-('Clínica Leste', '00.000.000/0004-00', 'Avenida Leste, 900', '(11) 4000-4000', '551140004000', 'contato@clinicaleste.local');
-
--- 2. specialties
-INSERT INTO specialties (name, description) VALUES
-('Clínico geral', 'Atendimento médico inicial e acompanhamento.'),
-('Cardiologia', 'Diagnóstico e tratamento de doenças do coração.'),
-('Dermatologia', 'Cuidados com a pele, cabelo e unhas.'),
-('Pediatria', 'Atendimento médico voltado para crianças e adolescentes.'),
-('Ortopedia', 'Diagnóstico e tratamento do sistema musculoesquelético.');
-
--- 3. users (senha de demonstração para todos: "password", hash bcrypt)
---
--- Os 3 usuários de ADM/médico já vêm com uma Pergunta de Segurança de
--- demonstração cadastrada, para testar o fluxo de "Esqueci minha senha"
--- logo após instalar o banco, sem precisar configurar nada no perfil
--- antes. As respostas de demonstração (já com o hash salvo) são:
---   admin@clinica.local          -> pergunta: primeiro animal de estimação -> resposta: "Rex"
---   medico@clinica.local         -> pergunta: primeira escola             -> resposta: "Colégio Santa Rita"
---   carlos.lima@clinicanorte.local -> pergunta: cidade natal              -> resposta: "Recife"
--- (a comparação ignora maiúsculas/minúsculas, espaços extras e acentos)
-INSERT INTO users (clinic_id, name, email, password_hash, role, phone, document, birth_date, address, status, security_question, security_answer_hash) VALUES
-(1, 'Administrador da Clínica', 'admin@clinica.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', '(11) 90000-0001', NULL, NULL, NULL, 'active', 'Qual o nome do seu primeiro animal de estimação?', '$2b$10$wfC1EC2FwTOwAF9J0EPfE.6p54n96xQ61.7Ide6bu5ey3zy.zEhuG'),
-(1, 'Dra. Ana Souza', 'medico@clinica.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'doctor', '(11) 90000-0002', NULL, NULL, NULL, 'active', 'Qual foi o nome da sua primeira escola?', '$2b$10$yJimUSf.awow2NElyFeWlukM.1F3B5cLmpgYN9PFQn4/Hus5JBwXi'),
-(2, 'Dr. Carlos Lima', 'carlos.lima@clinicanorte.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'doctor', '(11) 90000-0004', NULL, NULL, NULL, 'active', 'Qual é a sua cidade natal?', '$2b$10$vPU7lJHPJVWSF2LatKtonOIUx.ZXjFsreKnkevnq.0iJLuN1pWXKm'),
-(1, 'Paciente de Demonstração', 'paciente.demo@clinica.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'patient', '(11) 90000-0003', '111.111.111-11', '1995-05-10', 'Endereço de demonstração', 'active', NULL, NULL),
-(1, 'João Pereira', 'joao.pereira@email.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'patient', '(11) 90000-0005', '222.222.222-22', '1988-03-22', 'Rua A, 10', 'active', NULL, NULL);
-
--- 4. doctors (user_id 2 e 3 são médicos)
-INSERT INTO doctors (user_id, clinic_id, specialty_id, crm, bio, appointment_duration, active) VALUES
-(2, 1, 1, 'CRM-SP 123456', 'Atendimento clínico com foco em acompanhamento preventivo.', 30, 1),
-(3, 2, 2, 'CRM-SP 654321', 'Especialista em cardiologia clínica e preventiva.', 40, 1);
-
--- 5. doctor_schedules
-INSERT INTO doctor_schedules (doctor_id, weekday, start_time, end_time, active) VALUES
-(1, 1, '08:00:00', '12:00:00', 1),
-(1, 3, '08:00:00', '12:00:00', 1),
-(2, 2, '13:00:00', '18:00:00', 1),
-(2, 4, '13:00:00', '18:00:00', 1);
-
--- 6. schedule_blocks
-INSERT INTO schedule_blocks (doctor_id, block_date, start_time, end_time, reason) VALUES
-(1, '2026-09-07', '08:00:00', '12:00:00', 'Feriado municipal'),
-(2, '2026-09-14', '13:00:00', '18:00:00', 'Congresso médico');
-
--- 7. appointment_slots
-INSERT INTO appointment_slots (doctor_id, slot_start, slot_end, status, block_reason) VALUES
-(1, '2026-08-17 09:00:00', '2026-08-17 09:30:00', 'booked', NULL),
-(1, '2026-08-17 09:30:00', '2026-08-17 10:00:00', 'available', NULL),
-(1, '2026-08-17 10:00:00', '2026-08-17 10:30:00', 'blocked', 'Reunião interna'),
-(2, '2026-08-18 14:00:00', '2026-08-18 14:40:00', 'booked', NULL),
-(2, '2026-08-18 14:40:00', '2026-08-18 15:20:00', 'available', NULL);
-
--- 8. appointments
-INSERT INTO appointments (slot_id, patient_id, doctor_id, clinic_id, specialty_id, status, notes, confirmed_at) VALUES
-(1, 4, 1, 1, 1, 'confirmed', 'Consulta de demonstração.', '2026-08-14 22:57:21'),
-(4, 5, 2, 2, 2, 'confirmed', 'Avaliação cardiológica de rotina.', '2026-08-15 10:00:00'),
-(2, 5, 1, 1, 1, 'pending', 'Retorno de acompanhamento.', NULL);
-
--- 9. medical_records
-INSERT INTO medical_records (appointment_id, patient_id, doctor_id, created_by, weight, height, temperature, heart_rate, blood_pressure, symptoms, diagnosis, prescription, follow_up) VALUES
-(1, 4, 1, 2, 70.50, 175.00, 36.5, 72, '120/80 mmHg', 'Dor de cabeça leve e cansaço.', 'Cefaleia tensional.', 'Analgésico conforme necessidade.', 'Retorno em 15 dias.'),
-(2, 5, 2, 3, 82.00, 178.00, 36.7, 68, '130/85 mmHg', 'Falta de ar leve ao esforço.', 'Pré-hipertensão.', 'Redução de sódio na dieta.', 'Solicitar exames laboratoriais.');
-
--- 10. payments
-INSERT INTO payments (appointment_id, patient_id, clinic_id, amount, method, status, paid_at) VALUES
-(1, 4, 1, 250.00, NULL, 'pending', NULL),
-(2, 5, 2, 300.00, 'pix', 'paid', '2026-08-15 10:05:00'),
-(3, 5, 1, 250.00, NULL, 'pending', NULL);
-
--- 11. notifications
-INSERT INTO notifications (user_id, appointment_id, type, title, message, status, send_at, sent_at) VALUES
-(2, 1, 'in_app', 'Agenda de demonstração', 'Esta consulta é um exemplo para apresentar o sistema.', 'sent', '2026-08-14 22:57:21', '2026-08-14 22:57:21'),
-(4, 1, 'email', 'Consulta confirmada', 'Sua consulta foi confirmada para 17/08/2026 às 09h.', 'sent', '2026-08-14 23:00:00', '2026-08-14 23:00:00'),
-(5, 2, 'sms', 'Consulta confirmada', 'Sua consulta com Dr. Carlos Lima foi confirmada.', 'sent', '2026-08-15 09:00:00', '2026-08-15 09:00:00'),
-(5, 3, 'in_app', 'Consulta pendente', 'Sua consulta de retorno aguarda confirmação.', 'scheduled', '2026-08-16 08:00:00', NULL);
