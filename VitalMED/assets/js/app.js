@@ -870,6 +870,203 @@
      * requisição, o estado de carregamento do botão e o toast final —
      * evitando o reload de página tradicional.
      */
+    /**
+     * Tela de Relatórios: monta um gráfico (Chart.js) com consultas x
+     * realizadas x faltas de cada médico, revela a versão "para
+     * impressão" da página (só some quando @media print entra em
+     * ação, ver styles.css) e abre o diálogo de impressão do
+     * navegador. Só existe nesta tela — se os elementos não existirem
+     * na página atual, a função não faz nada.
+     */
+    /**
+     * Card "Movimentação mensal" da tela de Relatórios: mantém um
+     * gráfico (Consultas x Faltas) sempre visível, que já nasce
+     * preenchido com o mês atual (dados injetados pelo servidor em
+     * [data-movement-initial], sem precisar de uma chamada extra ao
+     * carregar a página). O botão "Atualizar gráfico" busca
+     * (?action=monthly_movement) os dados do mês escolhido no seletor
+     * e redesenha o mesmo gráfico, sem recarregar a tela.
+     */
+    function setupMovementChart() {
+        var canvas = qs('[data-movement-chart-canvas]');
+        var badge = qs('[data-movement-badge]');
+        var monthInput = qs('[data-movement-month]');
+        var refreshButton = qs('[data-refresh-movement-chart]');
+        var initialScript = qs('[data-movement-initial]');
+        if (!canvas || !badge || !monthInput || !refreshButton || typeof Chart === 'undefined') {
+            return;
+        }
+
+        var chartInstance = null;
+
+        function classLabel(classification) {
+            return {
+                high: 'Alta movimentação',
+                good: 'Boa movimentação',
+                low: 'Baixa movimentação',
+            }[classification] || classification;
+        }
+
+        function classColor(classification) {
+            return {
+                high: '#047857',
+                good: '#0aa6bd',
+                low: '#b54708',
+            }[classification] || '#5d7190';
+        }
+
+        function render(data) {
+            badge.textContent = data.classification_label + ' — ' + data.total + ' consultas, ' + data.no_shows + ' faltas';
+            badge.className = 'movement-badge movement-' + data.classification;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            chartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Consultas', 'Faltas'],
+                    datasets: [{
+                        label: data.month_label || '',
+                        data: [data.total, data.no_shows],
+                        backgroundColor: [classColor(data.classification), '#b42318'],
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: classLabel(data.classification) + ' (' + (data.month_label || '') + ')' },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                    },
+                },
+            });
+        }
+
+        // Primeiro desenho: usa os dados que o próprio PHP já calculou
+        // pro mês atual, sem precisar de fetch() nenhum.
+        if (initialScript) {
+            try {
+                render(JSON.parse(initialScript.textContent));
+            } catch (error) {
+                console.error('[relatorios] dados iniciais de movimentação inválidos:', error);
+            }
+        }
+
+        refreshButton.addEventListener('click', function () {
+            var month = monthInput.value; // "YYYY-MM"
+            if (!month) {
+                window.alert('Escolha um mês.');
+                return;
+            }
+
+            refreshButton.disabled = true;
+            var originalText = refreshButton.textContent;
+            refreshButton.textContent = 'Atualizando...';
+
+            fetch('index.php?action=monthly_movement&month=' + encodeURIComponent(month), {
+                headers: { 'Accept': 'application/json' },
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Falha ao buscar a movimentação do mês.');
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    render(data);
+                })
+                .catch(function (error) {
+                    console.error('[relatorios] falha ao atualizar gráfico de movimentação:', error);
+                    window.alert('Não foi possível atualizar o gráfico agora.');
+                })
+                .finally(function () {
+                    refreshButton.disabled = false;
+                    refreshButton.textContent = originalText;
+                });
+        });
+    }
+
+    /**
+     * O Chart.js só redesenha um gráfico em alta definição quando
+     * percebe uma mudança de tamanho — e trocar de tela para papel
+     * (@media print) não dispara isso sozinho. Sem isto, o gráfico
+     * impresso sairia borrado/espremido no tamanho que tinha na tela.
+     * Chart.instances é um registro que a própria biblioteca mantém de
+     * todo gráfico já criado na página.
+     */
+    window.addEventListener('beforeprint', function () {
+        if (typeof Chart === 'undefined' || !Chart.instances) {
+            return;
+        }
+        Object.keys(Chart.instances).forEach(function (key) {
+            Chart.instances[key].resize();
+        });
+    });
+
+    function setupReportsChart() {
+        var button = qs('[data-generate-report-chart]');
+        var canvas = qs('[data-report-chart-canvas]');
+        var printSection = qs('[data-print-report]');
+        var dataScript = qs('[data-report-data]');
+        if (!button || !canvas || !printSection || !dataScript || typeof Chart === 'undefined') {
+            return;
+        }
+
+        var chartInstance = null;
+
+        button.addEventListener('click', function () {
+            var report;
+            try {
+                report = JSON.parse(dataScript.textContent);
+            } catch (error) {
+                console.error('[relatorios] dados do relatório inválidos:', error);
+                window.alert('Não foi possível montar o gráfico agora.');
+                return;
+            }
+
+            var labels = report.doctors.map(function (d) { return d.name; });
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            chartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Consultas', data: report.doctors.map(function (d) { return d.total; }), backgroundColor: '#0aa6bd' },
+                        { label: 'Realizadas', data: report.doctors.map(function (d) { return d.completed; }), backgroundColor: '#047857' },
+                        { label: 'Faltas', data: report.doctors.map(function (d) { return d.no_shows; }), backgroundColor: '#b42318' },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Consultas por médico — ' + report.period },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                    },
+                },
+            });
+
+            printSection.hidden = false;
+
+            // Espera o gráfico terminar de desenhar no <canvas> antes de
+            // abrir a impressão — se chamar window.print() no mesmo
+            // instante, o navegador pode capturar o canvas ainda em
+            // branco.
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    window.print();
+                });
+            });
+        });
+    }
+
     function setupNewAppointmentForm() {
         var form = document.querySelector('#new-appointment-modal form');
         if (!form) {
@@ -1027,5 +1224,7 @@
         setupSlots();
         setupAutocomplete();
         setupNewAppointmentForm();
+        setupReportsChart();
+        setupMovementChart();
     });
 })();

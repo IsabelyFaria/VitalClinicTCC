@@ -62,6 +62,11 @@ function run_app(): void
         return;
     }
 
+    if (($_GET['action'] ?? '') === 'monthly_movement') {
+        monthly_movement_endpoint();
+        return;
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             handle_post();
@@ -186,6 +191,71 @@ function doctor_weekdays_endpoint(): void
 
     header('Content-Type: application/json');
     echo json_encode(['weekdays' => doctor_working_weekdays($doctorId)]);
+}
+
+/**
+ * Gráfico de "movimentação mensal" da tela de Relatórios: recebe um
+ * mês (?month=YYYY-MM, padrão o mês atual) e devolve o total de
+ * consultas, o total de faltas e uma classificação de movimentação
+ * (Alta/Boa/Baixa), calculada a partir dos limites configurados em
+ * app/config.php (rules.movement_low / rules.movement_high).
+ * Reaproveita report_data() — a mesma função usada no resto da tela —
+ * só que sempre para o intervalo de um mês inteiro.
+ */
+function monthly_movement_endpoint(): void
+{
+    $user = current_user();
+    if (!$user || $user['role'] !== 'admin') {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Nao autorizado.']);
+        return;
+    }
+
+    $month = (string) ($_GET['month'] ?? '');
+    $monthObj = DateTime::createFromFormat('Y-m-d', $month . '-01');
+    if (!$monthObj || $monthObj->format('Y-m') !== $month) {
+        $monthObj = new DateTime('first day of this month');
+    }
+
+    $from = $monthObj->format('Y-m-01');
+    $to = $monthObj->format('Y-m-t');
+
+    $report = report_data($from, $to);
+    $total = (int) ($report['summary']['total'] ?? 0);
+    $noShows = (int) ($report['summary']['no_shows'] ?? 0);
+    $noShowRate = $total ? round(($noShows / $total) * 100, 1) : 0.0;
+
+    $low = (int) (config('rules.movement_low') ?: 40);
+    $high = (int) (config('rules.movement_high') ?: 120);
+    if ($total >= $high) {
+        $classification = 'high';
+        $label = 'Alta movimentação';
+    } elseif ($total < $low) {
+        $classification = 'low';
+        $label = 'Baixa movimentação';
+    } else {
+        $classification = 'good';
+        $label = 'Boa movimentação';
+    }
+
+    $monthNames = [
+        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro',
+    ];
+    $monthLabel = $monthNames[(int) $monthObj->format('n')] . ' de ' . $monthObj->format('Y');
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'total' => $total,
+        'no_shows' => $noShows,
+        'no_show_rate' => $noShowRate,
+        'classification' => $classification,
+        'classification_label' => $label,
+        'month' => $monthObj->format('Y-m'),
+        'month_label' => $monthLabel,
+    ]);
 }
 
 function handle_post(): void
@@ -468,6 +538,9 @@ function render_layout(string $page, ?array $user): void
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
     <link rel="stylesheet" href="<?= asset_url('assets/css/styles.css') ?>">
+    <?php if ($page === 'admin_reports'): ?>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <?php endif; ?>
 </head>
 <body>
     <header class="topbar">

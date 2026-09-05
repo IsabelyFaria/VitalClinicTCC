@@ -36,6 +36,14 @@ return [
         // bloquear essa etapa na sessão atual (o usuário reinicia
         // informando o e-mail novamente).
         'security_answer_max_attempts' => 5,
+        // Classificação de movimentação mensal (tela de Relatórios):
+        // com MENOS que "movement_low" consultas no mês, a clínica é
+        // classificada como "Baixa movimentação"; com "movement_high"
+        // ou mais, como "Alta movimentação"; entre os dois valores,
+        // "Boa movimentação". Ajuste esses números conforme o porte
+        // real da sua clínica.
+        'movement_low' => 40,
+        'movement_high' => 120,
     ],
     // Lista fixa de perguntas de segurança que o usuário pode escolher no
     // seu perfil. Guardamos o texto exato (não apenas uma chave) na coluna

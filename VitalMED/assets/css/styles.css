@@ -1663,3 +1663,180 @@ code {
         grid-template-columns: 240px minmax(0, 1fr);
     }
 }
+
+/* Badge de classificação de movimentação mensal (tela de Relatórios) */
+.movement-badge {
+    display: inline-block;
+    margin: 14px 0 10px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.movement-badge.movement-high {
+    background: #ecfdf3;
+    color: var(--success);
+}
+
+.movement-badge.movement-good {
+    background: #dff7fb;
+    color: var(--primary-strong);
+}
+
+.movement-badge.movement-low {
+    background: #fff7ed;
+    color: var(--warning);
+}
+
+/* Relatório imprimível (tela de Relatórios) — fica escondido
+   (atributo "hidden" no HTML) até o botão "Gerar gráfico e imprimir"
+   ser clicado. Em tela normal, aparece como mais um painel; ao
+   imprimir, o bloco @media print abaixo esconde o resto da página e
+   deixa só ele na folha. */
+.print-report {
+    margin-top: 18px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.print-report-head {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.print-report-head h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+}
+
+.print-report-head p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.print-report-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.print-report-summary div {
+    text-align: center;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.print-report-summary span {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.print-report-summary strong {
+    font-size: 22px;
+}
+
+.print-report-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.print-report-table th,
+.print-report-table td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.print-report-footer {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+}
+
+@media print {
+    /* Formato e margens da folha A4 — sem isso, cada navegador usa um
+       tamanho/margem padrão diferente, o que é a causa mais comum de
+       relatório "desalinhado" ao imprimir. */
+    @page {
+        size: A4 portrait;
+        margin: 14mm 12mm;
+    }
+
+    html,
+    body {
+        background: #fff;
+    }
+
+    .topbar,
+    .page-head,
+    .app-footer,
+    section.panel {
+        display: none !important;
+    }
+
+    .shell {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .print-report {
+        display: block !important;
+        width: 100%;
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+    }
+
+    /* Evita que uma linha da tabela ou um cartão do resumo seja
+       cortado ao meio entre uma página e outra. */
+    .print-report-summary div,
+    .print-report-table tr {
+        break-inside: avoid;
+    }
+
+    .print-report-head {
+        break-after: avoid;
+    }
+
+    .print-report-summary {
+        break-inside: avoid;
+    }
+
+    /* O gráfico é um <canvas> — ocupa a largura útil da folha, com
+       altura fixa, pra não sair espremido nem cortado na impressão. */
+    .print-report canvas {
+        width: 100% !important;
+        max-width: 100%;
+        height: 260px !important;
+        break-inside: avoid;
+    }
+
+    .print-report-table {
+        font-size: 12px;
+    }
+
+    .print-report-table th,
+    .print-report-table td {
+        padding: 6px 8px;
+    }
+
+    /* Garante que cores de fundo/borda saiam na impressão mesmo se o
+       navegador estiver com "imprimir imagens de fundo" desligado por
+       padrão nas cores que realmente importam pro relatório. */
+    .movement-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
