@@ -1230,10 +1230,21 @@ function report_data(string $fromDate, string $toDate): array
 {
     ensure_slots_for_all($fromDate, $toDate);
 
-    $appointments = array_values(array_filter(
-        appointments_for_admin(),
-        static fn(array $row): bool => substr((string) $row['slot_start'], 0, 10) >= $fromDate && substr((string) $row['slot_start'], 0, 10) <= $toDate
-    ));
+    // IMPORTANTE: não reaproveitar appointments_for_admin() aqui — ela
+    // tem um "LIMIT 300, mais recentes primeiro" pensado pra tela de
+    // listagem, não pra relatório. Com mais de 300 consultas no banco
+    // (o que já é o caso), esse limite cortaria o conjunto ANTES do
+    // filtro de data ser aplicado, fazendo qualquer mês fora das ~300
+    // consultas mais recentes "sumir" do relatório. Aqui buscamos
+    // direto do banco, já filtrando pela data — sem limite nenhum.
+    $stmt = db()->prepare(
+        'SELECT a.doctor_id, a.status, s.slot_start
+         FROM appointments a
+         JOIN appointment_slots s ON s.id = a.slot_id
+         WHERE DATE(s.slot_start) >= ? AND DATE(s.slot_start) <= ?'
+    );
+    $stmt->execute([$fromDate, $toDate]);
+    $appointments = $stmt->fetchAll();
 
     $summary = ['total' => count($appointments), 'completed' => 0, 'no_shows' => 0, 'active' => 0];
     foreach ($appointments as $row) {
