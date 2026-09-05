@@ -255,6 +255,15 @@ function monthly_movement_endpoint(): void
         'classification_label' => $label,
         'month' => $monthObj->format('Y-m'),
         'month_label' => $monthLabel,
+        'period_label' => format_date($from) . ' a ' . format_date($to),
+        'doctors' => array_map(static function (array $row): array {
+            return [
+                'name' => $row['doctor_name'],
+                'total' => (int) $row['total'],
+                'completed' => (int) $row['completed'],
+                'no_shows' => (int) $row['no_shows'],
+            ];
+        }, $report['by_doctor']),
     ]);
 }
 

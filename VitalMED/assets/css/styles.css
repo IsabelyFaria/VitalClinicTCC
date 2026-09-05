@@ -1600,17 +1600,34 @@ code {
 @media (min-width: 1024px) {
     /* Menu volta a ficar sempre visível, sem o botão hambúrguer (que só
        existe para telas pequenas/tablet) — agora como uma pílula
-       flutuante centralizada no topo, separada da logo. */
+       flutuante centralizada no topo, separada da logo.
+
+       Técnica: o .topbar continua em flexbox (igual já era), com a
+       logo e o espaço reservado do Sair como dois lados "elásticos" de
+       peso igual (flex: 1 1 0, cada um) e o menu no meio com tamanho
+       fixo (flex: 0 0 auto). Como os dois lados crescem sempre na
+       mesma proporção um do outro, o menu no meio fica sempre
+       exatamente centralizado entre eles — não importa o quanto a
+       logo ou o espaço do Sair variem de largura. A ordem visual é
+       controlada por "order" (independente da ordem real no HTML). */
+    .topbar {
+        flex-wrap: nowrap;
+    }
+
+    .brand {
+        order: 1;
+        flex: 1 1 0;
+    }
+
     .nav-toggle {
         display: none;
     }
 
     .nav {
+        order: 2;
+        flex: 0 0 auto;
         display: flex !important;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        position: static;
         flex-direction: row;
         align-items: center;
         flex-wrap: nowrap;
@@ -1623,6 +1640,12 @@ code {
         border: 1px solid var(--line);
         border-radius: 999px;
         box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .topbar-actions {
+        order: 3;
+        flex: 1 1 0;
+        justify-content: flex-end;
     }
 
     .nav a {
@@ -1689,12 +1712,18 @@ code {
     color: var(--warning);
 }
 
-/* Relatório imprimível (tela de Relatórios) — fica escondido
-   (atributo "hidden" no HTML) até o botão "Gerar gráfico e imprimir"
-   ser clicado. Em tela normal, aparece como mais um painel; ao
-   imprimir, o bloco @media print abaixo esconde o resto da página e
-   deixa só ele na folha. */
+/* Relatório imprimível (tela de Relatórios) — NUNCA aparece na tela
+   normal (fica posicionado fora da área visível, não com display:none,
+   porque um elemento com display:none tem tamanho zero e o gráfico
+   dentro dele (Chart.js) não conseguiria se desenhar direito; assim
+   ele continua "existindo" para o navegador — só não é visível). Ao
+   imprimir, o bloco @media print mais abaixo traz ele de volta pro
+   fluxo normal da página, e some com todo o resto. */
 .print-report {
+    position: absolute;
+    top: 0;
+    left: -9999px;
+    width: 190mm;
     margin-top: 18px;
     padding: 24px;
     border: 1px solid var(--line);
@@ -1792,6 +1821,9 @@ code {
 
     .print-report {
         display: block !important;
+        position: static;
+        top: auto;
+        left: auto;
         width: 100%;
         border: none;
         padding: 0;

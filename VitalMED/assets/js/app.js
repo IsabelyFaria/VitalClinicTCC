@@ -892,12 +892,15 @@
         var badge = qs('[data-movement-badge]');
         var monthInput = qs('[data-movement-month]');
         var refreshButton = qs('[data-refresh-movement-chart]');
+        var printButton = qs('[data-print-movement]');
         var initialScript = qs('[data-movement-initial]');
         if (!canvas || !badge || !monthInput || !refreshButton || typeof Chart === 'undefined') {
             return;
         }
 
         var chartInstance = null;
+        var printChartInstance = null;
+        var lastData = null; // sempre os dados do último mês carregado
 
         function classLabel(classification) {
             return {
@@ -916,6 +919,7 @@
         }
 
         function render(data) {
+            lastData = data;
             badge.textContent = data.classification_label + ' — ' + data.total + ' consultas, ' + data.no_shows + ' faltas';
             badge.className = 'movement-badge movement-' + data.classification;
 
@@ -955,6 +959,17 @@
             }
         }
 
+        function loadMonth(month) {
+            return fetch('index.php?action=monthly_movement&month=' + encodeURIComponent(month), {
+                headers: { 'Accept': 'application/json' },
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Falha ao buscar a movimentação do mês.');
+                }
+                return response.json();
+            });
+        }
+
         refreshButton.addEventListener('click', function () {
             var month = monthInput.value; // "YYYY-MM"
             if (!month) {
@@ -966,18 +981,8 @@
             var originalText = refreshButton.textContent;
             refreshButton.textContent = 'Atualizando...';
 
-            fetch('index.php?action=monthly_movement&month=' + encodeURIComponent(month), {
-                headers: { 'Accept': 'application/json' },
-            })
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error('Falha ao buscar a movimentação do mês.');
-                    }
-                    return response.json();
-                })
-                .then(function (data) {
-                    render(data);
-                })
+            loadMonth(month)
+                .then(render)
                 .catch(function (error) {
                     console.error('[relatorios] falha ao atualizar gráfico de movimentação:', error);
                     window.alert('Não foi possível atualizar o gráfico agora.');
@@ -987,6 +992,100 @@
                     refreshButton.textContent = originalText;
                 });
         });
+
+        // Botão "Imprimir relatório": sempre imprime o MESMO mês que
+        // está sendo mostrado no gráfico da tela (lastData) — se o mês
+        // selecionado ainda não tiver sido carregado (usuário trocou o
+        // seletor mas não clicou em "Atualizar gráfico"), busca antes
+        // de imprimir, pra nunca imprimir um mês desatualizado.
+        if (printButton) {
+            var printSection = qs('[data-print-report]');
+            var printPeriod = qs('[data-print-period]', printSection);
+            var printTotal = qs('[data-print-total]', printSection);
+            var printNoShows = qs('[data-print-noshows]', printSection);
+            var printDoctorCount = qs('[data-print-doctor-count]', printSection);
+            var printCanvas = qs('[data-print-chart-canvas]', printSection);
+            var printTbody = qs('[data-print-tbody]', printSection);
+
+            function fillPrintReport(data) {
+                printPeriod.textContent = 'Período: ' + (data.period_label || data.month_label || '');
+                printTotal.textContent = data.total;
+                printNoShows.textContent = data.no_shows;
+                printDoctorCount.textContent = data.doctors ? data.doctors.length : 0;
+
+                printTbody.innerHTML = '';
+                (data.doctors || []).forEach(function (doctor) {
+                    var row = document.createElement('tr');
+                    row.innerHTML =
+                        '<td></td><td></td><td></td><td></td>';
+                    row.children[0].textContent = doctor.name;
+                    row.children[1].textContent = doctor.total;
+                    row.children[2].textContent = doctor.completed;
+                    row.children[3].textContent = doctor.no_shows;
+                    printTbody.appendChild(row);
+                });
+
+                if (printChartInstance) {
+                    printChartInstance.destroy();
+                }
+                var labels = (data.doctors || []).map(function (d) { return d.name; });
+                printChartInstance = new Chart(printCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Consultas', data: (data.doctors || []).map(function (d) { return d.total; }), backgroundColor: '#0aa6bd' },
+                            { label: 'Realizadas', data: (data.doctors || []).map(function (d) { return d.completed; }), backgroundColor: '#047857' },
+                            { label: 'Faltas', data: (data.doctors || []).map(function (d) { return d.no_shows; }), backgroundColor: '#b42318' },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: { display: true, text: 'Consultas por médico — ' + (data.month_label || '') },
+                        },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                        },
+                    },
+                });
+            }
+
+            printButton.addEventListener('click', function () {
+                var month = monthInput.value;
+                var needsFetch = !lastData || (month && lastData.month && lastData.month !== month);
+
+                var ready = needsFetch && month ? loadMonth(month) : Promise.resolve(lastData);
+
+                printButton.disabled = true;
+                var originalText = printButton.textContent;
+                printButton.textContent = 'Preparando...';
+
+                ready
+                    .then(function (data) {
+                        if (needsFetch) {
+                            render(data); // também atualiza o gráfico visível na tela
+                        }
+                        fillPrintReport(data);
+
+                        // Espera o(s) gráfico(s) terminar(em) de desenhar
+                        // antes de abrir a impressão.
+                        requestAnimationFrame(function () {
+                            requestAnimationFrame(function () {
+                                window.print();
+                            });
+                        });
+                    })
+                    .catch(function (error) {
+                        console.error('[relatorios] falha ao preparar impressão:', error);
+                        window.alert('Não foi possível preparar o relatório para impressão agora.');
+                    })
+                    .finally(function () {
+                        printButton.disabled = false;
+                        printButton.textContent = originalText;
+                    });
+            });
+        }
     }
 
     /**
@@ -1005,67 +1104,6 @@
             Chart.instances[key].resize();
         });
     });
-
-    function setupReportsChart() {
-        var button = qs('[data-generate-report-chart]');
-        var canvas = qs('[data-report-chart-canvas]');
-        var printSection = qs('[data-print-report]');
-        var dataScript = qs('[data-report-data]');
-        if (!button || !canvas || !printSection || !dataScript || typeof Chart === 'undefined') {
-            return;
-        }
-
-        var chartInstance = null;
-
-        button.addEventListener('click', function () {
-            var report;
-            try {
-                report = JSON.parse(dataScript.textContent);
-            } catch (error) {
-                console.error('[relatorios] dados do relatório inválidos:', error);
-                window.alert('Não foi possível montar o gráfico agora.');
-                return;
-            }
-
-            var labels = report.doctors.map(function (d) { return d.name; });
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-            chartInstance = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Consultas', data: report.doctors.map(function (d) { return d.total; }), backgroundColor: '#0aa6bd' },
-                        { label: 'Realizadas', data: report.doctors.map(function (d) { return d.completed; }), backgroundColor: '#047857' },
-                        { label: 'Faltas', data: report.doctors.map(function (d) { return d.no_shows; }), backgroundColor: '#b42318' },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: { display: true, text: 'Consultas por médico — ' + report.period },
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 } },
-                    },
-                },
-            });
-
-            printSection.hidden = false;
-
-            // Espera o gráfico terminar de desenhar no <canvas> antes de
-            // abrir a impressão — se chamar window.print() no mesmo
-            // instante, o navegador pode capturar o canvas ainda em
-            // branco.
-            requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                    window.print();
-                });
-            });
-        });
-    }
 
     function setupNewAppointmentForm() {
         var form = document.querySelector('#new-appointment-modal form');
@@ -1224,7 +1262,6 @@
         setupSlots();
         setupAutocomplete();
         setupNewAppointmentForm();
-        setupReportsChart();
         setupMovementChart();
     });
 })();

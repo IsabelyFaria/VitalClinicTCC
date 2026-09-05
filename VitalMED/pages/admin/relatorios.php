@@ -95,8 +95,8 @@ function render_admin_reports(): void
         </p>
         <canvas data-movement-chart-canvas height="90"></canvas>
         <div class="actions" style="margin-top: 14px;">
-            <button type="button" class="button" data-refresh-movement-chart>Atualizar informações</button>
-            <button type="button" class="button primary" data-generate-report-chart>Gerar gráfico e imprimir</button>
+            <button type="button" class="button" data-refresh-movement-chart>Atualizar gráfico</button>
+            <button type="button" class="button primary" data-print-movement>Imprimir relatório</button>
         </div>
         <script type="application/json" data-movement-initial>
             <?= json_encode([
@@ -105,26 +105,40 @@ function render_admin_reports(): void
                 'classification' => $movementClass,
                 'classification_label' => $movementLabel,
                 'month_label' => (new DateTime('first day of this month'))->format('m/Y'),
+                'period_label' => format_date((new DateTime('first day of this month'))->format('Y-m-d'))
+                    . ' a ' . format_date((new DateTime('last day of this month'))->format('Y-m-d')),
+                'doctors' => array_map(static function (array $row): array {
+                    return [
+                        'name' => $row['doctor_name'],
+                        'total' => (int) $row['total'],
+                        'completed' => (int) $row['completed'],
+                        'no_shows' => (int) $row['no_shows'],
+                    ];
+                }, $movementReport['by_doctor']),
             ], JSON_UNESCAPED_UNICODE) ?>
         </script>
     </section>
 
-    <!-- Relatório imprimível: fica escondido até o botão acima ser
-         clicado; no momento de imprimir, o CSS (@media print, em
-         styles.css) esconde todo o resto da página e mostra só isto. -->
-    <section class="print-report" data-print-report hidden>
+    <!-- Relatório imprimível — SEMPRE escondido na tela (o atributo
+         "hidden" nunca é removido via JavaScript); só aparece quando o
+         navegador está de fato imprimindo, porque o bloco @media print
+         (em styles.css) força "display: block" só nesse momento. O
+         conteúdo é preenchido em JavaScript (setupMovementChart, em
+         app.js) sempre com os dados do MESMO mês selecionado acima no
+         "Movimentação mensal" — nunca fica dessincronizado dos dois. -->
+    <section class="print-report" data-print-report>
         <header class="print-report-head">
             <h1><?= h(config('app_name')) ?> — Relatório Administrativo</h1>
-            <p>Período: <?= h(format_date($from)) ?> a <?= h(format_date($to)) ?></p>
+            <p data-print-period></p>
         </header>
 
         <div class="print-report-summary">
-            <div><span>Consultas no período</span><strong><?= $total ?></strong></div>
-            <div><span>Taxa de faltas</span><strong><?= $noShowRate ?>%</strong></div>
-            <div><span>Médicos na clínica</span><strong><?= count($report['by_doctor']) ?></strong></div>
+            <div><span>Consultas no mês</span><strong data-print-total></strong></div>
+            <div><span>Faltas no mês</span><strong data-print-noshows></strong></div>
+            <div><span>Médicos na clínica</span><strong data-print-doctor-count></strong></div>
         </div>
 
-        <canvas data-report-chart-canvas height="90"></canvas>
+        <canvas data-print-chart-canvas height="90"></canvas>
 
         <table class="print-report-table">
             <thead>
@@ -135,36 +149,10 @@ function render_admin_reports(): void
                     <th>Faltas</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php foreach ($report['by_doctor'] as $row): ?>
-                    <tr>
-                        <td><?= h($row['doctor_name']) ?></td>
-                        <td><?= (int) $row['total'] ?></td>
-                        <td><?= (int) $row['completed'] ?></td>
-                        <td><?= (int) $row['no_shows'] ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
+            <tbody data-print-tbody></tbody>
         </table>
 
         <p class="print-report-footer">Gerado em <?= h(format_datetime(now_sql())) ?> pelo painel Vital Clinic.</p>
     </section>
-
-    <!-- Dados do relatório, para o gráfico ser montado em JavaScript
-         (ver setupReportsChart() em app.js) sem precisar de uma nova
-         chamada ao servidor — os números já foram calculados acima. -->
-    <script type="application/json" data-report-data>
-        <?= json_encode([
-            'period' => format_date($from) . ' a ' . format_date($to),
-            'doctors' => array_map(static function (array $row): array {
-                return [
-                    'name' => $row['doctor_name'],
-                    'total' => (int) $row['total'],
-                    'completed' => (int) $row['completed'],
-                    'no_shows' => (int) $row['no_shows'],
-                ];
-            }, $report['by_doctor']),
-        ], JSON_UNESCAPED_UNICODE) ?>
-    </script>
     <?php
 }
