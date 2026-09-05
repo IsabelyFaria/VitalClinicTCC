@@ -95,8 +95,8 @@ function render_admin_reports(): void
         </p>
         <canvas data-movement-chart-canvas height="90"></canvas>
         <div class="actions" style="margin-top: 14px;">
-            <button type="button" class="button" data-refresh-movement-chart>🔄 Atualizar gráfico</button>
-            <button type="button" class="button primary" data-generate-report-chart>📊 Gerar gráfico e imprimir</button>
+            <button type="button" class="button" data-refresh-movement-chart>Atualizar informações</button>
+            <button type="button" class="button primary" data-generate-report-chart>Gerar gráfico e imprimir</button>
         </div>
         <script type="application/json" data-movement-initial>
             <?= json_encode([
