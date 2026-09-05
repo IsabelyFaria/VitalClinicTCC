@@ -1,5 +1,8 @@
 <?php
 
+/** Lista de consultas com filtros (data/status/médico) e o modal
+ * "Adicionar Nova Consulta" (autocompletar de paciente/médico,
+ * calendário visual de dias disponíveis e seleção de horário). */
 function render_admin_appointments(): void
 {
     $filters = [
@@ -60,7 +63,7 @@ function render_admin_appointments(): void
         <?php endif; ?>
     </section>
 
-    <dialog id="new-appointment-modal" class="modal">
+    <dialog id="new-appointment-modal" class="modal modal-wide">
         <form method="post" class="panel form-card">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="admin_create_appointment">
@@ -124,26 +127,40 @@ function render_admin_appointments(): void
                 </div>
             </label>
 
-            <label>Data
-                <input type="date" id="new-appointment-date" min="<?= h(current_date_value()) ?>" required>
-            </label>
-
-            <label>Horário disponível
-                <div class="slot-picker" data-slot-loader data-date-input="new-appointment-date">
-                    <span class="muted">Selecione o médico e a data para ver os horários.</span>
+            <div class="appointment-date-grid">
+                <div class="appointment-calendar" data-appt-calendar data-min-date="<?= h(current_date_value()) ?>" data-max-days="<?= (int) config('rules.booking_max_days') ?>">
+                    <div class="appointment-calendar-head">
+                        <button type="button" class="button ghost small" data-cal-prev aria-label="Mês anterior">‹</button>
+                        <strong data-cal-label>&nbsp;</strong>
+                        <button type="button" class="button ghost small" data-cal-next aria-label="Próximo mês">›</button>
+                    </div>
+                    <div class="appointment-calendar-weekdays">
+                        <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+                    </div>
+                    <div class="appointment-calendar-days" data-cal-days></div>
+                    <p class="muted appointment-calendar-hint" data-cal-hint>Selecione o médico para ver os dias de atendimento.</p>
+                    <input type="hidden" id="new-appointment-date">
                 </div>
-            </label>
 
-            <label>Tipo de consulta
-                <select name="modality" required>
-                    <option value="presencial">Presencial</option>
-                    <option value="teleconsulta">Teleconsulta</option>
-                </select>
-            </label>
+                <div class="appointment-date-side">
+                    <label>Horário disponível
+                        <div class="slot-picker" data-slot-loader data-date-input="new-appointment-date">
+                            <span class="muted">Selecione o médico e a data para ver os horários.</span>
+                        </div>
+                    </label>
 
-            <label>Observações (opcional)
-                <textarea name="notes" rows="3" placeholder="Motivo da consulta, orientações, etc."></textarea>
-            </label>
+                    <label>Tipo de consulta
+                        <select name="modality" required>
+                            <option value="presencial">Presencial</option>
+                            <option value="teleconsulta">Teleconsulta</option>
+                        </select>
+                    </label>
+
+                    <label>Observações (opcional)
+                        <textarea name="notes" rows="3" placeholder="Motivo da consulta, orientações, etc."></textarea>
+                    </label>
+                </div>
+            </div>
 
             <div class="actions">
                 <button type="button" class="button ghost" data-close-modal>Cancelar</button>

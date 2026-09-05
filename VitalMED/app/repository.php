@@ -420,6 +420,22 @@ function available_slots(int $doctorId, string $date): array
     ], $stmt->fetchAll());
 }
 
+/**
+ * Dias da semana (0=domingo ... 6=sábado, mesma convenção de
+ * doctor_schedules.weekday) em que o médico tem algum bloco de
+ * atendimento ativo cadastrado. Usado só para o destaque visual do
+ * calendário do modal "Nova consulta" — a checagem definitiva de
+ * horário livre continua sendo available_slots(), acima.
+ */
+function doctor_working_weekdays(int $doctorId): array
+{
+    $stmt = db()->prepare(
+        'SELECT DISTINCT weekday FROM doctor_schedules WHERE doctor_id = ? AND active = 1'
+    );
+    $stmt->execute([$doctorId]);
+    return array_map('intval', array_column($stmt->fetchAll(), 'weekday'));
+}
+
 function doctor_day_slots(int $doctorId, string $date): array
 {
     ensure_slots($doctorId, $date, $date);
