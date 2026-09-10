@@ -30,7 +30,7 @@ function h($value): string
 
 function app_version(): string
 {
-    return 'v.2.05';
+    return 'v.3.03';
 }
 
 function app_url(array $params = []): string
