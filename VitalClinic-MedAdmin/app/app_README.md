@@ -14,29 +14,23 @@ Configurações do sistema, num único array PHP retornado pela função
 `config()` (definida em `helpers.php`). Contém:
 
 - `app_name`, `timezone` — identidade e fuso horário do sistema.
-- `db` — host, nome do banco, usuário e senha do MySQL. Lê de
-  variáveis de ambiente (`getenv()`) quando existem, com valores
-  padrão para desenvolvimento local (XAMPP).
-- `data.mode` — qual "modo de dados" o site usa: `mysql` (o atual,
-  ativo), `api` (modo alternativo via `api_client.php`, não usado
-  hoje) ou `demo` (modo legado).
-- `rules` — regras de negócio: quantas horas de antecedência para
-  cancelar/reagendar, até quantos dias no futuro dá para agendar,
-  quantas tentativas erradas a pergunta de segurança permite.
-- `security_questions` — a lista fixa de perguntas de segurança que
-  aparece no formulário de perfil.
-- `mail` — configuração de e-mail (não usada no fluxo atual de
-  recuperação de senha, que é só por pergunta de segurança).
+- `db` — host, nome do banco, usuário e senha do MySQL.
+- `data.mode` — `mysql` (modo atual), `api` (alternativo, não usado)
+  ou `demo` (legado).
+- `rules` — regras de negócio: horas de antecedência para
+  cancelar/reagendar, dias máximos pra agendar no futuro, tentativas
+  da pergunta de segurança, e os limites de classificação da
+  "Movimentação mensal" (`movement_low` / `movement_high`).
+- `security_questions` — lista fixa de perguntas de segurança.
+- `mail` — configuração de e-mail (não usada no fluxo atual).
 
 ## `db.php`
 
 Abre a conexão com o MySQL via PDO (`db()`), reaproveitando a mesma
-conexão durante toda a requisição (variável `static`). Também expõe
-`db_transaction(callable $fn)` — roda o `$fn` dentro de uma transação
-(`BEGIN`/`COMMIT`/`ROLLBACK` automáticos): se qualquer coisa lançar uma
-exceção lá dentro, nada é gravado. É usada em operações que mexem em
-várias tabelas de uma vez (ex.: criar uma consulta grava em
-`appointment_slots`, `appointments` e `payments` juntos).
+conexão durante toda a requisição. Expõe `db_transaction(callable $fn)`
+— roda `$fn` dentro de uma transação: se qualquer coisa lançar uma
+exceção lá dentro, nada é gravado (usado, por exemplo, ao criar uma
+consulta — grava em 3 tabelas de uma vez).
 
 ## `helpers.php`
 
@@ -44,18 +38,18 @@ Funções pequenas, usadas em quase todo arquivo do projeto:
 
 | Função | Para que serve |
 |---|---|
-| `config($key)` | Lê uma configuração (aceita `'rules.booking_max_days'`, por exemplo) |
-| `h($value)` | Escapa texto para exibir em HTML com segurança (`htmlspecialchars`) |
-| `app_url($params)` / `asset_url($path)` | Monta a URL de uma página / de um arquivo estático (com versão anti-cache) |
-| `is_ajax_request()` | Detecta se a requisição veio de `fetch()` (cabeçalho `X-Requested-With`) |
-| `send_json($payload, $status)` | Responde em JSON e encerra a execução — usada por toda ação chamada via `fetch()` |
-| `redirect($params)` | Redireciona (ou responde em JSON, se for AJAX) — é o "fim de linha" comum de toda ação de formulário |
-| `csrf_token()` / `csrf_field()` / `verify_csrf()` | Geração e checagem do token anti-CSRF |
-| `flash($type, $msg)` / `take_flash()` | Mensagens de sucesso/erro que sobrevivem a um redirecionamento |
-| `post_value($key)` | Lê um campo de `$_POST` já tratado (trim) |
-| `format_datetime` / `format_date` / `format_time` / `format_money` / `weekday_name` / `status_label` | Formatação de datas, valores e status para exibição |
-| `current_date_value()` / `now_sql()` | Data/hora atual nos formatos usados pelo sistema/banco |
-| `abort_forbidden()` | Interrompe a requisição com HTTP 403 |
+| `config($key)` | Lê uma configuração (aceita `'rules.movement_low'`, por exemplo) |
+| `app_version()` | A versão exibida no rodapé (`app-footer`) |
+| `h($value)` | Escapa texto para exibir em HTML com segurança |
+| `app_url($params)` / `asset_url($path)` | Monta a URL de uma página / de um arquivo estático |
+| `is_ajax_request()` | Detecta se a requisição veio de `fetch()` |
+| `send_json($payload, $status)` | Responde em JSON e encerra a execução |
+| `redirect($params)` | Redireciona (ou responde em JSON, se AJAX) |
+| `csrf_token()` / `csrf_field()` / `verify_csrf()` | Token anti-CSRF |
+| `flash($type, $msg)` / `take_flash()` | Mensagens de sucesso/erro entre páginas |
+| `post_value($key)` | Lê um campo de `$_POST` já tratado |
+| `format_datetime` / `format_date` / `format_time` / `format_money` / `weekday_name` / `status_label` | Formatação para exibição |
+| `current_date_value()` / `now_sql()` | Data/hora atual nos formatos do sistema/banco |
 
 ## `auth.php`
 
@@ -63,53 +57,50 @@ Login, logout e todo o fluxo de "Esqueci minha senha".
 
 - `current_user()` / `require_login()` / `require_role($roles)` —
   quem está logado, e trava de acesso por perfil.
-- `attempt_login()` — faz a autenticação de verdade e devolve o
-  **motivo exato** da falha (`not_found`, `inactive`, `wrong_role`,
+- `attempt_login()` — autentica de verdade e devolve o **motivo
+  exato** da falha (`not_found`, `inactive`, `wrong_role`,
   `wrong_password`) ou `null` se deu certo — é isso que permite a tela
-  de login mostrar uma mensagem específica em vez de um erro genérico.
-  `login_user()` é só um wrapper que devolve `true`/`false`.
-- `register_patient()` — cadastro de paciente feito pelo admin (gera
-  uma senha inicial aleatória).
+  de login mostrar uma mensagem específica. `login_user()` é um
+  wrapper que devolve `true`/`false`.
+- `register_patient()` — cadastro de paciente feito pelo admin.
 - `request_password_reset()` → `confirm_password_reset_security_answer()`
-  → `complete_password_reset()` — as 3 etapas da recuperação de senha
-  por pergunta de segurança, com o estado temporário guardado em
-  `$_SESSION['pwd_reset']` entre uma etapa e outra.
+  → `complete_password_reset()` — as 3 etapas da recuperação por
+  pergunta de segurança, com estado em `$_SESSION['pwd_reset']`.
 
 ## `repository.php`
 
-O arquivo mais longo do projeto (~70 funções) — é aqui que toda
-consulta SQL do sistema realmente acontece. Organizado por assunto:
+O arquivo mais longo do projeto — é aqui que toda consulta SQL do
+sistema acontece. Organizado por assunto:
 
-- **Usuários e perfis** — buscar por e-mail/id, atualizar perfil,
-  trocar senha, pergunta de segurança (`set_user_security_question()`,
-  `verify_user_security_answer()`), tutorial (`mark_tutorial_seen()`),
-  termos de uso (`accept_terms()`).
-- **Clínicas e especialidades** — listagens usadas em formulários.
+- **Usuários e perfis** — buscar/atualizar, senha, pergunta de
+  segurança, `mark_tutorial_seen()`, `accept_terms()`.
+- **Clínicas e especialidades** — listagens para formulários.
 - **Médicos** (`doctors`) — CRUD, agenda semanal
-  (`doctor_working_weekdays()` inclusive, usada pelo calendário visual
-  do agendamento), bloqueios pontuais.
-- **Pacientes** — CRUD, busca, histórico de consultas.
+  (`doctor_working_weekdays()`, usada tanto pelo calendário do
+  agendamento quanto pela ação `doctor_weekdays`), bloqueios pontuais.
+- **Pacientes** — CRUD, busca, histórico.
 - **Agenda e consultas** — geração de horários (`ensure_slots()`),
   horários livres (`available_slots()`), criação de consulta
-  (`create_appointment()`, dentro de uma transação), mudança de status,
-  cancelamento.
-- **Prontuários** (`medical_records`) — salvar e listar.
-- **Pagamentos** — criados automaticamente junto com a consulta.
-- **Notificações** — criar, listar, marcar como lidas.
-- **Relatórios** — números agregados para a tela de Relatórios.
+  (`create_appointment()`, numa transação), mudança de status.
+- **Prontuários**, **pagamentos**, **notificações**.
+- **`report_data($from, $to)`** — números agregados para a tela de
+  Relatórios (tabela De/Até e o gráfico de "Movimentação mensal").
+  ⚠️ Consulta o banco **direto**, com o intervalo de data filtrado em
+  SQL — não reaproveita `appointments_for_admin()` (que tem um
+  `LIMIT 300, mais recentes primeiro` pensado pra tela de listagem).
+  Reaproveitar aquela função aqui já causou um bug real: com mais de
+  300 consultas no banco, qualquer mês fora das "300 mais recentes"
+  simplesmente não aparecia no relatório, não importa o filtro de
+  data escolhido.
 
 ## `mailer.php`
 
 Envio de e-mail via `mail()`/SMTP. **Não é chamado por nenhuma tela
 hoje** — era usado pelo antigo fluxo de recuperação de senha por
-código enviado por e-mail, que foi substituído pela Pergunta de
-Segurança. Mantido no projeto caso o envio de e-mail volte a ser
-necessário para outra finalidade (ex.: lembretes de consulta).
+código, substituído pela Pergunta de Segurança.
 
 ## `api_client.php`
 
-Cliente HTTP (via cURL) para um modo alternativo de operação em que o
-site conversaria com uma API central externa em vez de ler/gravar
-direto no MySQL. **Não está em uso** — o modo ativo é `mysql` (ver
-`config.php`, `data.mode`). Nenhuma das funções deste arquivo é
-chamada no funcionamento normal do sistema hoje.
+Cliente HTTP para um modo alternativo de operação via API central
+externa. **Não está em uso** — o modo ativo é `mysql` (ver
+`config.php`, `data.mode`).

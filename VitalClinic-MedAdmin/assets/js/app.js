@@ -1028,21 +1028,46 @@
                 if (printChartInstance) {
                     printChartInstance.destroy();
                 }
-                var labels = (data.doctors || []).map(function (d) { return d.name; });
+                // Mesmo gráfico simples (Consultas x Faltas) que já
+                // aparece na tela — só que desenhado no canvas do
+                // relatório imprimível, com os dados do mês escolhido.
                 printChartInstance = new Chart(printCanvas, {
                     type: 'bar',
                     data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Consultas', data: (data.doctors || []).map(function (d) { return d.total; }), backgroundColor: '#0aa6bd' },
-                            { label: 'Realizadas', data: (data.doctors || []).map(function (d) { return d.completed; }), backgroundColor: '#047857' },
-                            { label: 'Faltas', data: (data.doctors || []).map(function (d) { return d.no_shows; }), backgroundColor: '#b42318' },
-                        ],
+                        labels: ['Consultas', 'Faltas'],
+                        datasets: [{
+                            label: data.month_label || '',
+                            data: [data.total, data.no_shows],
+                            backgroundColor: [classColor(data.classification), '#b42318'],
+                        }],
                     },
                     options: {
-                        responsive: true,
+                        // "responsive: false" é de propósito aqui: o
+                        // canvas de impressão fica fora da tela
+                        // (position: absolute; left: -9999px — ver
+                        // styles.css) até o momento de imprimir, e um
+                        // gráfico "responsive" depende de medir o
+                        // tamanho do elemento na tela pra saber como se
+                        // desenhar — o que é pouco confiável quando o
+                        // elemento nunca esteve realmente visível. Com
+                        // responsive desligado, o Chart.js usa direto
+                        // os atributos width/height do <canvas> (fixos,
+                        // no HTML), sem depender de nenhuma medição.
+                        responsive: false,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        // O canvas tem resolução interna baixa (pro
+                        // desenho ficar confiável mesmo fora da tela —
+                        // ver comentário acima), mas a impressão amplia
+                        // ele pra caber na folha. Sem isto, essa
+                        // ampliação deixa os textos (eixos, "legenda")
+                        // borrados. devicePixelRatio força o Chart.js a
+                        // desenhar em resolução bem mais alta por
+                        // dentro, então a ampliação sai nítida.
+                        devicePixelRatio: 3,
                         plugins: {
-                            title: { display: true, text: 'Consultas por médico — ' + (data.month_label || '') },
+                            legend: { display: false },
+                            title: { display: true, text: classLabel(data.classification) + ' (' + (data.month_label || '') + ')' },
                         },
                         scales: {
                             y: { beginAtZero: true, ticks: { precision: 0 } },

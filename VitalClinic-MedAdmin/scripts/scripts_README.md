@@ -7,8 +7,8 @@ terminal (`php nome-do-arquivo.php`), fora do fluxo normal do site.
 
 Gera dados fictícios (clínicas, médicos, pacientes e um histórico de
 consultas) direto no banco, para testar o sistema com um volume
-realista. Mesma ideia do `seed_populacao.sql` (na raiz do projeto),
-mas em PHP — o que permite ajustar as quantidades por parâmetro:
+realista. Complementa os dados já incluídos em `../db/vitalclinic_dados.sql`,
+com a vantagem de permitir ajustar as quantidades por parâmetro:
 
 ```bash
 php scripts/seed_producao.php --clinics=8 --patients=200 --appointments=700

@@ -1,13 +1,13 @@
 # `migrations/` — Histórico de mudanças no banco
 
 Cada arquivo aqui é um script SQL **incremental**: aplica, num banco
-que já existe, a mesma mudança que já está incluída no
-`vitalclinic_schema.sql` (que só serve para instalações novas — ele
-apaga e recria o banco do zero). Rode as migrations **em ordem**, pela
-aba SQL do phpMyAdmin, pulando as que você já aplicou.
+que já existe, a mesma mudança que já está incluída em
+`../db/vitalclinic_estrutura.sql` (que só serve para instalações
+novas — ele apaga e recria o banco do zero). Rode as migrations **em
+ordem**, pela aba SQL do phpMyAdmin, pulando as que você já aplicou.
 
 > Não existe um "001" — a numeração começa em 002 porque a criação
-> inicial das tabelas já é o próprio `vitalclinic_schema.sql`.
+> inicial das tabelas já é o próprio `vitalclinic_estrutura.sql`.
 
 | Nº | O que faz |
 |---|---|
