@@ -739,6 +739,32 @@ td small {
     flex-wrap: wrap;
 }
 
+/* Esconde visualmente um texto, mas mantém ele legível por leitor de
+   tela — usado no rótulo do seletor de mês do calendário, que já tem
+   o ícone nativo do <input type="month"> como pista visual. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.calendar-jump {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.calendar-jump input[type="month"] {
+    min-height: 40px;
+    width: auto;
+}
+
 .status {
     display: inline-flex;
     align-items: center;

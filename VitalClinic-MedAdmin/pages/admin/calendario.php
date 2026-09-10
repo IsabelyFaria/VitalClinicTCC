@@ -25,6 +25,17 @@ function render_calendar_component(string $navPage, DateTime $first, DateTime $p
         <div class="actions">
             <a class="button small" href="<?= h(app_url(array_merge(['page' => $navPage, 'month' => $prev->format('n'), 'year' => $prev->format('Y')], $extraLinkParams))) ?>">Mês anterior</a>
             <a class="button small" href="<?= h(app_url(array_merge(['page' => $navPage, 'month' => $next->format('n'), 'year' => $next->format('Y')], $extraLinkParams))) ?>">Próximo mês</a>
+            <form method="get" class="calendar-jump">
+                <input type="hidden" name="page" value="<?= h($navPage) ?>">
+                <?php foreach ($extraLinkParams as $key => $value): ?>
+                    <input type="hidden" name="<?= h((string) $key) ?>" value="<?= h((string) $value) ?>">
+                <?php endforeach; ?>
+                <label>
+                    <span class="sr-only">Ir direto para o mês</span>
+                    <input type="month" name="ym" value="<?= h($first->format('Y-m')) ?>">
+                </label>
+                <button class="button small" type="submit">Ir</button>
+            </form>
         </div>
     </section>
 
@@ -75,8 +86,17 @@ function render_calendar_component(string $navPage, DateTime $first, DateTime $p
 
 function render_admin_calendar(): void
 {
-    $month = (int) ($_GET['month'] ?? (new DateTime())->format('n'));
-    $year = (int) ($_GET['year'] ?? (new DateTime())->format('Y'));
+    // Aceita tanto o formato antigo (?month=9&year=2026, usado pelos
+    // links "Mês anterior/Próximo mês") quanto o novo campo único
+    // ?ym=2026-09 (o <input type="month"> do seletor de mês manda os
+    // dois juntos, nesse formato).
+    if (isset($_GET['ym']) && preg_match('/^(\d{4})-(\d{2})$/', (string) $_GET['ym'], $matches)) {
+        $year = (int) $matches[1];
+        $month = (int) $matches[2];
+    } else {
+        $month = (int) ($_GET['month'] ?? (new DateTime())->format('n'));
+        $year = (int) ($_GET['year'] ?? (new DateTime())->format('Y'));
+    }
     if ($month < 1 || $month > 12) {
         $month = (int) (new DateTime())->format('n');
     }

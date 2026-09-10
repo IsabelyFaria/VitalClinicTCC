@@ -19,8 +19,13 @@ function render_doctor_calendar(array $user): void
         return;
     }
 
-    $month = (int) ($_GET['month'] ?? (new DateTime())->format('n'));
-    $year = (int) ($_GET['year'] ?? (new DateTime())->format('Y'));
+    if (isset($_GET['ym']) && preg_match('/^(\d{4})-(\d{2})$/', (string) $_GET['ym'], $matches)) {
+        $year = (int) $matches[1];
+        $month = (int) $matches[2];
+    } else {
+        $month = (int) ($_GET['month'] ?? (new DateTime())->format('n'));
+        $year = (int) ($_GET['year'] ?? (new DateTime())->format('Y'));
+    }
     if ($month < 1 || $month > 12) {
         $month = (int) (new DateTime())->format('n');
     }
