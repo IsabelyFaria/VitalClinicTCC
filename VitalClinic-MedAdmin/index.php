@@ -596,7 +596,6 @@ function render_nav(string $page, ?array $user): void
     $items = [];
     if ($user['role'] === 'patient') {
         $items = [
-            'profile' => 'Perfil',
             'notifications' => 'Notificações',
         ];
     } elseif ($user['role'] === 'admin') {
@@ -607,7 +606,6 @@ function render_nav(string $page, ?array $user): void
             'admin_patients' => 'Pacientes',
             'admin_doctors' => 'Médicos',
             'admin_reports' => 'Relatórios',
-            'profile' => 'Perfil',
             'notifications' => 'Notificações',
         ];
     } else {
@@ -616,19 +614,29 @@ function render_nav(string $page, ?array $user): void
             'doctor_calendar' => 'Calendário',
             'doctor_appointments' => 'Consultas',
             'doctor_patients' => 'Pacientes',
-            'profile' => 'Perfil',
             'notifications' => 'Notificações',
         ];
     }
 
     $unread = unread_notifications_count((int) $user['id']);
+    $initial = strtoupper(substr($user['name'], 0, 1));
     ?>
-    <form method="post" class="topbar-logout inline">
-        <?= csrf_field() ?>
-        <input type="hidden" name="action" value="logout">
-        <button class="button" type="submit">Sair</button>
-    </form>
     <div class="topbar-actions">
+        <div class="topbar-profile" data-profile-menu>
+            <button type="button" class="topbar-profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false" aria-label="Menu do perfil">
+                <span class="avatar avatar-sm"><?= h($initial) ?></span>
+            </button>
+            <div class="topbar-profile-dropdown" data-profile-dropdown>
+                <div class="topbar-profile-name"><?= h($user['name']) ?></div>
+                <a href="<?= h(app_url(['page' => 'profile'])) ?>">Perfil</a>
+                <a href="<?= h(app_url(['page' => 'about'])) ?>">Sobre nós</a>
+                <form method="post">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="logout">
+                    <button class="topbar-profile-logout" type="submit">Sair</button>
+                </form>
+            </div>
+        </div>
         <button type="button" class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menu">
             <span class="nav-toggle-bar"></span>
             <span class="nav-toggle-bar"></span>
@@ -865,6 +873,11 @@ function render_page(string $page, ?array $user): void
         return;
     }
 
+    if ($page === 'about') {
+        render_about();
+        return;
+    }
+
     if ($user['role'] === 'patient') {
         render_profile($user);
         return;
@@ -1002,6 +1015,39 @@ function render_staff_profile(array $user): void
             <button class="button primary" type="submit">Salvar perfil</button>
         </div>
     </form>
+    <?php
+}
+
+/**
+ * "Sobre nós" — página institucional simples, acessível pelo menu do
+ * avatar (perfil) em qualquer painel. Conteúdo estático, sem consulta
+ * ao banco.
+ */
+function render_about(): void
+{
+    ?>
+    <section class="page-head">
+        <div>
+            <p class="eyebrow">Vital Clinic</p>
+            <h1>Sobre nós</h1>
+        </div>
+    </section>
+    <section class="panel">
+        <p>
+            O <strong>Vital Clinic</strong> é uma plataforma de gestão para
+            clínicas médicas, pensada para simplificar o dia a dia de
+            administradores e médicos: agenda, prontuário eletrônico,
+            relatórios e o cadastro de pacientes, tudo num só lugar.
+        </p>
+        <p>
+            Este painel (administrador/médico) é um dos componentes do
+            projeto — pacientes têm seu próprio espaço de acesso, para
+            marcar consultas e acompanhar seu histórico diretamente.
+        </p>
+        <p class="muted">
+            Vital Clinic <?= h(app_version()) ?>
+        </p>
+    </section>
     <?php
 }
 

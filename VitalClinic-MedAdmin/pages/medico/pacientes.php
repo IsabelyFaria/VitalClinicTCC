@@ -18,7 +18,7 @@ function render_doctor_patients(array $user): void
         </div>
     </section>
     <section class="panel">
-        <form method="get" class="filters">
+        <form method="get" class="filters filters-search">
             <input type="hidden" name="page" value="doctor_patients">
             <label>Buscar paciente
                 <span class="search-field">
@@ -27,6 +27,7 @@ function render_doctor_patients(array $user): void
                 </span>
             </label>
             <button class="button" type="submit">Buscar</button>
+            <h2> </h2>
         </form>
         <div class="table-wrap">
             <table>

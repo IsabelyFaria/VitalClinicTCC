@@ -30,7 +30,7 @@ function render_admin_doctors(): void
 
         <div class="panel">
             <h2>Médicos ativos</h2>
-            <form method="get" class="filters">
+            <form method="get" class="filters filters-search">
                 <input type="hidden" name="page" value="admin_doctors">
                 <label>Buscar médico
                     <span class="search-field">
@@ -39,6 +39,7 @@ function render_admin_doctors(): void
                     </span>
                 </label>
                 <button class="button" type="submit">Buscar</button>
+                <h2> </h2>
             </form>
             <div class="accordion-list">
                 <?php if (!$doctors): ?>

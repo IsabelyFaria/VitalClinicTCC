@@ -131,6 +131,45 @@
      * Em telas >= 1024px o CSS já força o menu visível (ver styles.css),
      * então este JS não interfere no desktop.
      */
+    /**
+     * Menu do avatar (canto superior direito): abre ao passar o mouse
+     * em cima (CSS puro, ver .topbar-profile:hover em styles.css) — mas
+     * hover não existe em telas de toque, então aqui também tratamos
+     * clique/toque, adicionando a classe "is-open" (que o CSS também
+     * reconhece pra mostrar o menu). Fecha ao clicar fora, ao escolher
+     * uma opção, ou com Esc.
+     */
+    function setupProfileMenu() {
+        var wrapper = qs('[data-profile-menu]');
+        var toggle = qs('[data-profile-toggle]');
+        if (!wrapper || !toggle) {
+            return;
+        }
+
+        function close() {
+            wrapper.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var isOpen = wrapper.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!wrapper.contains(event.target)) {
+                close();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                close();
+            }
+        });
+    }
+
     function setupMobileNav() {
         var toggle = qs('[data-nav-toggle]');
         var nav = qs('[data-nav]');
@@ -1278,6 +1317,7 @@
         setupNetworkBanner();
         setupRolePicker();
         setupRoleSwitches();
+        setupProfileMenu();
         setupMobileNav();
         setupResponsiveTables();
         setupTermsGate();

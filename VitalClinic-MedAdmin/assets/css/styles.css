@@ -59,7 +59,7 @@ textarea {
     justify-content: space-between;
     gap: 12px;
     min-height: 60px;
-    padding: 10px 100px 10px 12px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(10px);
@@ -92,26 +92,87 @@ textarea {
     gap: 12px;
 }
 
-.topbar-logout {
-    position: fixed;
-    top: 14px;
-    right: 14px;
+.topbar-profile {
+    position: relative;
     z-index: 1002;
 }
 
-.topbar-logout .button {
-    min-height: 60px;
-    padding: 12px 20px;
+.topbar-profile-toggle {
+    display: block;
+    padding: 0;
     border: none;
-    border-radius: 500px;
-    background: #dc2626;
-    color: #fff;
-    font-weight: 800;
-    box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3);
+    background: transparent;
+    cursor: pointer;
 }
 
-.topbar-logout .button:hover {
-    background: #b91c1c;
+.avatar.avatar-sm {
+    width: 42px !important;
+    height: 42px !important;
+    border-width: 2px !important;
+    font-size: 17px !important;
+    box-shadow: 0 2px 10px rgba(23, 58, 112, 0.25);
+}
+
+/* O menu abre ao passar o mouse (desktop) OU ao clicar/tocar (a classe
+   .is-open é adicionada pelo JS em setupProfileMenu, pra funcionar em
+   telas sem mouse também — hover sozinho não existe no toque). */
+.topbar-profile-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    /* Sem espaço real entre o botão e o menu (padding-top faz esse
+       espaço visual por dentro da própria caixa do menu) — um "vão"
+       vazio ali faria o :hover se perder no meio do caminho, fechando
+       o menu antes do cursor chegar nas opções. */
+    padding: 16px 8px 8px;
+    margin-top: 0;
+    min-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.topbar-profile:hover .topbar-profile-dropdown,
+.topbar-profile.is-open .topbar-profile-dropdown {
+    display: block;
+}
+
+.topbar-profile-name {
+    padding: 8px 10px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-profile-dropdown a,
+.topbar-profile-logout {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.topbar-profile-dropdown a:hover,
+.topbar-profile-logout:hover {
+    background: var(--surface-alt);
+}
+
+.topbar-profile-logout {
+    color: #dc2626;
 }
 
 .nav-toggle {
@@ -535,6 +596,21 @@ textarea:focus {
     grid-template-columns: minmax(0, 1fr);
     align-items: end;
     gap: 12px;
+}
+
+/* Variação pra formulários "só busca + botão" (Pacientes/Médicos) —
+   diferente do .filters genérico (pensado pra vários campos lado a
+   lado, tipo data/status), aqui só tem 2 itens: o campo de busca deve
+   ocupar todo o espaço disponível, e o botão fica do tamanho do
+   próprio texto — em vez dos dois dividirem uma grade de 5 colunas
+   iguais, deixando a busca espremida numa fatia só. */
+.filters.filters-search {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+}
+
+.filters.filters-search label {
+    min-width: 0;
 }
 
 .filters.compact {
@@ -1579,7 +1655,7 @@ code {
     .topbar {
         gap: 20px;
         min-height: 68px;
-        padding: 12px 110px 12px 28px;
+        padding: 12px 28px;
     }
 
     .brand-logo {

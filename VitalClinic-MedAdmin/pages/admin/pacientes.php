@@ -14,7 +14,7 @@ function render_admin_patients(): void
     <section class="grid two">
         <div class="panel">
             <h2>Lista de pacientes</h2>
-            <form method="get" class="filters">
+            <form method="get" class="filters filters-search">
                 <input type="hidden" name="page" value="admin_patients">
                 <label>Buscar paciente
                     <span class="search-field">
@@ -23,6 +23,7 @@ function render_admin_patients(): void
                     </span>
                 </label>
                 <button class="button" type="submit">Buscar</button>
+                <h2> </h2>
             </form>
             <div class="list">
                 <?php $filteredPatients = patient_list($search); ?>
