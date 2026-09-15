@@ -575,8 +575,130 @@ function find_doctor_details(int $medicoId): ?array
     return $linha ?: null;
 }
 
+/**
+ * Garante que, entre $fromDate e $toDate, todo dia da semana em que esse
+ * médico atende (cadastro em doctor_schedules, a "Atendimento semanal" do
+ * painel do médico/admin) já tenha um horário DE VERDADE criado na tabela
+ * appointment_slots. Sem essa função, um dia novo cadastrado no
+ * Atendimento semanal só virava horário visível depois que alguém abria
+ * aquele dia específico lá no painel do médico/admin (é lá que essa
+ * mesma "criação sob demanda" já acontecia) — aqui replicamos a mesma
+ * ideia, agora do lado do paciente também.
+ */
+function ensure_slots_for_doctor(int $doctorId, string $fromDate, string $toDate): void
+{
+    $medico = repository_find('doctors', $doctorId);
+    if (!$medico || !(int) ($medico['active'] ?? 0)) {
+        // médico não existe ou está inativo: não faz sentido gerar
+        // horário nenhum pra ele
+        return;
+    }
+
+    // busca a grade semanal recorrente desse médico (ex.: "toda quarta,
+    // das 08h às 12h"), é essa tabela que o painel do médico/admin chama
+    // de "Atendimento semanal"
+    $stmtGrade = db()->prepare('SELECT * FROM doctor_schedules WHERE doctor_id = ? AND active = 1');
+    $stmtGrade->execute([$doctorId]);
+    $grades = $stmtGrade->fetchAll();
+
+    // busca os bloqueios pontuais desse médico dentro do período (férias,
+    // folga...), pra já marcar como 'blocked' os horários que caem em
+    // cima de um bloqueio, em vez de deixar como 'available'
+    $stmtBloqueios = db()->prepare('SELECT * FROM schedule_blocks WHERE doctor_id = ? AND block_date >= ? AND block_date <= ?');
+    $stmtBloqueios->execute([$doctorId, $fromDate, $toDate]);
+    $bloqueios = $stmtBloqueios->fetchAll();
+
+    // pega todos os slot_start que esse médico JÁ TEM no banco, pra nunca
+    // tentar criar um horário duplicado (a tabela tem uma trava UNIQUE em
+    // (doctor_id, slot_start) que barraria isso de qualquer jeito, mas é
+    // mais barato já conferir aqui do que deixar o banco recusar)
+    $stmtExistentes = db()->prepare('SELECT slot_start FROM appointment_slots WHERE doctor_id = ?');
+    $stmtExistentes->execute([$doctorId]);
+    $existentes = array_fill_keys(array_column($stmtExistentes->fetchAll(), 'slot_start'), true);
+
+    $duracao = max(10, (int) ($medico['appointment_duration'] ?? 30));
+    // cada consulta dura esse tanto de minutos (30 é o valor padrão, caso
+    // o médico não tenha essa coluna preenchida)
+
+    $dataAtual = new DateTime($fromDate);
+    $dataFinal = (new DateTime($toDate))->modify('+1 day');
+    $novosSlots = [];
+
+    while ($dataAtual < $dataFinal) {
+        $diaDaSemana = (int) $dataAtual->format('w');
+        // 'w' devolve 0 (domingo) até 6 (sábado), a mesma convenção usada
+        // na coluna doctor_schedules.weekday
+
+        foreach ($grades as $grade) {
+            if ((int) $grade['weekday'] !== $diaDaSemana) {
+                continue;
+                // essa regra de horário não é desse dia da semana, pula
+                // pra próxima regra
+            }
+
+            $inicioSlot = new DateTime($dataAtual->format('Y-m-d') . ' ' . $grade['start_time']);
+            $limite = new DateTime($dataAtual->format('Y-m-d') . ' ' . $grade['end_time']);
+
+            while ($inicioSlot < $limite) {
+                $fimSlot = (clone $inicioSlot)->modify('+' . $duracao . ' minutes');
+                if ($fimSlot > $limite) {
+                    break;
+                    // não sobra tempo suficiente pra mais uma consulta
+                    // inteira antes do fim do expediente, para por aqui
+                }
+
+                $inicio = $inicioSlot->format('Y-m-d H:i:s');
+
+                if (!isset($existentes[$inicio])) {
+                    // confere se esse horário cai em cima de algum
+                    // bloqueio (férias, folga...), pra já nascer 'blocked'
+                    $bloqueioEncontrado = null;
+                    foreach ($bloqueios as $bloqueio) {
+                        $inicioBloqueio = new DateTime($bloqueio['block_date'] . ' ' . $bloqueio['start_time']);
+                        $fimBloqueio = new DateTime($bloqueio['block_date'] . ' ' . $bloqueio['end_time']);
+                        if ($inicioSlot < $fimBloqueio && $fimSlot > $inicioBloqueio) {
+                            $bloqueioEncontrado = $bloqueio;
+                            break;
+                        }
+                    }
+
+                    $novosSlots[] = [
+                        'doctor_id' => $doctorId,
+                        'slot_start' => $inicio,
+                        'slot_end' => $fimSlot->format('Y-m-d H:i:s'),
+                        'status' => $bloqueioEncontrado ? 'blocked' : 'available',
+                        'block_reason' => $bloqueioEncontrado['reason'] ?? null,
+                    ];
+                    $existentes[$inicio] = true;
+                    // já marca como "existente" aqui mesmo, pra não montar
+                    // esse mesmo horário de novo se duas regras se
+                    // sobrepusessem por engano
+                }
+
+                $inicioSlot = $fimSlot;
+            }
+        }
+
+        $dataAtual->modify('+1 day');
+    }
+
+    foreach ($novosSlots as $slot) {
+        repository_append('appointment_slots', $slot);
+        // reaproveita a função de INSERT genérica que já existe aqui em
+        // cima nesse mesmo arquivo, uma chamada por horário novo
+    }
+}
+
 function available_slots_for_doctor(int $medicoId): array
 {
+    // antes de ler o que já existe no banco, garante que os próximos 90
+    // dias de horários (baseados na grade semanal cadastrada em
+    // doctor_schedules) já estão criados como linhas de verdade em
+    // appointment_slots. Sem essa chamada, um dia novo cadastrado no
+    // "Atendimento semanal" só apareceria pro paciente depois que alguém
+    // abrisse aquele dia específico no painel do médico/admin
+    ensure_slots_for_doctor($medicoId, date('Y-m-d'), date('Y-m-d', strtotime('+90 days')));
+
     // busca os horários LIVRES desse médico, só os que ainda vão acontecer
     // (slot_start >= NOW(), NOW() é uma função do próprio MySQL que pega a
     // data/hora atual do servidor do banco), ordenados do mais próximo pro
