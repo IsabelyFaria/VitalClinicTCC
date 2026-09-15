@@ -91,7 +91,7 @@ a equipe consegue:
 
 ## 3. Credenciais de acesso
 
-# Senha de **todas** as contas abaixo: **`password`**.
+### Senha de **todas** as contas abaixo: **`password`**.
 
 Extraído diretamente do `db/vitalclinic_dados.sql` (parseando o arquivo
 na mesma ordem que o MySQL executaria, resolvendo as variáveis
