@@ -490,6 +490,27 @@ function render_agendar_horarios(array $paciente, array $medico, array $horarios
              abaixo: depois de recarregar a página, o navegador rola sozinho
              até aqui, em vez de voltar pro topo -->
         <div class="agendar-grid" id="calendario">
+            <!-- legenda explicando as 3 cores do calendário. Fica fora dos
+                 dois cards, direto dentro do .agendar-grid, com uma regra
+                 de CSS que obriga ela a ocupar a linha inteira sozinha
+                 (repare no CSS: flex: 0 0 100%), é isso que garante que
+                 ela sempre fica numa fileira própria, acima, empurrando o
+                 calendário e os horários pra ficarem lado a lado embaixo -->
+            <div class="calendario-legenda">
+                <span class="legenda-item">
+                    <span class="legenda-bolinha selected"></span>
+                    Dia selecionado
+                </span>
+                <span class="legenda-item">
+                    <span class="legenda-bolinha available"></span>
+                    Dia com horário disponível
+                </span>
+                <span class="legenda-item">
+                    <span class="legenda-bolinha disabled"></span>
+                    Sem horário disponível
+                </span>
+            </div>
+
             <div class="card calendar-card">
                 <div class="calendar-header">
                     <!-- seta "mês anterior": recarrega a mesma tela, trocando
@@ -543,29 +564,6 @@ function render_agendar_horarios(array $paciente, array $medico, array $horarios
                     <?php endfor; ?>
                 </div>
             </div>
-
-            <!-- legenda explicando as 3 cores usadas nas casinhas acima.
-                     Cada bolinha usa a mesma classe de cor que a casinha
-                     correspondente já usa (.selected, .available, .disabled),
-                     então se um dia, mudar a cor lá no CSS, a bolinha
-                     daqui muda junto sozinha, sem precisar lembrar de mexer
-                     em dois lugares -->
-                <div class="calendario-legenda">
-                    <span class="legenda-item">
-                        <span class="legenda-bolinha selected"></span>
-                        Dia selecionado
-                    </span>
-                    <span class="legenda-item">
-                        <span class="legenda-bolinha available"></span>
-                        Dia com horário disponível
-                    </span>
-                    <span class="legenda-item">
-                        <span class="legenda-bolinha disabled"></span>
-                        Sem horário disponível
-                    </span>
-                </div>
-            </div>
-
 
             <div class="card horarios-card">
                 <div class="section-title">Horários disponíveis</div>
