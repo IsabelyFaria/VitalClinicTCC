@@ -98,13 +98,13 @@ na mesma ordem que o MySQL executaria, resolvendo as variáveis
 `@clinicN` de verdade) — reflete exatamente o que entra no banco
 quando você importa esse arquivo.
 
-### Clínica Central (contas fixas de demonstração)
+### Conta fixa de demonstração ADMIN (acesso total a todas as informações do site)
 
 | Perfil | Nome | E-mail |
 |---|---|---|
 | Super admin | Administrador da Clínica | `admin@clinica.local` |
 
-### Clínica Norte (conta fixa de demonstração)
+### Conta fixa de demonstração MÉDICO
 
 | Perfil | Nome | E-mail |
 |---|---|---|
