@@ -418,6 +418,9 @@ function cancel_appointment_patient(int $consultaId, int $pacienteId): void
         $stmt = $pdo->prepare('UPDATE appointment_slots SET status = ? WHERE id = ?');
         $stmt->execute(['available', $consulta['slot_id']]);
 
+        // avisa o paciente que o cancelamento foi registrado
+        notificar_paciente($pacienteId, $consultaId, 'Consulta cancelada', 'Sua consulta foi cancelada.');
+
         // as duas mudanças deram certo, então agora manda gravar de verdade no
         // banco, "assina embaixo do rascunho"
         $pdo->commit();
@@ -861,6 +864,10 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
                 'presencial',
                 $consultaAntiga['id'],
             ]);
+
+            $appointmentId = (int) $consultaAntiga['id'];
+            // guardamos o id aqui porque vamos precisar dele daqui a
+            // pouco, pra criar a notificação vinculada a ESSA consulta
         } else {
             // primeira vez que alguém agenda nesse horário: aí sim cria a
             // linha nova, do jeito que já era antes
@@ -877,11 +884,26 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
                 'pending',
                 'presencial',
             ]);
+
+            $appointmentId = (int) $pdo->lastInsertId();
+            // esse caminho é o de uma consulta NOVA (não reaproveitando
+            // uma cancelada antes), então o id vem do INSERT que acabou
+            // de rodar
         }
 
         // marca o horário como ocupado, igual já era
         $stmtOcupa = $pdo->prepare('UPDATE appointment_slots SET status = ? WHERE id = ?');
         $stmtOcupa->execute(['booked', $slotId]);
+
+        // avisa o paciente que a consulta foi marcada. O título "Consulta
+        // pendente" é o mesmo que o notificacao_badge_class() já sabe
+        // colorir (bolinha âmbar), porque toda consulta nasce com esse
+        // status, esperando confirmação. Não precisamos escrever nome de
+        // médico/data na mensagem: a tela de Notificações já busca isso
+        // sozinha através do appointment_id, sempre que a notificação
+        // tiver um vinculado (foi por isso que o LEFT JOIN foi montado
+        // daquele jeito lá no notifications_for_patient())
+        notificar_paciente($pacienteId, $appointmentId, 'Consulta pendente', 'Sua consulta foi marcada e está aguardando confirmação.');
 
         $pdo->commit();
     } catch (Exception $e) {
@@ -1005,4 +1027,81 @@ function mark_notifications_as_read(int $pacienteId): void
     $sql = "UPDATE notifications SET status = 'read', read_at = NOW() WHERE user_id = ? AND status = 'sent'";
     $stmt = db()->prepare($sql);
     $stmt->execute([$pacienteId]);
+}
+
+// Atalho pra criar uma notificação nova, sem repetir o mesmo array de 9
+// campos toda vez, usada ao marcar consulta, ao cancelar, e também no
+// lembrete automático logo abaixo
+function notificar_paciente(int $pacienteId, ?int $appointmentId, string $titulo, string $mensagem): void
+{
+    repository_append('notifications', [
+        'user_id' => $pacienteId,
+        'appointment_id' => $appointmentId,
+        'type' => 'in_app',
+        'title' => $titulo,
+        'message' => $mensagem,
+        'status' => 'sent',
+        'send_at' => now_sql(),
+        'sent_at' => now_sql(),
+        'read_at' => null,
+        'created_at' => now_sql(),
+    ]);
+}
+
+/**
+ * Cria o "Lembrete de consulta" pras consultas que vão acontecer daqui a
+ * aproximadamente $horasAntes horas (24 por padrão). Pensada pra ser
+ * chamada por um script de linha de comando (scripts/lembretes.php),
+ * agendado pra rodar sozinho todo dia. Devolve quantos lembretes novos
+ * foram criados.
+ */
+function create_appointment_reminders(int $horasAntes = 24): int
+{
+    // a "janela" de 2 horas (1 antes, 1 depois da hora exata pedida)
+    // existe porque esse script não fica rodando o tempo inteiro, ele
+    // roda de tempos em tempos (ex.: uma vez por hora). Sem essa margem,
+    // uma consulta poderia "passar batido" pela hora exata das 24h de
+    // antecedência, entre uma execução e outra, e nunca ganhar lembrete
+    $de = (new DateTime())->modify('+' . ($horasAntes - 1) . ' hours');
+    $ate = (new DateTime())->modify('+' . ($horasAntes + 1) . ' hours');
+
+    $sql = "
+        SELECT a.id, a.patient_id, slot.slot_start
+        FROM appointments a
+        JOIN appointment_slots slot ON slot.id = a.slot_id
+        WHERE a.status IN ('pending', 'confirmed')
+          AND slot.slot_start BETWEEN ? AND ?
+    ";
+    $stmt = db()->prepare($sql);
+    $stmt->execute([$de->format('Y-m-d H:i:s'), $ate->format('Y-m-d H:i:s')]);
+    $consultas = $stmt->fetchAll();
+
+    $criados = 0;
+
+    foreach ($consultas as $consulta) {
+        // confere se JÁ existe um lembrete criado pra essa consulta
+        // específica antes de criar outro, sem essa checagem, se o
+        // script rodar de hora em hora, a mesma consulta ganharia vários
+        // lembretes duplicados enquanto estivesse dentro da janela
+        $stmtExiste = db()->prepare("
+            SELECT COUNT(*) FROM notifications
+            WHERE appointment_id = ? AND title = 'Lembrete de consulta'
+        ");
+        $stmtExiste->execute([$consulta['id']]);
+
+        if ((int) $stmtExiste->fetchColumn() > 0) {
+            continue;
+        }
+
+        notificar_paciente(
+            (int) $consulta['patient_id'],
+            (int) $consulta['id'],
+            'Lembrete de consulta',
+            'Sua consulta é amanhã, ' . format_datetime($consulta['slot_start']) . '.'
+        );
+
+        $criados++;
+    }
+
+    return $criados;
 }
