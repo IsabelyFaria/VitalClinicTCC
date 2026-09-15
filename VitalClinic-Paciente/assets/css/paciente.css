@@ -1437,12 +1437,18 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 16px;
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--color-border, #d7e4ea);
-    /* uma linha fina separando a legenda do resto do calendário, e
-       flex-wrap deixa os itens quebrarem pra segunda linha sozinhos em
-       telas estreitas, em vez de espremer tudo numa linha só */
+    flex: 0 0 100%;
+    /* dentro do .agendar-grid (que é um flex container com flex-wrap:
+       wrap), essa linha diz "não cresça, não encolha, ocupe sempre 100%
+       da largura", isso obriga a legenda a tomar conta da linha INTEIRA
+       sozinha, sobrando espaço zero pros outros dois itens (o calendário
+       e os horários) ficarem ao lado dela, então eles são "empurrados"
+       pra próxima linha, lado a lado entre si, embaixo da legenda */
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border, #d7e4ea);
+    /* a linha divisória agora fica embaixo da legenda (separando ela do
+       calendário/horários logo abaixo), em vez de em cima */
 }
 
 .legenda-item {
