@@ -1524,3 +1524,27 @@ body {
        --color-danger (vermelho) porque já é a cor reservada do site pra
        chamar atenção, igual o botão de Cancelar consulta */
 }
+
+/* ===== CABEÇALHO DA TELA DE MÉDICOS (com o "desenho" da clínica) ===== */
+
+.clinica-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    /* nome+endereço de um lado, desenho do outro, cada ponta puxando
+       pro seu canto, a mesma ideia do .topbar já usado no menu de cima */
+    
+    background: linear-gradient(135deg, var(--color-primary-light, #d6f0f3), #ffffff);
+    border-radius: 16px;
+    padding: 32px 40px;
+    /* mesmo degradê, mesmo arredondamento e a mesma ideia de respiro
+       interno generoso que o .home-banner já usa lá na Home */
+}
+
+.clinica-cabecalho-desenho {
+    flex-shrink: 0;
+    /* garante que o desenho nunca "espreme" e encolhe quando o nome da
+       clínica for comprido, ele sempre mantém o tamanho de 90x90 */
+}

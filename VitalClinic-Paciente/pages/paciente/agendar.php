@@ -245,11 +245,27 @@ function render_agendar_medicos(array $paciente, array $clinica, array $medicos,
         ‹ Voltar para lista de clínicas
     </a>
 
-    <h1><?= h($clinica['clinic_name']) ?></h1>
-    <p class="text-muted" style="margin-bottom: 20px;">
-        <?= h($clinica['clinic_address'] ?: 'Endereço não informado') ?>
-        <?php if (!empty($clinica['clinic_phone'])): ?> · <?= h($clinica['clinic_phone']) ?><?php endif; ?>
-    </p>
+     <div class="clinica-cabecalho">
+        <div>
+            <h1><?= h($clinica['clinic_name']) ?></h1>
+            <p class="text-muted" style="margin-bottom: 0;">
+                <?= h($clinica['clinic_address'] ?: 'Endereço não informado') ?>
+                <?php if (!empty($clinica['clinic_phone'])): ?> · <?= h($clinica['clinic_phone']) ?><?php endif; ?>
+            </p>
+        </div>
+
+        <!-- mesmo desenho do banner da Home (círculo + coração + linha de
+             batimento), só que numa versão menor (90x90 em vez de
+             180x180), usado aqui como se fosse a "foto" da clínica.
+             aria-hidden="true" de novo, porque é só decoração -->
+        <div class="clinica-cabecalho-desenho" aria-hidden="true">
+            <svg viewBox="0 0 200 200" width="90" height="90">
+                <circle cx="100" cy="100" r="90" fill="var(--color-primary-light, #d6f0f3)"></circle>
+                <path d="M100 60 a20 20 0 0 1 40 0 c0 25 -40 45 -40 60 c0 -15 -40 -35 -40 -60 a20 20 0 0 1 40 0 z" fill="var(--color-primary, #0aa6bd)"></path>
+                <polyline points="40,140 65,140 75,120 90,155 100,130 110,140 160,140" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            </svg>
+        </div>
+    </div>
 
     <?php if (empty($medicos)): ?>
         <div class="card">
