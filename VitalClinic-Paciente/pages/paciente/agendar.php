@@ -544,6 +544,29 @@ function render_agendar_horarios(array $paciente, array $medico, array $horarios
                 </div>
             </div>
 
+            <!-- legenda explicando as 3 cores usadas nas casinhas acima.
+                     Cada bolinha usa a mesma classe de cor que a casinha
+                     correspondente já usa (.selected, .available, .disabled),
+                     então se um dia, mudar a cor lá no CSS, a bolinha
+                     daqui muda junto sozinha, sem precisar lembrar de mexer
+                     em dois lugares -->
+                <div class="calendario-legenda">
+                    <span class="legenda-item">
+                        <span class="legenda-bolinha selected"></span>
+                        Dia selecionado
+                    </span>
+                    <span class="legenda-item">
+                        <span class="legenda-bolinha available"></span>
+                        Dia com horário disponível
+                    </span>
+                    <span class="legenda-item">
+                        <span class="legenda-bolinha disabled"></span>
+                        Sem horário disponível
+                    </span>
+                </div>
+            </div>
+
+
             <div class="card horarios-card">
                 <div class="section-title">Horários disponíveis</div>
                 <p class="text-muted" style="margin-bottom: 16px;">
