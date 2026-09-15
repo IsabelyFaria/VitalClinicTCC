@@ -93,60 +93,172 @@ a equipe consegue:
 
 Senha de **todas** as contas abaixo: **`password`**.
 
-### Contas fixas — sempre existem, uma por clínica
+Extraído diretamente do `db/vitalclinic_dados.sql` (parseando o arquivo
+na mesma ordem que o MySQL executaria, resolvendo as variáveis
+`@clinicN` de verdade) — reflete exatamente o que entra no banco
+quando você importa esse arquivo.
 
-Essas são as contas mais confiáveis pra testar o isolamento por
-clínica: cada uma pertence a uma clínica diferente, então dá pra
-comparar lado a lado o que cada uma vê.
+### Clínica Central (contas fixas de demonstração)
 
-| Clínica | Perfil | Nome | E-mail |
-|---|---|---|---|
-| **Clínica Central** | 👑 Super admin (vê TODAS as clínicas) | Administrador da Clínica | `admin@clinica.local` |
-| **Clínica Central** | Médico | Dra. Ana Souza — Clínico geral | `medico@clinica.local` |
-| **Clínica Norte** | Médico | Dr. Carlos Lima — Cardiologia | `carlos.lima@clinicanorte.local` |
-
-Essas 3 contas já têm uma **pergunta de segurança** cadastrada, pra
-testar a recuperação de senha sem configurar nada antes:
-
-| Conta | Pergunta | Resposta |
+| Perfil | Nome | E-mail |
 |---|---|---|
-| `admin@clinica.local` | Qual o nome do seu primeiro animal de estimação? | `Rex` |
-| `medico@clinica.local` | Qual foi o nome da sua primeira escola? | `Colégio Santa Rita` |
-| `carlos.lima@clinicanorte.local` | Qual é a sua cidade natal? | `Recife` |
+| 👑 Super admin | Administrador da Clínica | `admin@clinica.local` |
+| Médico | Dra. Ana Souza — Clínico geral | `medico@clinica.local` |
 
-### Contas fictícias (dos lotes de seed) — agrupadas por clínica
+### Clínica Norte (conta fixa de demonstração)
 
-O banco também vem com **mais de 20 clínicas** e dezenas de médicos e
-administradores fictícios, todos com senha `password` — úteis
-principalmente pra testar o isolamento (logar com o admin de uma
-clínica e confirmar que só aparece o que é dela).
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Médico | Dr. Carlos Lima — Cardiologia | `carlos.lima@clinicanorte.local` |
 
-Como esses lotes foram gerados em momentos diferentes do
-desenvolvimento, listar cada um manualmente aqui ficaria desatualizado
-rápido. Em vez disso, rode esta consulta no phpMyAdmin sempre que
-precisar da lista **atual e correta**, já agrupada por clínica:
+---
 
-```sql
-SELECT c.name AS clinica, u.role AS perfil, u.name AS nome, u.email AS email
-FROM users u
-JOIN clinics c ON c.id = u.clinic_id
-WHERE u.role IN ('admin', 'doctor')
-ORDER BY c.name, u.role DESC, u.name;
-```
+### Demais clínicas (dados fictícios gerados)
 
-Isso devolve uma linha por administrador/médico, ordenada por clínica
-— é só rolar pra ver, por exemplo, os 2-3 primeiros de cada clínica
-diferente e usar um admin e um médico de clínicas diferentes pra testar
-se um não está vendo os dados do outro (veja o roteiro de teste na
-[seção 6](#6-isolamento-por-clínica-e-super-admin)).
+### Centro Médico Aurora — Santos/SP
 
-> Rodando `scripts/seed_producao.php`, mais contas são geradas (e-mail
-> terminado em `@seed3.local`) — a consulta acima já pega essas também,
-> sem precisar de nada extra.
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | André Andrade Ferreira | `andre.andrade.ferreira.7402@seed5.local` |
+| Administrador | Roberto Almeida Correia | `roberto.almeida.correia.1933@seed5.local` |
+| Médico | Dr. Antônio Santos Gomes | `antonio.santos.gomes.1526@seed5.local` |
+| Médico | Dra. Camila Nascimento Soares | `camila.nascimento.soares.5869@seed5.local` |
 
-**Cadastrando o admin de uma clínica nova:** não precisa mexer em SQL
-— use o fluxo de convite (ver [seção 7](#7-convite-de-primeiro-acesso)),
-disponível pro super admin (`admin@clinica.local`).
+### Centro Médico Nova Saúde — Belo Horizonte/MG
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Natalia Santos Pereira | `natalia.santos.pereira.8107@seed5.local` |
+| Administrador | Pedro Rodrigues Gomes | `pedro.rodrigues.gomes.9906@seed5.local` |
+| Médico | Dr. Cristiano Souza Teixeira | `cristiano.souza.teixeira.5708@seed5.local` |
+| Médico | Dr. Rafael Andrade Marques | `rafael.andrade.marques.7422@seed5.local` |
+| Médico | Dra. Camila Cavalcanti Nascimento | `camila.cavalcanti.nascimento.7691@seed5.local` |
+
+### Centro Médico Nova Saúde — Campinas/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Larissa Carvalho Nascimento | `larissa.carvalho.nascimento.6167@seed5.local` |
+| Médico | Dr. Gustavo Souza Ramos | `gustavo.souza.ramos.2558@seed5.local` |
+| Médico | Dr. Matheus Soares Reis | `matheus.soares.reis.9928@seed5.local` |
+
+### Centro Médico Santa Clara — São Paulo/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Carlos Almeida Cardoso | `carlos.almeida.cardoso.5607@seed4.local` |
+| Administrador | Sérgio Lima Andrade | `sergio.lima.andrade.4718@seed4.local` |
+| Médico | Dr. Thiago Ramos Fernandes | `thiago.ramos.fernandes.6758@seed4.local` |
+| Médico | Dr. Vinícius Ribeiro Vieira | `vinicius.ribeiro.vieira.9365@seed4.local` |
+| Médico | Dra. Debora Reis Fernandes | `debora.reis.fernandes.9883@seed4.local` |
+| Médico | Dra. Maria Cavalcanti Fernandes | `maria.cavalcanti.fernandes.9536@seed4.local` |
+
+### Clínica Central
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Carlos Martins Rocha | `carlos.martins.rocha.adm.383@seed2.local` |
+
+### Clínica Harmonia — Sorocaba/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Daniel Cavalcanti Rocha | `daniel.cavalcanti.rocha.5903@seed4.local` |
+| Administrador | Paulo Cardoso Fernandes | `paulo.cardoso.fernandes.4648@seed4.local` |
+| Médico | Dra. Amanda Ribeiro Gomes | `amanda.ribeiro.gomes.9408@seed4.local` |
+| Médico | Dra. Leticia Santos Martins | `leticia.santos.martins.6725@seed4.local` |
+
+### Clínica Renascer
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Eliane Rodrigues Pinto | `eliane.rodrigues.pinto.adm.465@seed2.local` |
+| Médico | Dr(a). Daniel Marques Soares | `daniel.marques.soares.365@seed2.local` |
+| Médico | Dr(a). Otávio Nascimento Marques | `otavio.nascimento.marques.780@seed2.local` |
+| Médico | Dr(a). Sérgio Ramos Andrade | `sergio.ramos.andrade.716@seed2.local` |
+| Médico | Dr(a). Talita Lima Machado | `talita.lima.machado.471@seed2.local` |
+
+### Clínica Renascer — Campinas/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Fábio Ramos Ribeiro | `fabio.ramos.ribeiro.5722@seed4.local` |
+| Administrador | Priscila Lima Gomes | `priscila.lima.gomes.8220@seed4.local` |
+| Médico | Dr. Cristiano Castro Alves | `cristiano.castro.alves.3413@seed4.local` |
+| Médico | Dra. Gabriela Soares Teixeira | `gabriela.soares.teixeira.9631@seed4.local` |
+
+### Clínica Sul
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Cristiano Pereira Ramos | `cristiano.pereira.ramos.adm.309@seed2.local` |
+
+### Clínica Vitalità
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Médico | Dr(a). Gustavo Oliveira Vieira | `gustavo.oliveira.vieira.973@seed2.local` |
+| Médico | Dr(a). Igor Cavalcanti Andrade | `igor.cavalcanti.andrade.427@seed2.local` |
+| Médico | Dr(a). Paulo Almeida Santos | `paulo.almeida.santos.745@seed2.local` |
+| Médico | Dr(a). Roberto Fernandes Carvalho | `roberto.fernandes.carvalho.156@seed2.local` |
+
+### Espaço Saúde Mais
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Marcelo Ferreira Ribeiro | `marcelo.ferreira.ribeiro.adm.161@seed2.local` |
+| Médico | Dr(a). Adriana Silva Pinto | `adriana.silva.pinto.915@seed2.local` |
+| Médico | Dr(a). Leonardo Freitas Marques | `leonardo.freitas.marques.290@seed2.local` |
+| Médico | Dr(a). Sérgio Lopes Martins | `sergio.lopes.martins.611@seed2.local` |
+| Médico | Dr(a). Viviane Dias Cavalcanti | `viviane.dias.cavalcanti.307@seed2.local` |
+
+### Espaço Saúde Raízes — Curitiba/PR
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Maria Dias Castro | `maria.dias.castro.2732@seed5.local` |
+| Administrador | Priscila Nascimento Machado | `priscila.nascimento.machado.7559@seed5.local` |
+| Médico | Dr. Felipe Lima Monteiro | `felipe.lima.monteiro.9035@seed5.local` |
+| Médico | Dra. Leticia Alves Rodrigues | `leticia.alves.rodrigues.5308@seed5.local` |
+
+### Espaço Saúde Santa Clara — Belo Horizonte/MG
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Alexandre Carvalho Ribeiro | `alexandre.carvalho.ribeiro.8498@seed5.local` |
+| Administrador | Marcos Reis Cavalcanti | `marcos.reis.cavalcanti.7977@seed5.local` |
+| Médico | Dr. André Vieira Lima | `andre.vieira.lima.4626@seed5.local` |
+| Médico | Dr. Gilberto Silva Almeida | `gilberto.silva.almeida.3189@seed5.local` |
+
+### Instituto Harmonia — Campinas/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Aline Pinto Ferreira | `aline.pinto.ferreira.8673@seed5.local` |
+| Administrador | Ricardo Pinto Fernandes | `ricardo.pinto.fernandes.5176@seed5.local` |
+| Médico | Dr. Igor Freitas Fernandes | `igor.freitas.fernandes.5692@seed5.local` |
+| Médico | Dr. Pedro Alves Santos | `pedro.alves.santos.7617@seed5.local` |
+| Médico | Dr. Sérgio Cardoso Pereira | `sergio.cardoso.pereira.1075@seed5.local` |
+
+### Instituto Primavera — São Paulo/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Carlos Barbosa Cavalcanti | `carlos.barbosa.cavalcanti.9449@seed4.local` |
+| Médico | Dra. Adriana Lopes Nascimento | `adriana.lopes.nascimento.6231@seed4.local` |
+| Médico | Dra. Talita Ribeiro Nunes | `talita.ribeiro.nunes.8398@seed4.local` |
+
+### Policlínica Aurora — Ribeirão Preto/SP
+
+| Perfil | Nome | E-mail |
+|---|---|---|
+| Administrador | Henrique Pinto Gomes | `henrique.pinto.gomes.6619@seed4.local` |
+| Administrador | Sandra Almeida Vieira | `sandra.almeida.vieira.7638@seed4.local` |
+| Médico | Dr. Roberto Alves Monteiro | `roberto.alves.monteiro.8729@seed4.local` |
+| Médico | Dra. Talita Reis Ferreira | `talita.reis.ferreira.2357@seed4.local` |
+
+
+**Cadastrando o admin de uma clínica nova:** use o fluxo de convite (ver [seção 7](#7-convite-de-primeiro-acesso)), disponível pro super admin (`admin@clinica.local`).
 
 ---
 
