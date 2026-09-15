@@ -9,9 +9,14 @@ function render_header(?array $paciente, string $paginaAtual = ''): void
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
-        <meta charset="UTF-8">
+       <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Vital Clinic — Paciente</title>
+        <link rel="icon" href="<?= h(asset_url('assets/brand/vital-clinic-mark.svg')) ?>" type="image/svg+xml">
+        <!-- esse é o ícone que aparece do lado do título, na abinha do
+             navegador. asset_url() é a mesma função que já usamos pro
+             logo do topbar e pro paciente.css, ela monta o caminho certo
+             e já cuida do cache-busting sozinha -->
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="<?= h(asset_url('assets/css/paciente.css')) ?>">
     </head>
