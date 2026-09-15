@@ -594,6 +594,35 @@ function ensure_slots_for_doctor(int $doctorId, string $fromDate, string $toDate
         return;
     }
 
+    $limiteInicial = $fromDate . ' 00:00:00';
+    $limiteFinal = (new DateTime($toDate))->modify('+1 day')->format('Y-m-d') . ' 00:00:00';
+    // guardamos essas duas "pontas" do período aqui em cima porque vamos
+    // usar as duas tanto na limpeza quanto na geração, mais abaixo
+
+    // ANTES de gerar qualquer coisa nova, apaga os horários 'available'
+    // (livres) e 'blocked' (bloqueados) desse médico dentro do período,
+    // ou seja, os que ninguém marcou ainda. É isso que faz o calendário
+    // se "auto-corrigir" quando você muda a duração da consulta ou apaga
+    // um dia do Atendimento semanal: sem essa limpeza, os horários
+    // antigos (nos 30 minutos de antes, ou de um dia que você já tirou
+    // da grade) ficavam presos no banco pra sempre, porque essa função só
+    // sabia criar horário novo, nunca sabia apagar o que tinha ficado
+    // desatualizado. Um horário 'booked' (com consulta marcada de
+    // verdade) NUNCA é apagado aqui, só os que ainda estão livres ou
+    // bloqueados e SEM nenhuma consulta de verdade grudada neles (é o que
+    // o "NOT EXISTS" confere)
+    $stmtLimpeza = db()->prepare(
+        "DELETE FROM appointment_slots
+         WHERE doctor_id = ?
+           AND slot_start >= ?
+           AND slot_start < ?
+           AND status IN ('available', 'blocked')
+           AND NOT EXISTS (
+               SELECT 1 FROM appointments ap WHERE ap.slot_id = appointment_slots.id
+           )"
+    );
+    $stmtLimpeza->execute([$doctorId, $limiteInicial, $limiteFinal]);
+
     // busca a grade semanal recorrente desse médico (ex.: "toda quarta,
     // das 08h às 12h"), é essa tabela que o painel do médico/admin chama
     // de "Atendimento semanal"
@@ -621,7 +650,9 @@ function ensure_slots_for_doctor(int $doctorId, string $fromDate, string $toDate
     // o médico não tenha essa coluna preenchida)
 
     $dataAtual = new DateTime($fromDate);
-    $dataFinal = (new DateTime($toDate))->modify('+1 day');
+    // reaproveitandoa variavel $limiteFinal, que ja calculamos acima, sem 
+    // precisar recalcular aqui de novo.
+    $dataFinal = new DateTime($limiteFinal);
     $novosSlots = [];
 
     while ($dataAtual < $dataFinal) {
