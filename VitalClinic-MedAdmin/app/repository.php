@@ -815,6 +815,21 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
         'completed_at' => now_sql(),
         'updated_at' => now_sql(),
     ]);
+
+    // avisa o PACIENTE quando ele é marcado como ausente. Como as duas
+    // aplicações (MedAdmin e Paciente) leem a mesma tabela
+    // "notifications" do mesmo banco, essa notificação aparece sozinha
+    // na tela de Notificações do app do paciente, sem precisar de
+    // nenhuma mudança lá
+    if ($status === 'no_show') {
+        create_notification(
+            (int) $appointment['patient_id'],
+            $appointmentId,
+            'in_app',
+            'Consulta com ausência',
+            'Você não compareceu à sua consulta.'
+        );
+    }
 }
  
 /* ---------------------------------------------------------------------
