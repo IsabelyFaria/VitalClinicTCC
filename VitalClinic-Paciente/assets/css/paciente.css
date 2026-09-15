@@ -1,0 +1,1432 @@
+/* ===== 1. VARIÁVEIS DE COR ===== */
+/* :root é um seletor especial que representa a página inteira (a "raiz" do documento).
+   Definir cores aqui, como variáveis, significa que se um dia você quiser mudar o teal
+   principal do site inteiro, muda em UM lugar só, em vez de procurar em 20 arquivos */
+:root {
+  --color-primary: #0aa6bd;
+  /*  o teal principal: cor de botão de ação, links ativos, destaques.
+     Pinçado direto do botão "Entrar" do print do site real */
+
+  --color-primary-dark: #087a8c;
+  /*  uma versão mais escura do teal, pra usar quando o mouse passa em cima de um botão
+     (efeito ":hover"), dá um feedback visual de "isso é clicável" */
+
+  --color-navy: #154275;
+  /*  o azul petróleo escuro, usado no gradiente do painel de login e em textos de destaque */
+
+  --color-bg: #e8f4f8;
+  /*  o azul bem clarinho usado de fundo da página inteira (por trás dos cartões brancos) */
+
+  --color-card: #ffffff;
+  /*  branco puro, é a cor de fundo de todo "cartão" (caixinha) de conteúdo */
+
+  --color-badge-bg: #e6f6fa;
+  /*  um teal bem clarinho, usado de fundo em selinhos de status (tipo "Confirmada") */
+
+  --color-text-dark: #1a3a42;
+  /*  quase preto, mas puxando pro azul, cor padrão de título e texto importante */
+
+  --color-text-muted: #5a8a95;
+  /*  um cinza-azulado mais claro, usado em texto secundário, tipo legendas e subtítulos */
+
+  --color-danger: #e74c3c;
+  /*  vermelho, reservado só pra ações de "perigo" (cancelar consulta, excluir algo) */
+
+  --radius-card: 14px;
+  /*  o quanto os cantos dos cartões são arredondados. Guardar isso numa variável também
+     garante que TODOS os cartões do site tenham o mesmo arredondamento, sem inconsistência */
+
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.08);
+  /*  uma sombra bem sutil por trás dos cartões, pra dar profundidade (parecer que o
+     cartão está "flutuando" um pouquinho acima do fundo). rgba(0,0,0,0.08) é preto
+     com só 8% de opacidade, quase transparente, por isso fica discreto */
+}
+
+/* ===== 2. RESET BÁSICO ===== */
+/* Cada navegador tem margens e espaçamentos padrão diferentes pra elementos como <h1>,
+   <p>, <ul>. Esse "reset" zera tudo isso, pra gente começar do zero e controlar
+   exatamente o espaçamento que queremos, em vez de brigar com o padrão de cada navegador */
+* {
+  box-sizing: border-box;
+  /*  muda a forma como o navegador calcula a largura de um elemento: com isso, o
+     padding (espaçamento interno) e a borda passam a ser contados dentro da largura
+     definida, em vez de somados por fora. Sem isso, um elemento com width:100%(largura) e
+     padding(espaçamento) acaba ficando mais largo que o esperado e "vazando" pra fora do card */
+
+  margin: 0;
+  padding: 0;
+  /*  zera a margem e o espaçamento interno padrão de TODO elemento da página,
+     o "*" no começo do seletor significa "aplica isso a absolutamente tudo" */
+}
+
+/* ===== 3. CORPO DA PÁGINA ===== */
+body {
+  font-family: 'Nunito', sans-serif;
+  /*  a mesma fonte usada no protótipo do app. "sans-serif" é o plano B: se por
+     algum motivo a fonte Nunito não carregar, o navegador usa qualquer fonte sem
+     serifa disponível, em vez de quebrar o visual */
+
+  background: var(--color-bg);
+  /*  var(--color-bg) "puxa" o valor que a gente definiu lá em cima, no :root.
+     É assim que se usa uma variável de CSS depois de declarada */
+
+  color: var(--color-text-dark);
+  /*  cor de texto padrão da página inteira (a menos que algum elemento específico
+     sobrescreva isso depois) */
+
+  min-height: 100vh;
+  /*  garante que o fundo cubra a tela inteira mesmo se o conteúdo for curto.
+     "vh" = "viewport height", ou seja, 100vh = 100% da altura visível da tela */
+}
+
+/* ===== 4. CONTAINER (largura máxima do conteúdo) ===== */
+/* Mesmo escolhendo "largura total como o site de admin", não queremos o texto esticando
+   de ponta a ponta numa tela ultrawide, fica cansativo de ler. Esse container central
+   limita a largura, mas ainda ocupa bastante espaço */
+.container {
+  max-width: 1200px;
+  /*  a largura do conteúdo nunca ultrapassa 1200 pixels, mesmo em monitores gigantes */
+
+  margin: 0 auto;
+  /*  margem 0 em cima/embaixo, e "auto" nos lados esquerdo/direito, esse "auto" é o
+     truque clássico de CSS pra centralizar um bloco horizontalmente na tela */
+
+  padding: 0 24px;
+  /*  um respiro de 24px nas laterais, pra o conteúdo não colar na borda da tela em
+     telas menores (onde o max-width de 1200px ainda não faz efeito) */
+}
+
+/* ===== 5. BARRA DE NAVEGAÇÃO (topo) ===== */
+.topbar {
+  background: var(--color-card);
+  /*  fundo branco, igual ao navbar do site de admin/médico */
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  /*  sombrinha sutil embaixo da barra, pra separar visualmente do conteúdo da página */
+
+  display: flex;
+  /*  "flex" transforma esse elemento num "container flexível": os filhos dele (logo,
+     links, botão sair) se organizam automaticamente numa linha, um do lado do outro */
+
+  align-items: center;
+  /*  alinha todos os itens dessa linha verticalmente ao centro (senão o logo, que é
+     maior, ficaria "mais alto" que os links de texto) */
+
+  justify-content: space-between;
+  /*  empurra o primeiro item pra ponta esquerda e o último pra ponta direita,
+     distribuindo o espaço vazio no meio deles, é assim que o logo fica à esquerda
+     e o botão "Sair" fica lá na direita, com os links no centro */
+
+  padding: 16px 24px;
+  /*  espaçamento interno da barra: 16px em cima/embaixo, 24px nos lados */
+}
+
+.topbar-logo {
+  font-weight: 800;
+  /*  800 é um peso de fonte bem "grosso" (negrito forte), deixa o nome da marca
+     com mais destaque */
+
+  font-size: 20px;
+  color: var(--color-navy);
+}
+
+.topbar-logo img {
+    display: block;
+    height: 70px;
+    width: auto;
+    /* height fixo e width:auto mantêm a proporção original do SVG,
+       só ajustando ele pra caber bem na altura da barra de navegação.
+       Se achar grande ou pequeno demais, é só mudar esse "70px" */
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 8px;
+  /*  "gap" cria um espaço automático entre os itens de um flex container, sem
+     precisar ficar colocando margem manualmente em cada link */
+}
+
+.topbar-nav a {
+  color: var(--color-text-muted);
+  /*  os links começam com a cor "apagada" (texto secundário) */
+
+  text-decoration: none;
+  /*  remove o sublinhado padrão de link */
+
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  /*  20px de arredondamento é o suficiente pra virar uma "pílula" (cantos bem redondos),
+     igual às abas do protótipo do app */
+
+  transition: background 0.2s, color 0.2s;
+  /*  quando o "background" ou o "color" mudar (por causa do hover ou da classe .active),
+     a mudança acontece suavemente ao longo de 0.2 segundos, em vez de trocar "seco" */
+}
+
+.topbar-nav a:hover {
+  background: var(--color-badge-bg);
+  /*  ":hover" é um estado especial: essas regras só valem enquanto o mouse está
+     em cima do link. Aqui, ao passar o mouse, o fundo fica com aquele teal clarinho */
+}
+
+.topbar-nav a.active {
+  background: var(--color-badge-bg);
+  color: var(--color-primary);
+  /*  ".active" é uma classe que a gente vai adicionar via PHP no link da página atual
+     (ex.: se a pessoa está em "Minhas consultas", só o link de Consultas ganha essa
+     classe), assim ela sabe visualmente em qual tela está */
+}
+
+/* Só em telas grandes (celular fica do jeito que já era, esse bloco
+   nem entra em ação lá). Aqui a gente transforma o menu numa "pílula"
+   flutuante, centralizada entre a logo e o avatar */
+@media (min-width: 1024px) {
+  .topbar-logo {
+    /* flex: 1 1 0 diz "cresça pra ocupar espaço livre, dividindo IGUAL
+       com qualquer outro item que também tenha flex: 1 1 0", como o
+       avatar (.topbar-profile) lá embaixo também vai ganhar esse mesmo
+       valor, os dois crescem sempre no mesmo tamanho um do outro */
+    flex: 1 1 0;
+    /* order controla a ORDEM VISUAL dos itens, independente da ordem
+       em que eles aparecem no HTML (útil se um dia você reorganizar o
+       HTML sem querer mudar o visual) */
+    order: 1;
+  }
+
+  .topbar-nav {
+    /* flex: 0 0 auto diz o oposto: "não cresça, não encolha, fique só
+       do tamanho do seu próprio conteúdo". Como os dois vizinhos (logo
+       e avatar) crescem igual dos dois lados, sobrando espaço igual dos
+       dois lados, o menu, que não cresce, acaba ficando bem no meio */
+    flex: 0 0 auto;
+    order: 2;
+
+    /* a "pílula" em volta do menu: fundo branco (igual ao da topbar,
+       então quem separa um do outro é só a borda + a sombra), cantos
+       bem arredondados (999px é um valor "gigante" de propósito, garante
+       que sempre vire uma pílula perfeita, não importa a largura) */
+    background: var(--color-card);
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 999px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    padding: 6px;
+  }
+
+  .topbar-profile {
+    /* mesma lógica da logo: cresce igual, do lado oposto */
+    flex: 1 1 0;
+    order: 3;
+
+    /* .topbar-profile já era "position: relative" (pro painel se
+       encaixar certinho embaixo do avatar), agora também vira um
+       mini flex container só pra empurrar o avatar pra ponta DIREITA
+       do espaço que ele ganhou ao crescer (senão ele ficaria "colado"
+       na esquerda desse espaço, longe da borda da tela) */
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.btn-sair {
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  background: transparent;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  /*  muda o formato do cursor do mouse pra "mãozinha" ao passar em cima, avisando
+     que aquilo é clicável (útil aqui porque geralmente isso vai ser um <button>) */
+}
+
+/* ===== 6. BOTÕES ===== */
+.btn {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  /*  essas são as regras "em comum" de qualquer botão do site: tamanho, fonte,
+     arredondamento. As classes abaixo (.btn-primary, .btn-outline...) só adicionam
+     a cor por cima dessa base, então um botão sempre usa ".btn" junto com uma delas,
+     tipo: <button class="btn btn-primary"> */
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+  /*  escurece um pouco no hover, dando feedback de que é clicável */
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--color-danger);
+  border: 2px solid var(--color-danger);
+  /*  reservado pra ações tipo "Cancelar consulta", a cor vermelha já avisa
+     visualmente que é uma ação mais séria, antes mesmo da pessoa ler o texto */
+}
+
+/* ===== 7. CARTÕES ===== */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  margin-bottom: 16px;
+  /*  esse é o "cartão" genérico que vimos no print do dashboard admin (aquelas
+     caixinhas brancas com "Hoje", "Pendentes", etc.), toda tela nova do paciente
+     vai usar essa mesma classe pra qualquer bloco de conteúdo */
+}
+
+/* ===== 8. FORMULÁRIOS ===== */
+.form-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  margin-bottom: 4px;
+}
+
+.form-subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: block;
+  /*  força o rótulo a ocupar a linha inteira sozinho, empurrando o campo de
+     input pra linha de baixo, em vez de ficar tudo espremido lado a lado */
+
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin-bottom: 4px;
+}
+
+.field-input {
+  width: 100%;
+  background: var(--color-bg);
+  border: 2px solid transparent;
+  /*  começa com borda "invisível" (transparent), mas já reservando o espaço dela,
+     assim, quando a borda aparecer de verdade no :focus (próxima regra), o campo não
+     "pula" de tamanho na tela */
+
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--color-text-dark);
+  margin-bottom: 16px;
+  outline: none;
+  /*  remove aquele contorno azul padrão que o navegador coloca em campos
+     selecionados, a gente vai fazer o nosso próprio indicador de foco */
+}
+
+.field-input:focus {
+  border-color: var(--color-primary);
+  /*  ":focus" é o estado de quando a pessoa clicou no campo e está digitando nele.
+     Aqui a borda (que era transparente) vira teal, mostrando claramente qual
+     campo está ativo no momento */
+}
+
+/* ===== 9. SELOS DE STATUS (badges) ===== */
+.badge {
+  display: inline-block;
+  background: var(--color-badge-bg);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  /*  é o selinho tipo "Confirmada" que vimos no print do dashboard, fundo teal
+     clarinho, texto teal, bem arredondado */
+}
+
+/* ===== 10. MENSAGENS FLASH ===== */
+/* flash()/take_flash() que a gente fez no helpers.php, Essas duas classes
+   são exatamente pra estilizar essas mensagens quando elas aparecem na tela */
+.flash-success {
+  background: #e6f6ea;
+  color: #1c7c3c;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.flash-error {
+  background: #fdecea;
+  color: #c0392b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  /*  mesma ideia da de cima, só que com tons de vermelho, pra erro ficar
+     visualmente diferente de sucesso, mesmo sem a pessoa ler o texto */
+}
+
+/* ===== 11. UTILITÁRIOS ===== */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-center {
+  text-align: center;
+  /*  classes "utilitárias" são pequenos atalhos reutilizáveis, em vez de criar uma
+     classe nova toda vez que precisar centralizar um texto, é só grudar "text-center"
+     em qualquer elemento */
+}
+
+
+/* ===== 12. DASHBOARD: DESTAQUE DE CONSULTA E ATALHOS ===== */
+.section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  /* título pequeno de seção (tipo "Atalhos"), reaproveitado do protótipo do app */
+}
+
+.appointment-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  /* flex-wrap: wrap permite que, se a tela for estreita demais pra caber tudo numa
+     linha só, o conteúdo "quebra" pra linha de baixo, em vez de espremer ou vazar */
+}
+
+.appointment-doctor {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-dark);
+}
+
+.appointment-meta {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  /* antes, esses dois estilos só funcionavam se estivessem DENTRO de um elemento
+     com a classe .appointment-highlight-info (lembra do "espaço = está dentro de"
+     do CSS?). Tirando essa exigência, essas classes ficam "soltas" e podem ser
+     usadas em qualquer lugar novo, como o cartão, sem
+     precisar reescrever o mesmo estilo duas vezes. O uso no dashboard continua
+     funcionando normalmente, porque nada te impede de usar uma classe "solta"
+     dentro de outro elemento também */
+}
+
+/* ===== 12b. CARTÕES INDIVIDUAIS (cada consulta/médico é o SEU PRÓPRIO cartão) ===== */
+.appointment-card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  /* essa é a mesma "receita" do .card genérico, só que pensada pra ficar em
+     LISTA: cada uma dessas já nasce com margem embaixo, empurrando a próxima
+     pra baixo, sem precisar de div nem linha divisória entre elas */
+}
+
+.appointment-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  /* fileira de cima do cartão: o que estiver à esquerda (badge, ou nome do
+     médico) e o que estiver à direita (botão) ficam nas pontas opostas, com
+     o espaço vazio distribuído no meio, a mesma ideia do .topbar que já
+     construímos, só que numa escala menor, dentro do cartão */
+}
+
+.btn-sm {
+  /* versão menor do botão, pra caber bem dentro de um cartão de lista sem
+     dominar o espaço todo, some junto com .btn e .btn-danger/.btn-outline,
+     tipo: <button class="btn btn-danger btn-sm"> */
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.shortcut-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.shortcut-card {
+  flex: 1;
+  min-width: 160px;
+  /* "flex: 1" faz cada cartão dividir o espaço disponível igualmente entre eles.
+     "min-width: 160px" garante que, mesmo dividindo espaço, nenhum cartão fica
+     menor que 160px, é isso que força a quebra de linha em telas estreitas,
+     em vez de espremer os cartões até ficarem ilegíveis */
+
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text-dark);
+  font-weight: 700;
+  transition: transform 0.15s;
+  /* prepara uma transição suave pra propriedade "transform" (que vamos mudar no
+     hover, logo abaixo), sem isso, o efeito aconteceria "seco", de uma vez */
+}
+
+.shortcut-card:hover {
+  transform: translateY(-2px);
+  /* translateY(-2px) move o elemento 2 pixels PRA CIMA (valor negativo = pra cima).
+     Combinado com a "transition" de cima, dá um efeitinho sutil de "levantar" o
+     cartão quando o mouse passa em cima, indicando que é clicável */
+}
+
+.shortcut-card .shortcut-icon {
+  display: block;
+  margin: 0 auto 8px;
+  color: var(--color-primary);
+  /* "color" aqui não pinta texto, pinta o ícone SVG de dentro, através da
+     propriedade "currentColor" que vamos usar no SVG (explico embaixo) */
+}
+
+.shortcut-card .shortcut-icon svg {
+  width: 28px;
+  height: 28px;
+  /* controla o tamanho do desenho */
+}
+
+/* Divisória */
+.divider {
+  height: 1px;
+  background: #e8f4f8;
+  margin: 12px 0;
+  /* uma "linha" bem fina (1px de altura), colorida igual o fundo do site, dá
+     uma separação visual sutil entre os itens da lista, sem precisar de bordas
+     mais pesadas */
+}
+
+/* AGENDA */
+.time-slot-grid {
+    /* container que vai segurar os botõezinhos de horário lado a lado */
+    display: flex;
+    flex-wrap: wrap; /* quando não couber mais na linha, quebra pra próxima */
+    gap: 8px; /* espacinho entre um botão e outro */
+    margin-bottom: 16px;
+}
+
+.time-slot-btn {
+    /* o botão de cada horário (tipo "09:00") */
+    background: var(--color-badge-bg); /* mesmo azul clarinho do badge de status */
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer; /* mãozinha ao passar o mouse, indicando que é clicável */
+}
+
+.time-slot-btn:hover {
+    /* inverte as cores ao passar o mouse, pra dar um feedback visual */
+    background: var(--color-primary);
+    color: #fff;
+}
+
+/* MARCAR CONSULTA */
+.date-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.date-pill {
+    /* a "pilula" de cada data clicável, parecida com os links do menu de cima */
+    display: inline-block;
+    background: var(--color-badge-bg);
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+}
+
+.date-pill:hover {
+    border-color: var(--color-primary);
+}
+
+.date-pill.active {
+    /* a data que está sendo mostrada no momento fica destacada, preenchida
+       de teal sólido, pra ficar óbvio qual dia você está vendo */
+    background: var(--color-primary);
+    color: #fff;
+}
+
+/* CALENDARIO E HORARIOS */
+.agendar-grid {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    /* em telas estreitas, o card de horários desce pra debaixo do
+       calendário, em vez de espremer os dois lado a lado até ficar ilegível */
+}
+
+.calendar-card {
+    flex: 1 1 380px;
+    /* "flex-basis" de 380px: cada card TENTA ocupar 380px, mas o primeiro
+       "1" permite crescer se sobrar espaço, e o segundo "1" permite encolher
+       se a tela for estreita */
+}
+
+.horarios-card {
+    flex: 1 1 300px;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--color-text-dark);
+}
+
+.calendar-nav-arrow {
+    text-decoration: none;
+    color: var(--color-primary);
+    font-size: 20px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.calendar-nav-arrow:hover {
+    background: var(--color-badge-bg);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* "repeat(7, 1fr)" cria 7 colunas de larguras IGUAIS (uma pra cada dia
+       da semana). "1fr" significa "1 fração do espaço disponível" */
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    /* cada "casinha" (vazia ou com número) é um item dentro dessa grade de
+       7 colunas. O navegador quebra pra próxima linha sozinho a cada 7
+       itens, não precisamos montar "semana por semana" na mão em HTML */
+}
+
+.calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    /* obriga cada casinha a ser um quadrado (altura sempre igual à largura) */
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.calendar-day.disabled {
+    /* dias SEM horário livre: fundo azul bem clarinho, texto discreto,
+       dá pra ver que ali existe um dia, mas não chama atenção nenhuma */
+    background: var(--color-badge-bg);
+    color: var(--color-text-muted);
+}
+
+.calendar-day.available {
+    /* dias COM horário livre: fundo azul forte (sólido), texto branco,
+       agora é isso que salta aos olhos primeiro na grade do calendário */
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.calendar-day.available:hover {
+    background: var(--color-primary-dark);
+    /* escurece ainda mais ao passar o mouse, reforçando que é clicável */
+}
+
+.calendar-day.selected {
+    /* o dia escolhido agora usa o azul petróleo mais escuro, pra se destacar
+       tanto dos indisponíveis (clarinhos) quanto dos disponíveis comuns
+       (teal), fica óbvio qual dia está sendo mostrado no card ao lado */
+    background: var(--color-navy);
+    color: #fff;
+    font-weight: 800;
+}
+
+.search-box {
+    /* display:flex coloca o campo de texto e o botão lado a lado, na mesma
+       linha, em vez de um embaixo do outro */
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.search-box input[type="text"] {
+    /* flex: 1 faz o campo de texto "esticar" e ocupar todo o espaço que
+       sobrar na linha, o botão do lado fica só do tamanho do texto dele */
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+/* PAINEL AVATAR */
+.topbar-profile {
+    /* position: relative é o que faz o painel (que é position: absolute)
+       se posicionar EM RELAÇÃO a essa div, e não em relação à página
+       inteira, sem isso, o painel apareceria "perdido" em outro canto */
+    position: relative;
+}
+
+.perfil-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    /* border-radius: 50% num elemento quadrado (mesma largura e altura)
+       vira um círculo perfeito */
+    background: var(--color-primary, #0aa6bd);
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* esse display:flex + align-items + justify-content é só pra
+       centralizar a letrinha certinho no meio do círculo, tanto na
+       horizontal quanto na vertical */
+}
+
+.perfil-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    padding: 8px;
+    /* padding menor que antes (era 16px): como não tem mais nome/email
+       pra "respirar" lá em cima, o painel fica mais compacto, só do
+       tamanho dos dois itens de menu */
+    width: 180px;
+    z-index: 100;
+}
+
+/* estilo COMUM aos dois itens do menu (o link "Perfil" e o botão "Sair").
+   Uso a mesma classe nos dois de propósito: assim os dois ficam do
+   MESMO jeito visualmente, um "bloco" clicável do tamanho inteiro do
+   painel, com cantos arredondados e fundo transparente, em vez de um
+   parecer link azul sublinhado e o outro um botão com borda, como
+   acontecia antes */
+.perfil-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text, #1a3a42);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: left;
+    text-decoration: none;
+    /* text-decoration: none tira o sublinhado que os navegadores colocam
+       em links <a> por padrão, é isso que fazia o "Ver meu perfil"
+       aparecer sublinhado e azulado antes, mesmo você não tendo pedido */
+    cursor: pointer;
+}
+
+.perfil-dropdown-item:hover {
+    /* ao passar o mouse por cima (de qualquer um dos dois itens), ganha
+       um fundo clarinho, dando a sensação de "isso é clicável" */
+    background: var(--color-badge-bg, #eaf6f8);
+}
+
+.perfil-dropdown-sair {
+    /* essa classe SOMA com .perfil-dropdown-item (o botão Sair tem as
+       DUAS classes no HTML: class="perfil-dropdown-item perfil-dropdown-sair").
+       Aqui só sobrescrevemos a cor do texto pra vermelho, deixando claro
+       que "Sair" é uma ação diferente das outras (encerra sua sessão) */
+    color: #dc2626;
+}
+
+
+/* BOTÃO FILTRO */
+.agendar-busca-linha {
+    display: flex;
+    flex-wrap: wrap;
+    /* flex-wrap: wrap deixa o botão "Filtros" descer pra uma segunda
+       linha sozinho, caso a tela seja estreita demais pra caber os dois
+       lado a lado */
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.filtros-wrapper {
+    position: relative;
+    /* de novo, position:relative é o "ponto de referência" pro painel
+       (que é position:absolute) se encaixar embaixo do botão certinho */
+}
+
+.filtros-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    padding: 16px;
+    width: 220px;
+    z-index: 100;
+}
+
+.filtros-dropdown select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+/* a grade de cards: 3 colunas iguais no desktop */
+.clinicas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* em telas menores que 900px de largura (tablet/celular), vira 1 coluna
+   só, cada clínica aparece uma embaixo da outra. Se
+   tiver muitas clínicas, a rolagem é só a rolagem normal da página pra
+   baixo, o navegador já faz isso sozinho, não precisa de nada especial */
+@media (max-width: 900px) {
+    .clinicas-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.clinica-card {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    /* ERA "align-items: flex-start" antes. "stretch" faz o avatar e o
+       bloco de texto ESTICAREM pra ocupar a altura TOTAL do card (que já
+       vem igualada entre os cards da mesma linha, por causa do
+       .clinicas-grid ser um "grid". grid já iguala a altura de tudo que
+       está lado a lado sozinho). O avatar não fica "esticado" e vira uma
+       bolinha achatada porque ele já tem um "height: 48px" fixo lá na
+       regra dele, uma altura fixa sempre GANHA do "stretch" do pai */
+}
+
+.clinica-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    /* min-width evita que o círculo "espreme" e vire oval quando o
+       texto do lado precisar de mais espaço do que sobrou */
+    border-radius: 50%;
+    background: var(--color-primary, #0aa6bd);
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clinica-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    /* agora esse bloco também virou um "flex", só que organizando os
+       filhos dele (nome, endereço, contagem de médicos, botão) numa
+       COLUNA (um embaixo do outro, só que dessa vez controlado por
+       flex, não pelo fluxo normal do HTML). É isso que permite o
+       próximo truque funcionar */
+}
+
+/* PESQUISA ABA MÉDICOS */
+.tabs-secundarias {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab-secundaria {
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border, #d7e4ea);
+    background: #fff;
+    color: var(--color-text-muted, #6b8b93);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.tab-secundaria.tab-ativa {
+    /* essa é a aba SELECIONADA no momento: fundo preenchido, texto branco */
+    background: var(--color-primary, #0aa6bd);
+    border-color: var(--color-primary, #0aa6bd);
+    color: #fff;
+}
+
+.medico-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    /* flex-wrap:wrap deixa o CRM e o botão descerem pra próxima linha
+       sozinhos em telas estreitas, em vez de espremer tudo numa linha só */
+    gap: 14px;
+    background: var(--color-card, #fff);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.medico-avatar {
+    /* sobrescreve só o tamanho do .clinica-avatar (que já tem cor de
+       fundo, formato redondo etc.), deixando o do médico um pouco menor */
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 16px;
+}
+
+.medico-info {
+    flex: 1;
+    min-width: 200px;
+    /* min-width garante um tamanho mínimo confortável pro texto antes de
+       quebrar linha, em vez de espremer até ficar ilegível */
+}
+
+.medico-crm {
+    color: var(--color-text-muted, #6b8b93);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.especialidades-pilulas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pilula-especialidade {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border, #d7e4ea);
+    background: #fff;
+    color: var(--color-primary, #0aa6bd);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pilula-especialidade:hover {
+    background: var(--color-badge-bg, #eaf6f8);
+}
+
+.btn-voltar {
+    /* transition garante que a troca de cor no hover aconteça suave,
+       em vez de "piscar" seca de uma cor pra outra */
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-voltar:hover {
+    /* ao passar o mouse: preenche o fundo com a cor principal do site
+       e deixa o texto branco, em vez de só ter a borda contornada */
+    background: var(--color-primary, #0aa6bd);
+    color: #fff;
+    border-color: var(--color-primary, #0aa6bd);
+}
+
+/* BANNER DA HOME */
+.home-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: linear-gradient(135deg, var(--color-primary-light, #d6f0f3), #ffffff);
+    border-radius: 16px;
+    padding: 32px 60px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.home-banner-conteudo { flex: 1; min-width: 0; }
+.home-banner-eyebrow {
+    display: inline-block;
+    background: #ffffff;
+    color: var(--color-primary, #0aa6bd);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+.home-banner-titulo { font-size: 28px; margin: 0 0 10px; color: var(--color-text, #14313a); }
+.home-banner-texto { color: var(--color-text-muted, #5a7580); margin: 0 0 16px; max-width: 420px; }
+.home-banner-desenho { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.home-banner-seta {
+    background: #ffffff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+}
+.home-banner-pontos {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+}
+.home-banner-ponto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+.home-banner-ponto.ponto-ativo { background: var(--color-primary, #0aa6bd); }
+@media (max-width: 700px) {
+    .home-banner { flex-wrap: wrap; padding: 24px; }
+    .home-banner-desenho { display: none; }
+}
+
+/* NOVO: pílulas de especialidade da Home (reaproveitam .pilula-especialidade
+   que já existe, só que agora como link em vez de botão) */
+.especialidades-pilulas-home {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+/* NOVO: cabeçalho "Clínicas parceiras" + link "Ver todas" */
+.clinicas-parceiras-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.ver-todas-link {
+    color: var(--color-primary, #0aa6bd);
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+}
+.ver-todas-link:hover { text-decoration: underline; }
+
+/* NOVO: selo "Disponível" (só aparece quando é real) */
+.badge-disponivel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #1a9c5c;
+    font-weight: 600;
+    margin: 4px 0;
+}
+.bolinha-verde {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1a9c5c;
+    display: inline-block;
+}
+
+/* REGRA NOVA DA TELA PERFIL*/
+/* cabeçalho da página de Perfil (bolinha + título lado a lado) */
+.perfil-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* bolinha grande com a inicial do paciente, usando as mesmas
+   cores que já usamos nos avatares de clínica/médico */
+.perfil-avatar-grande {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 50%;
+    background: var(--color-primary-light, #d6f0f3);
+    color: var(--color-primary, #0aa6bd);
+    font-weight: 700;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* essa classe extra deixa a bolinha um pouco menor, só pra usar
+   dentro do card (o header da página fica com a bolinha maior) */
+.perfil-avatar-media {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 18px;
+}
+
+/* cabeçalho de dentro do card "Informações pessoais", com uma
+   linha fina separando ele do formulário */
+.perfil-card-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--color-border, #e2edf0);
+}
+
+/* linha com 2 campos lado a lado (E-mail/Telefone, CPF/Nascimento).
+   flex-wrap faz eles caírem um embaixo do outro sozinhos em telas
+   estreitas (celular), sem precisar de media query separada */
+.perfil-linha-dupla {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.perfil-linha-dupla .perfil-campo {
+    flex: 1;
+    min-width: 220px;
+}
+
+/* linha final com os botões Cancelar/Salvar, um em cada ponta */
+.perfil-botoes {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border, #e2edf0);
+}
+
+/* HISTÓRICO */
+
+/* linha que segura as abas (Todas/Realizadas/...) à esquerda e o botão
+   de período à direita, quebrando pra baixo sozinha em telas estreitas */
+.historico-filtros-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* botão "Período": mesma ideia de pílula usada nos outros filtros do
+   site, com o texto do período atual escrito dentro dele */
+.periodo-trigger {
+    background: #fff;
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--color-text-dark);
+    cursor: pointer;
+}
+
+.periodo-trigger:hover {
+    border-color: var(--color-primary);
+}
+
+/* cores dos selos de status do histórico, entram por cima do .badge
+   genérico (que já cuida do formato/tamanho), só trocando fundo/cor */
+.badge-realizada {
+    background: #e6f6ea;
+    color: #1c7c3c;
+    /* mesmo verde do .flash-success, "sucesso" sempre com a mesma cor */
+}
+
+.badge-cancelada {
+    background: #fdecea;
+    color: #c0392b;
+    /* mesmo vermelho do .flash-error */
+}
+
+.badge-ausencia {
+    background: #fff4e0;
+    color: #b7791f;
+    /* âmbar: não é "sucesso" nem "erro do paciente" (que já é vermelho,
+       usado em Cancelada), é um terceiro tipo de desfecho */
+}
+
+.badge-pendente {
+    background: #fff4e0;
+    color: #b7791f;
+    /* mesma cor âmbar do badge-ausencia, "pendente" também é um estado
+       de "aguardando", faz sentido usar a mesma cor de aviso, só que com
+       um nome de classe próprio, pra não confundir com o Histórico */
+}
+
+/* fileira de cima de cada cartão: 3 colunas lado a lado, avatar+nome
+   do médico / especialidade·clínica·data / selo de status */
+.historico-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+/* coluna 1 (esquerda): avatar + nome, tamanho travado, quem cede
+   espaço quando o cartão aperta é sempre a coluna do meio, nunca esta */
+.historico-medico-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* coluna 2 (meio): flex:1 faz ela esticar e tomar conta de todo o
+   espaço vazio entre o nome do médico e o selo; text-align:center
+   centraliza o texto dentro desse espaço, essa combinação é o que faz
+   a informação "flutuar" no meio do cartão */
+.historico-meta-central {
+    flex: 1 1 220px;
+    text-align: center;
+    font-size: 13px;
+}
+
+/* ===== TERMOS DE USO (modal bloqueante) ===== */
+
+.terms-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(15, 23, 42, 0.6);
+    /* escurece a página inteira por trás do modal, reforçando que ele é
+       bloqueante, não dá pra clicar em nada atrás dele */
+}
+
+.terms-modal {
+    position: fixed;
+    z-index: 2001;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* esse "top/left 50% + translate -50%" é o jeito clássico de centralizar
+       um elemento na tela inteira, tanto na horizontal quanto na vertical */
+    width: min(640px, calc(100% - 32px));
+    max-height: min(720px, calc(100vh - 32px));
+    /* min() escolhe o menor entre os dois valores: em telas grandes vira
+       640px/720px fixos; em telas pequenas, encolhe pra caber com uma
+       margem de 16px de cada lado, sem estourar a tela */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--color-card);
+    border-radius: var(--radius-card);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    padding: 24px;
+}
+
+.terms-modal h2 {
+    margin: 0 0 4px;
+}
+
+.terms-text {
+    overflow-y: auto;
+    /* é isso que cria a barra de rolagem PRÓPRIA desse quadro (o resto do
+       modal, título, checkbox e botão fica fixo, só o texto rola) */
+    padding: 4px 12px 4px 0;
+    margin: 12px 0;
+    border: 1px solid var(--color-border, #d7e4ea);
+    border-radius: 10px;
+    background: var(--color-bg);
+}
+
+.terms-text h3,
+.terms-text h4 {
+    margin: 16px 12px 6px;
+    color: var(--color-navy);
+}
+
+.terms-text h3:first-child {
+    margin-top: 12px;
+}
+
+.terms-text p,
+.terms-text ul {
+    margin: 0 12px 10px;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.terms-text ul {
+    padding-left: 20px;
+}
+
+.terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 4px 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.terms-checkbox input {
+    width: auto;
+    margin-top: 3px;
+    /* sem isso, o checkbox herdaria o "width: 100%" do .field-input (lá da
+       seção 8 do CSS) e viraria uma caixa esticada, gigante, em vez de um
+       quadradinho normal */
+}
+
+/* ===== TUTORIAL DE PRIMEIRO ACESSO (tour guiado) ===== */
+.tour-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(15, 23, 42, 0.15);
+    pointer-events: none;
+    /* pointer-events:none deixa os cliques "atravessarem" essa camada,
+       ela é só um escurecimento leve, quem realmente bloqueia clique é o
+       destaque (.tour-highlight) com aquele box-shadow gigante */
+}
+
+.tour-highlight {
+    position: fixed;
+    z-index: 999;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55), 0 0 0 3px var(--color-primary);
+    /* o truque do "spotlight": uma sombra de 9999px (gigante) escurece a
+       tela inteira ao redor, menos onde esse elemento está posicionado
+       (que vira o "buraco" claro em volta do link do menu) */
+    transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+    pointer-events: none;
+}
+
+.tour-tooltip {
+    position: fixed;
+    z-index: 1000;
+    width: min(320px, calc(100vw - 28px));
+}
+
+.tour-tooltip-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tour-tooltip p {
+    margin: 8px 0 0;
+}
+
+.modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: var(--color-text-dark);
+}
+
+.tutorial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 16px 0;
+}
+
+.tutorial-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-border, #d7e4ea);
+}
+
+.tutorial-dot.is-active {
+    background: var(--color-primary);
+}
+
+.tutorial-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tutorial-nav-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== PÁGINA "SOBRE NÓS" ===== */
+
+.sobre-eyebrow {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
