@@ -128,11 +128,17 @@ body {
 
   font-size: 20px;
   color: var(--color-navy);
+  margin-left: 12px;
+  /* puxa a logo um pouco mais pra perto da borda esquerda da barra,
+     deixando ela na mesma posição visual do MedAdmin. Se ainda achar
+     pouco (ou demais), é só ajustar esse número: mais negativo (ex.:
+     -20px) puxa mais pra esquerda, menos negativo (ex.: -6px) puxa
+     menos */
 }
 
 .topbar-logo img {
     display: block;
-    height: 70px;
+    height: 68px;
     width: auto;
     /* height fixo e width:auto mantêm a proporção original do SVG,
        só ajustando ele pra caber bem na altura da barra de navegação.
