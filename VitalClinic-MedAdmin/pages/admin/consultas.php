@@ -3,16 +3,18 @@
 /** Lista de consultas com filtros (data/status/médico) e o modal
  * "Adicionar Nova Consulta" (autocompletar de paciente/médico,
  * calendário visual de dias disponíveis e seleção de horário). */
-function render_admin_appointments(): void
+function render_admin_appointments(array $user): void
 {
+    $clinicId = (int) $user['clinic_id'];
     $filters = [
         'date' => $_GET['date'] ?? '',
         'status' => $_GET['status'] ?? '',
         'doctor_id' => (int) ($_GET['doctor_id'] ?? 0),
+        'clinic_id' => $clinicId,
     ];
     $appointments = appointments_for_admin($filters);
-    $doctors = active_doctors();
-    $patients = patient_list();
+    $doctors = active_doctors(['clinic_id' => $clinicId]);
+    $patients = patient_list('', $clinicId);
     ?>
     <section class="page-head">
         <div>

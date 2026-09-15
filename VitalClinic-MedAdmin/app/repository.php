@@ -230,16 +230,25 @@ function active_doctors(array $filters = []): array
  * Gestão de Acessos. Pacientes não entram aqui: eles não fazem login
  * no painel administrativo e não podem receber privilégio de ADM.
  */
-function staff_users(): array
+function staff_users(?int $clinicId = null): array
 {
     $sql = 'SELECT u.id, u.name, u.email, u.role, u.is_admin, u.status,
                    d.crm AS crm, sp.name AS specialty_name
             FROM users u
             LEFT JOIN doctors d ON d.user_id = u.id
             LEFT JOIN specialties sp ON sp.id = d.specialty_id
-            WHERE u.role IN ("admin", "doctor")
-            ORDER BY u.role DESC, u.name';
-    return db()->query($sql)->fetchAll();
+            WHERE u.role IN ("admin", "doctor")';
+    $params = [];
+    if ($clinicId !== null) {
+        // Isola por clínica: um admin só gerencia acesso de quem
+        // trabalha na mesma clínica que ele.
+        $sql .= ' AND u.clinic_id = ?';
+        $params[] = $clinicId;
+    }
+    $sql .= ' ORDER BY u.role DESC, u.name';
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
 }
 
 function count_active_admins(): int
@@ -637,6 +646,13 @@ function appointments_for_admin(array $filters = []): array
     if (!empty($filters['doctor_id'])) {
         $sql .= ' AND a.doctor_id = ?';
         $params[] = (int) $filters['doctor_id'];
+    }
+    if (!empty($filters['clinic_id'])) {
+        // Isola os dados por clínica: um administrador só pode ver as
+        // consultas da própria clínica (users.clinic_id), nunca de
+        // outra — mesmo que ele tente forçar via URL/parâmetro.
+        $sql .= ' AND a.clinic_id = ?';
+        $params[] = (int) $filters['clinic_id'];
     }
 
     $sql .= ' ORDER BY s.slot_start DESC LIMIT 300';
@@ -1037,7 +1053,7 @@ function doctor_blocks(int $doctorId): array
  * Pacientes
  * ------------------------------------------------------------------- */
 
-function patient_list(string $search = ''): array
+function patient_list(string $search = '', ?int $clinicId = null): array
 {
     $sql = 'SELECT u.*,
                    COUNT(a.id) AS total_appointments,
@@ -1046,6 +1062,13 @@ function patient_list(string $search = ''): array
             LEFT JOIN appointments a ON a.patient_id = u.id
             WHERE u.role = "patient"';
     $params = [];
+
+    if ($clinicId !== null) {
+        // Isola por clínica: só pacientes cadastrados na mesma clínica
+        // do administrador logado.
+        $sql .= ' AND u.clinic_id = ?';
+        $params[] = $clinicId;
+    }
 
     if ($search !== '') {
         // Busca por nome, e-mail, telefone ou CPF — cobre os jeitos
@@ -1208,15 +1231,22 @@ function age_from_birth(?string $birthDate): string
  * Calendário, relatórios e dashboard
  * ------------------------------------------------------------------- */
 
-function calendar_appointments(int $year, int $month, ?int $doctorId = null): array
+function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?int $clinicId = null): array
 {
     $prefix = sprintf('%04d-%02d-', $year, $month);
     $days = [];
     // Quando $doctorId é informado, a busca já sai filtrada no repositório
     // (mesmo filtro usado em appointments_for_admin), garantindo que um
     // médico nunca receba, nem carregado em memória, compromissos de
-    // outro profissional.
-    $filters = $doctorId !== null ? ['doctor_id' => $doctorId] : [];
+    // outro profissional. $clinicId faz o mesmo isolamento para o
+    // calendário do administrador, por clínica.
+    $filters = [];
+    if ($doctorId !== null) {
+        $filters['doctor_id'] = $doctorId;
+    }
+    if ($clinicId !== null) {
+        $filters['clinic_id'] = $clinicId;
+    }
     foreach (appointments_for_admin($filters) as $appointment) {
         if (str_starts_with((string) $appointment['slot_start'], $prefix)) {
             $day = (int) (new DateTime($appointment['slot_start']))->format('j');
@@ -1226,7 +1256,7 @@ function calendar_appointments(int $year, int $month, ?int $doctorId = null): ar
     return $days;
 }
 
-function report_data(string $fromDate, string $toDate): array
+function report_data(string $fromDate, string $toDate, ?int $clinicId = null): array
 {
     ensure_slots_for_all($fromDate, $toDate);
 
@@ -1237,13 +1267,17 @@ function report_data(string $fromDate, string $toDate): array
     // filtro de data ser aplicado, fazendo qualquer mês fora das ~300
     // consultas mais recentes "sumir" do relatório. Aqui buscamos
     // direto do banco, já filtrando pela data — sem limite nenhum.
-    $stmt = db()->prepare(
-        'SELECT a.doctor_id, a.status, s.slot_start
-         FROM appointments a
-         JOIN appointment_slots s ON s.id = a.slot_id
-         WHERE DATE(s.slot_start) >= ? AND DATE(s.slot_start) <= ?'
-    );
-    $stmt->execute([$fromDate, $toDate]);
+    $sql = 'SELECT a.doctor_id, a.status, s.slot_start
+            FROM appointments a
+            JOIN appointment_slots s ON s.id = a.slot_id
+            WHERE DATE(s.slot_start) >= ? AND DATE(s.slot_start) <= ?';
+    $params = [$fromDate, $toDate];
+    if ($clinicId !== null) {
+        $sql .= ' AND a.clinic_id = ?';
+        $params[] = $clinicId;
+    }
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
     $appointments = $stmt->fetchAll();
 
     $summary = ['total' => count($appointments), 'completed' => 0, 'no_shows' => 0, 'active' => 0];
@@ -1253,13 +1287,22 @@ function report_data(string $fromDate, string $toDate): array
         if (in_array($row['status'], ['pending', 'confirmed'], true)) $summary['active']++;
     }
 
-    $slotStmt = db()->prepare(
-        'SELECT COUNT(*) AS total_slots,
-                SUM(CASE WHEN status = "booked" THEN 1 ELSE 0 END) AS booked_slots,
-                SUM(CASE WHEN status = "blocked" THEN 1 ELSE 0 END) AS blocked_slots
-         FROM appointment_slots WHERE DATE(slot_start) >= ? AND DATE(slot_start) <= ?'
-    );
-    $slotStmt->execute([$fromDate, $toDate]);
+    // appointment_slots não tem clinic_id direto (só doctor_id) — filtra
+    // por clínica através da tabela doctors.
+    $slotSql = 'SELECT COUNT(*) AS total_slots,
+                       SUM(CASE WHEN s.status = "booked" THEN 1 ELSE 0 END) AS booked_slots,
+                       SUM(CASE WHEN s.status = "blocked" THEN 1 ELSE 0 END) AS blocked_slots
+                FROM appointment_slots s';
+    $slotParams = [];
+    if ($clinicId !== null) {
+        $slotSql .= ' JOIN doctors d ON d.id = s.doctor_id WHERE DATE(s.slot_start) >= ? AND DATE(s.slot_start) <= ? AND d.clinic_id = ?';
+        $slotParams = [$fromDate, $toDate, $clinicId];
+    } else {
+        $slotSql .= ' WHERE DATE(s.slot_start) >= ? AND DATE(s.slot_start) <= ?';
+        $slotParams = [$fromDate, $toDate];
+    }
+    $slotStmt = db()->prepare($slotSql);
+    $slotStmt->execute($slotParams);
     $slotRow = $slotStmt->fetch();
     $slotSummary = [
         'total_slots' => (int) ($slotRow['total_slots'] ?? 0),
@@ -1268,7 +1311,8 @@ function report_data(string $fromDate, string $toDate): array
     ];
 
     $byDoctor = [];
-    foreach (active_doctors() as $doctor) {
+    $doctorFilters = $clinicId !== null ? ['clinic_id' => $clinicId] : [];
+    foreach (active_doctors($doctorFilters) as $doctor) {
         $doctorAppointments = array_values(array_filter($appointments, static fn(array $row): bool => (int) $row['doctor_id'] === (int) $doctor['id']));
         $byDoctor[] = [
             'doctor_name' => $doctor['name'],
@@ -1281,21 +1325,48 @@ function report_data(string $fromDate, string $toDate): array
     return ['summary' => $summary, 'slots' => $slotSummary, 'by_doctor' => $byDoctor];
 }
 
-function dashboard_metrics(): array
+function dashboard_metrics(?int $clinicId = null): array
 {
     $today = current_date_value();
 
-    $todayStmt = db()->prepare(
-        'SELECT COUNT(*) FROM appointments a JOIN appointment_slots s ON s.id = a.slot_id
-         WHERE DATE(s.slot_start) = ? AND a.status IN ("pending", "confirmed")'
-    );
-    $todayStmt->execute([$today]);
+    $todaySql = 'SELECT COUNT(*) FROM appointments a JOIN appointment_slots s ON s.id = a.slot_id
+                 WHERE DATE(s.slot_start) = ? AND a.status IN ("pending", "confirmed")';
+    $todayParams = [$today];
+    $pendingSql = 'SELECT COUNT(*) FROM appointments WHERE status = "pending"';
+    $pendingParams = [];
+    $patientsSql = 'SELECT COUNT(*) FROM users WHERE role = "patient" AND status = "active"';
+    $patientsParams = [];
+    $doctorsSql = 'SELECT COUNT(*) FROM doctors WHERE active = 1';
+    $doctorsParams = [];
+
+    if ($clinicId !== null) {
+        // Todo indicador do painel principal fica restrito à clínica do
+        // administrador logado — sem isso, os números mostrados
+        // somavam TODAS as clínicas do sistema, não só a dele.
+        $todaySql .= ' AND a.clinic_id = ?';
+        $todayParams[] = $clinicId;
+        $pendingSql .= ' AND clinic_id = ?';
+        $pendingParams[] = $clinicId;
+        $patientsSql .= ' AND clinic_id = ?';
+        $patientsParams[] = $clinicId;
+        $doctorsSql .= ' AND clinic_id = ?';
+        $doctorsParams[] = $clinicId;
+    }
+
+    $todayStmt = db()->prepare($todaySql);
+    $todayStmt->execute($todayParams);
+    $pendingStmt = db()->prepare($pendingSql);
+    $pendingStmt->execute($pendingParams);
+    $patientsStmt = db()->prepare($patientsSql);
+    $patientsStmt->execute($patientsParams);
+    $doctorsStmt = db()->prepare($doctorsSql);
+    $doctorsStmt->execute($doctorsParams);
 
     return [
         'today' => (int) $todayStmt->fetchColumn(),
-        'pending' => (int) db()->query('SELECT COUNT(*) FROM appointments WHERE status = "pending"')->fetchColumn(),
-        'patients' => (int) db()->query('SELECT COUNT(*) FROM users WHERE role = "patient" AND status = "active"')->fetchColumn(),
-        'doctors' => (int) db()->query('SELECT COUNT(*) FROM doctors WHERE active = 1')->fetchColumn(),
+        'pending' => (int) $pendingStmt->fetchColumn(),
+        'patients' => (int) $patientsStmt->fetchColumn(),
+        'doctors' => (int) $doctorsStmt->fetchColumn(),
     ];
 }
 

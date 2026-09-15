@@ -2,11 +2,12 @@
 
 /** Relatórios agregados (consultas por status, faltas, faturamento)
  * dentro de um período escolhido pelo filtro De/Até. */
-function render_admin_reports(): void
+function render_admin_reports(array $user): void
 {
+    $clinicId = (int) $user['clinic_id'];
     $from = $_GET['from'] ?? (new DateTime('first day of this month'))->format('Y-m-d');
     $to = $_GET['to'] ?? (new DateTime('last day of this month'))->format('Y-m-d');
-    $report = report_data($from, $to);
+    $report = report_data($from, $to, $clinicId);
     $summary = $report['summary'];
     $total = (int) ($summary['total'] ?? 0);
     $noShows = (int) ($summary['no_shows'] ?? 0);
@@ -21,7 +22,8 @@ function render_admin_reports(): void
     $currentMonth = (new DateTime('first day of this month'))->format('Y-m');
     $movementReport = report_data(
         (new DateTime('first day of this month'))->format('Y-m-d'),
-        (new DateTime('last day of this month'))->format('Y-m-d')
+        (new DateTime('last day of this month'))->format('Y-m-d'),
+        $clinicId
     );
     $movementTotal = (int) ($movementReport['summary']['total'] ?? 0);
     $movementNoShows = (int) ($movementReport['summary']['no_shows'] ?? 0);

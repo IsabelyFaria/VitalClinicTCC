@@ -1,11 +1,12 @@
 <?php
 
-function render_admin_dashboard(): void
+function render_admin_dashboard(array $user): void
 {
-    $metrics = dashboard_metrics();
+    $clinicId = (int) $user['clinic_id'];
+    $metrics = dashboard_metrics($clinicId);
     $today = current_date_value();
     ensure_slots_for_all($today, $today);
-    $appointments = appointments_for_admin(['date' => $today]);
+    $appointments = appointments_for_admin(['date' => $today, 'clinic_id' => $clinicId]);
     ?>
     <section class="page-head">
         <div>

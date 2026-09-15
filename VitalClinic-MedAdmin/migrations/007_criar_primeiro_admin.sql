@@ -40,7 +40,7 @@ USE vitalclinic;
 
 INSERT INTO users (clinic_id, name, email, password_hash, role, phone, status)
 VALUES (
-    NULL,                             -- clinic_id: veja a nota abaixo
+    (SELECT id FROM clinics WHERE cnpj = '00.000.000/0001-00' LIMIT 1), -- clinic_id: veja a nota abaixo (NUNCA deixe NULL)
     'Nome do Administrador',
     'admin@nomedaclinica.com',
     'PASSWORD_HASH_AQUI',             -- cole aqui o hash do Passo 1
@@ -51,19 +51,20 @@ VALUES (
 
 
 -- ---------------------------------------------------------------------
--- NOTA sobre clinic_id: o painel de administrador NÃO filtra dados por
--- clínica (todas as consultas/pacientes/médicos do banco aparecem pra
--- qualquer admin logado), então deixar NULL não quebra nada.
---
--- Se você já tem a clínica cadastrada na tabela `clinics` e quer
--- vincular o admin a ela mesmo assim, troque o NULL acima por uma
--- subconsulta com o nome ou CNPJ da clínica, por exemplo:
---
---   (SELECT id FROM clinics WHERE cnpj = '00.000.000/0001-00' LIMIT 1)
+-- NOTA sobre clinic_id: a partir da versão que isola os dados por
+-- clínica, o painel de administrador só mostra/gerencia informações da
+-- MESMA clínica do admin logado — por isso, diferente de versões
+-- anteriores deste script, clinic_id AQUI NÃO PODE FICAR NULL. Um
+-- admin sem clínica vinculada veria o painel inteiro vazio.
 --
 -- Se a clínica ainda não existe no banco, cadastre-a primeiro:
 --
 --   INSERT INTO clinics (name, cnpj, address, phone, whatsapp, email)
 --   VALUES ('Nome da Clínica', '00.000.000/0001-00', 'Endereço completo',
 --           '(11) 4000-0000', '5511940000000', 'contato@nomedaclinica.com');
+--
+-- Depois, troque o NULL do INSERT acima por uma subconsulta com o nome
+-- ou CNPJ dela, por exemplo:
+--
+--   (SELECT id FROM clinics WHERE cnpj = '00.000.000/0001-00' LIMIT 1)
 -- ---------------------------------------------------------------------

@@ -84,7 +84,7 @@ function render_calendar_component(string $navPage, DateTime $first, DateTime $p
     <?php
 }
 
-function render_admin_calendar(): void
+function render_admin_calendar(array $user): void
 {
     // Aceita tanto o formato antigo (?month=9&year=2026, usado pelos
     // links "Mês anterior/Próximo mês") quanto o novo campo único
@@ -107,7 +107,7 @@ function render_admin_calendar(): void
     $first = new DateTime(sprintf('%04d-%02d-01', $year, $month));
     $prev = (clone $first)->modify('-1 month');
     $next = (clone $first)->modify('+1 month');
-    $calendar = calendar_appointments($year, $month);
+    $calendar = calendar_appointments($year, $month, null, (int) $user['clinic_id']);
 
     render_calendar_component('admin_calendar', $first, $prev, $next, $calendar);
 }

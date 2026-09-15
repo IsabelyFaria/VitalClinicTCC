@@ -1,13 +1,18 @@
 <?php
 
-function render_admin_doctors(): void
+function render_admin_doctors(array $user): void
 {
-    $clinics = clinics();
+    $clinicId = (int) $user['clinic_id'];
+    $ownClinic = repository_find('clinics', $clinicId);
     $specialties = specialties();
     $search = trim((string) ($_GET['q'] ?? ''));
-    $doctors = active_doctors($search !== '' ? ['search' => $search] : []);
+    $doctorFilters = ['clinic_id' => $clinicId];
+    if ($search !== '') {
+        $doctorFilters['search'] = $search;
+    }
+    $doctors = active_doctors($doctorFilters);
     $currentUser = current_user();
-    $staff = staff_users();
+    $staff = staff_users($clinicId);
     ?>
     <section class="page-head">
         <div>
@@ -23,7 +28,7 @@ function render_admin_doctors(): void
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="admin_create_doctor">
                 <input type="hidden" name="page_after" value="admin_doctors">
-                <?php render_doctor_fields($clinics, $specialties); ?>
+                <?php render_doctor_fields($ownClinic, $specialties); ?>
                 <button class="button primary" type="submit">Cadastrar médico</button>
             </form>
         </div>
@@ -39,7 +44,6 @@ function render_admin_doctors(): void
                     </span>
                 </label>
                 <button class="button" type="submit">Buscar</button>
-                <h2> </h2>
             </form>
             <div class="accordion-list">
                 <?php if (!$doctors): ?>
@@ -58,7 +62,7 @@ function render_admin_doctors(): void
                             <input type="hidden" name="action" value="admin_update_doctor">
                             <input type="hidden" name="doctor_id" value="<?= (int) $doctor['id'] ?>">
                             <input type="hidden" name="page_after" value="admin_doctors">
-                            <?php render_doctor_fields($clinics, $specialties, $doctor, false); ?>
+                            <?php render_doctor_fields($ownClinic, $specialties, $doctor, false); ?>
                             <button class="button small" type="submit">Salvar</button>
                         </form>
 
@@ -187,7 +191,12 @@ function render_admin_doctors(): void
     </section>
     <?php
 }
-function render_doctor_fields(array $clinics, array $specialties, array $doctor = [], bool $includeEmail = true): void
+/** Campos do formulário de médico (nome, e-mail, CRM, especialidade) —
+ * reaproveitados entre os formulários de "cadastrar" e "editar". A
+ * clínica NÃO é mais uma escolha: um médico sempre entra/permanece na
+ * mesma clínica do administrador logado, por isso é um campo travado
+ * (readonly) em vez de um <select> com todas as clínicas do sistema. */
+function render_doctor_fields(array $ownClinic, array $specialties, array $doctor = [], bool $includeEmail = true): void
 {
     ?>
     <div class="grid two">
@@ -208,13 +217,7 @@ function render_doctor_fields(array $clinics, array $specialties, array $doctor 
             </select>
         </label>
         <label>Clínica
-            <select name="clinic_id" required>
-                <?php foreach ($clinics as $clinic): ?>
-                    <option value="<?= (int) $clinic['id'] ?>" <?= (int) ($doctor['clinic_id'] ?? 0) === (int) $clinic['id'] ? 'selected' : '' ?>>
-                        <?= h($clinic['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <input value="<?= h($ownClinic['name'] ?? '') ?>" readonly disabled>
         </label>
         <label>Especialidade
             <select name="specialty_id" required>

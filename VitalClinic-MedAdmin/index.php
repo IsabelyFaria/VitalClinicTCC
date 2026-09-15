@@ -143,6 +143,19 @@ function slots_endpoint(): void
         return;
     }
 
+    // Um admin só pode ver os horários de um médico da própria
+    // clínica — impede consultar/agendar horários de outra clínica
+    // manipulando o doctor_id direto na URL.
+    if ($user['role'] === 'admin') {
+        $doctor = repository_find_doctor($doctorId);
+        if (!$doctor || (int) $doctor['clinic_id'] !== (int) $user['clinic_id']) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Nao autorizado.']);
+            return;
+        }
+    }
+
     $maxDate = (new DateTime())->modify('+' . (int) config('rules.booking_max_days') . ' days');
     if ($dateObj > $maxDate) {
         http_response_code(422);
@@ -189,6 +202,16 @@ function doctor_weekdays_endpoint(): void
         return;
     }
 
+    if ($user['role'] === 'admin') {
+        $doctor = repository_find_doctor($doctorId);
+        if (!$doctor || (int) $doctor['clinic_id'] !== (int) $user['clinic_id']) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Nao autorizado.']);
+            return;
+        }
+    }
+
     header('Content-Type: application/json');
     echo json_encode(['weekdays' => doctor_working_weekdays($doctorId)]);
 }
@@ -221,7 +244,7 @@ function monthly_movement_endpoint(): void
     $from = $monthObj->format('Y-m-01');
     $to = $monthObj->format('Y-m-t');
 
-    $report = report_data($from, $to);
+    $report = report_data($from, $to, (int) $user['clinic_id']);
     $total = (int) ($report['summary']['total'] ?? 0);
     $noShows = (int) ($report['summary']['no_shows'] ?? 0);
     $noShowRate = $total ? round(($noShows / $total) * 100, 1) : 0.0;
@@ -365,18 +388,23 @@ function handle_post(): void
             redirect(['page' => $_POST['page_after'] ?? 'appointments']);
 
         case 'admin_create_appointment':
-            require_role('admin');
+            $adminUser = require_role('admin');
             $slotId = (int) ($_POST['slot_id'] ?? 0);
             $patientId = (int) ($_POST['patient_id'] ?? 0);
             $doctorId = (int) ($_POST['doctor_id'] ?? 0);
 
             $patient = repository_find_user($patientId);
-            if (!$patient || $patient['role'] !== 'patient') {
+            if (!$patient || $patient['role'] !== 'patient' || (int) $patient['clinic_id'] !== (int) $adminUser['clinic_id']) {
                 throw new RuntimeException('Selecione um paciente válido.');
             }
             if (!$doctorId) {
                 throw new RuntimeException('Selecione o médico.');
             }
+            // Confirma que o médico escolhido é mesmo da clínica deste
+            // admin — sem isso, seria possível agendar (ou consultar
+            // horários de) um médico de outra clínica manipulando o
+            // formulário diretamente.
+            require_admin_owns_doctor($adminUser, $doctorId);
             if (!$slotId) {
                 throw new RuntimeException('Selecione um horário disponível para a consulta.');
             }
@@ -393,27 +421,41 @@ function handle_post(): void
             redirect(['page' => 'admin_appointments']);
 
         case 'admin_create_doctor':
-            require_role('admin');
-            create_doctor(doctor_form_data());
+            $adminUser = require_role('admin');
+            $doctorData = doctor_form_data();
+            // Nunca confia no clinic_id do formulário — um médico
+            // cadastrado por um admin sempre entra na MESMA clínica
+            // desse admin.
+            $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            create_doctor($doctorData);
             flash('success', 'Medico cadastrado.');
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_update_doctor':
-            require_role('admin');
-            update_doctor((int) ($_POST['doctor_id'] ?? 0), doctor_form_data(false));
+            $adminUser = require_role('admin');
+            $doctorId = (int) ($_POST['doctor_id'] ?? 0);
+            require_admin_owns_doctor($adminUser, $doctorId);
+            $doctorData = doctor_form_data(false);
+            // Idem: edição nunca muda o médico de clínica.
+            $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            update_doctor($doctorId, $doctorData);
             flash('success', 'Medico atualizado.');
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_delete_doctor':
-            require_role('admin');
-            deactivate_doctor((int) ($_POST['doctor_id'] ?? 0));
+            $adminUser = require_role('admin');
+            $doctorId = (int) ($_POST['doctor_id'] ?? 0);
+            require_admin_owns_doctor($adminUser, $doctorId);
+            deactivate_doctor($doctorId);
             flash('success', 'Medico removido da agenda.');
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_add_schedule':
-            require_role('admin');
+            $adminUser = require_role('admin');
+            $doctorId = (int) ($_POST['doctor_id'] ?? 0);
+            require_admin_owns_doctor($adminUser, $doctorId);
             add_schedule([
-                'doctor_id' => (int) ($_POST['doctor_id'] ?? 0),
+                'doctor_id' => $doctorId,
                 'weekday' => (int) ($_POST['weekday'] ?? 0),
                 'start_time' => post_value('start_time'),
                 'end_time' => post_value('end_time'),
@@ -422,15 +464,23 @@ function handle_post(): void
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_delete_schedule':
-            require_role('admin');
-            delete_schedule((int) ($_POST['schedule_id'] ?? 0));
+            $adminUser = require_role('admin');
+            $scheduleId = (int) ($_POST['schedule_id'] ?? 0);
+            $scheduleRow = repository_find('doctor_schedules', $scheduleId);
+            if (!$scheduleRow) {
+                throw new RuntimeException('Horário não encontrado.');
+            }
+            require_admin_owns_doctor($adminUser, (int) $scheduleRow['doctor_id']);
+            delete_schedule($scheduleId);
             flash('success', 'Horario removido.');
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_add_block':
-            require_role('admin');
+            $adminUser = require_role('admin');
+            $doctorId = (int) ($_POST['doctor_id'] ?? 0);
+            require_admin_owns_doctor($adminUser, $doctorId);
             add_block([
-                'doctor_id' => (int) ($_POST['doctor_id'] ?? 0),
+                'doctor_id' => $doctorId,
                 'block_date' => post_value('block_date'),
                 'start_time' => post_value('start_time'),
                 'end_time' => post_value('end_time'),
@@ -440,8 +490,14 @@ function handle_post(): void
             redirect(['page' => 'admin_doctors']);
 
         case 'admin_update_patient':
-            require_role('admin');
+            $adminUser = require_role('admin');
             $patientId = (int) ($_POST['patient_id'] ?? 0);
+            $targetPatient = repository_find_user($patientId);
+            if (!$targetPatient || $targetPatient['role'] !== 'patient' || (int) $targetPatient['clinic_id'] !== (int) $adminUser['clinic_id']) {
+                // Nunca deixa um admin editar um paciente de outra
+                // clínica, mesmo que o ID tenha sido forjado no POST.
+                throw new RuntimeException('Paciente não encontrado.');
+            }
             update_patient_admin($patientId, [
                 'name' => post_value('name'),
                 'phone' => post_value('phone'),
@@ -454,7 +510,7 @@ function handle_post(): void
             redirect(['page' => 'admin_patients', 'patient_id' => $patientId]);
 
         case 'admin_create_patient':
-            require_role('admin');
+            $adminUser = require_role('admin');
             $initialPassword = (string) ($_POST['password'] ?? '');
             if ($initialPassword === '') {
                 $initialPassword = '123456';
@@ -467,7 +523,10 @@ function handle_post(): void
                 'document' => post_value('document'),
                 'birth_date' => post_value('birth_date'),
                 'address' => post_value('address'),
-                'clinic_id' => (int) ($_POST['clinic_id'] ?? 0),
+                // Nunca confia no clinic_id vindo do formulário — um
+                // paciente cadastrado por um admin sempre pertence à
+                // MESMA clínica desse admin, sem exceção.
+                'clinic_id' => (int) $adminUser['clinic_id'],
             ]);
             flash('success', 'Paciente cadastrado. Senha inicial: ' . $initialPassword);
             redirect(['page' => 'admin_patients', 'patient_id' => $patientId]);
@@ -490,8 +549,15 @@ function handle_post(): void
 
         case 'admin_update_user_role':
             $actor = require_role('admin');
+            $targetUserId = (int) ($_POST['user_id'] ?? 0);
+            $targetUser = repository_find_user($targetUserId);
+            if (!$targetUser || (int) $targetUser['clinic_id'] !== (int) $actor['clinic_id']) {
+                // Um admin só pode conceder/revogar acesso ADM de gente
+                // da própria clínica, nunca de outra.
+                throw new RuntimeException('Usuário não encontrado.');
+            }
             update_user_role(
-                (int) ($_POST['user_id'] ?? 0),
+                $targetUserId,
                 post_value('role'),
                 (int) $actor['id']
             );
@@ -512,6 +578,22 @@ function handle_post(): void
     }
 
     throw new RuntimeException('Acao invalida.');
+}
+
+/**
+ * Garante que o médico pertence à mesma clínica do administrador
+ * logado — usada em toda ação que recebe um doctor_id vindo do
+ * formulário/URL (editar, remover, agenda, bloqueio), pra um admin
+ * nunca conseguir mexer na agenda de um médico de outra clínica só
+ * forjando o ID no POST.
+ */
+function require_admin_owns_doctor(array $adminUser, int $doctorId): array
+{
+    $doctor = repository_find_doctor($doctorId);
+    if (!$doctor || (int) $doctor['clinic_id'] !== (int) $adminUser['clinic_id']) {
+        throw new RuntimeException('Médico não encontrado.');
+    }
+    return $doctor;
 }
 
 function doctor_form_data(bool $withPassword = true): array
@@ -885,19 +967,19 @@ function render_page(string $page, ?array $user): void
 
     if ($user['role'] === 'admin') {
         if ($page === 'admin_calendar') {
-            render_admin_calendar();
+            render_admin_calendar($user);
         } elseif ($page === 'admin_doctors') {
-            render_admin_doctors();
+            render_admin_doctors($user);
         } elseif ($page === 'admin_appointments') {
-            render_admin_appointments();
+            render_admin_appointments($user);
         } elseif ($page === 'admin_patients') {
-            render_admin_patients();
+            render_admin_patients($user);
         } elseif ($page === 'admin_reports') {
-            render_admin_reports();
+            render_admin_reports($user);
         } elseif ($page === 'profile') {
             render_staff_profile($user);
         } else {
-            render_admin_dashboard();
+            render_admin_dashboard($user);
         }
         return;
     }

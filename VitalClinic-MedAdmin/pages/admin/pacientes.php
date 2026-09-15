@@ -1,7 +1,8 @@
 <?php
 
-function render_admin_patients(): void
+function render_admin_patients(array $user): void
 {
+    $clinicId = (int) $user['clinic_id'];
     $patientId = (int) ($_GET['patient_id'] ?? 0);
     $search = trim((string) ($_GET['q'] ?? ''));
     ?>
@@ -23,10 +24,9 @@ function render_admin_patients(): void
                     </span>
                 </label>
                 <button class="button" type="submit">Buscar</button>
-                <h2> </h2>
             </form>
             <div class="list">
-                <?php $filteredPatients = patient_list($search); ?>
+                <?php $filteredPatients = patient_list($search, $clinicId); ?>
                 <?php if (!$filteredPatients): ?>
                     <p class="muted">Nenhum paciente encontrado<?= $search !== '' ? ' para "' . h($search) . '"' : '' ?>.</p>
                 <?php endif; ?>
@@ -46,7 +46,10 @@ function render_admin_patients(): void
             <?php
             if ($patientId) {
                 $patient = repository_find_user($patientId);
-                if ($patient && $patient['role'] !== 'patient') {
+                if ($patient && ($patient['role'] !== 'patient' || (int) $patient['clinic_id'] !== $clinicId)) {
+                    // Bloqueia acesso cruzado: um paciente de outra
+                    // clínica (ou um ID forjado na URL) nunca deve
+                    // aparecer aqui, mesmo que o ID exista no banco.
                     $patient = null;
                 }
                 if ($patient) {
@@ -91,15 +94,8 @@ function render_admin_patients(): void
                         <label>Documento <input name="document"></label>
                         <label>Nascimento <input type="date" name="birth_date"></label>
                         <label>Endereço <input name="address"></label>
-                        <label>Clínica
-                            <select name="clinic_id">
-                                <option value="">Sem preferência</option>
-                                <?php foreach (clinics() as $clinic): ?>
-                                    <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
                     </div>
+                    <p class="muted">O paciente será cadastrado na sua clínica.</p>
                     <button class="button primary" type="submit">Cadastrar paciente</button>
                 </form>
                 <?php
