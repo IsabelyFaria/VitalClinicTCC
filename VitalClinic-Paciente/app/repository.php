@@ -1047,6 +1047,16 @@ function notificar_paciente(int $pacienteId, ?int $appointmentId, string $titulo
     ]);
 }
 
+// conta quantas notificações desse paciente ainda estão como 'sent'
+// (enviadas, mas ele ainda não abriu a tela de Notificações pra ver).
+// Usada pra desenhar o sininho/contador no menu, em render_header()
+function unread_notifications_count(int $pacienteId): int
+{
+    $stmt = db()->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND status = 'sent'");
+    $stmt->execute([$pacienteId]);
+    return (int) $stmt->fetchColumn();
+}
+
 /**
  * Cria o "Lembrete de consulta" pras consultas que vão acontecer daqui a
  * aproximadamente $horasAntes horas (24 por padrão). Pensada pra ser

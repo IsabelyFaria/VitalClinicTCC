@@ -39,11 +39,19 @@ function render_header(?array $paciente, string $paginaAtual = ''): void
                     'notificacoes'  => 'Notificações',
                 ];
 
+                // quantas notificações esse paciente ainda não abriu pra
+                // ver, calculado uma vez só aqui em cima, fora do loop,
+                // porque não muda item por item do menu
+                $naoLidas = unread_notifications_count((int) $paciente['id']);
+
                 foreach ($links as $slug => $rotulo):
                     $classe = ($paginaAtual === $slug) ? 'active' : '';
                     ?>
                     <a href="<?= h(app_url(['page' => $slug])) ?>" class="<?= h($classe) ?>">
                         <?= h($rotulo) ?>
+                        <?php if ($slug === 'notificacoes' && $naoLidas > 0): ?>
+                            <span class="nav-badge-nao-lida"><?= $naoLidas > 9 ? '9+' : $naoLidas ?></span>
+                        <?php endif; ?>
                     </a>
                 <?php endforeach; ?>
             </nav>
