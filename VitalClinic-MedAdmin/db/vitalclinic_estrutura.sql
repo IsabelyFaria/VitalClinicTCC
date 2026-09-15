@@ -65,6 +65,11 @@ CREATE TABLE users (
     -- Bloqueia o uso do painel até ser marcado como 1 (ver modal em
     -- render_terms_modal(), em index.php).
     terms_accepted  TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+    -- 1 = enxerga e gerencia os dados de TODAS as clínicas cadastradas
+    -- (uso exclusivo de contas de suporte/operação do sistema); 0 = só
+    -- vê a própria clínica (users.clinic_id), que é o padrão de todo
+    -- administrador comum.
+    is_super_admin  TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
     created_at      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP           NULL     ON UPDATE CURRENT_TIMESTAMP,
     last_login_at   TIMESTAMP           NULL,

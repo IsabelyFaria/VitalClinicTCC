@@ -2,17 +2,18 @@
 
 function render_admin_doctors(array $user): void
 {
-    $clinicId = (int) $user['clinic_id'];
-    $ownClinic = repository_find('clinics', $clinicId);
+    $isSuperAdmin = !empty($user['is_super_admin']);
+    $clinicScope = admin_clinic_scope($user);
+    $clinicOptions = $isSuperAdmin ? clinics() : array_filter([repository_find('clinics', (int) $user['clinic_id'])]);
     $specialties = specialties();
     $search = trim((string) ($_GET['q'] ?? ''));
-    $doctorFilters = ['clinic_id' => $clinicId];
+    $doctorFilters = $clinicScope !== null ? ['clinic_id' => $clinicScope] : [];
     if ($search !== '') {
         $doctorFilters['search'] = $search;
     }
     $doctors = active_doctors($doctorFilters);
     $currentUser = current_user();
-    $staff = staff_users($clinicId);
+    $staff = staff_users($clinicScope);
     ?>
     <section class="page-head">
         <div>
@@ -28,7 +29,7 @@ function render_admin_doctors(array $user): void
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="admin_create_doctor">
                 <input type="hidden" name="page_after" value="admin_doctors">
-                <?php render_doctor_fields($ownClinic, $specialties); ?>
+                <?php render_doctor_fields($clinicOptions, $specialties, [], true, $isSuperAdmin); ?>
                 <button class="button primary" type="submit">Cadastrar médico</button>
             </form>
         </div>
@@ -62,7 +63,7 @@ function render_admin_doctors(array $user): void
                             <input type="hidden" name="action" value="admin_update_doctor">
                             <input type="hidden" name="doctor_id" value="<?= (int) $doctor['id'] ?>">
                             <input type="hidden" name="page_after" value="admin_doctors">
-                            <?php render_doctor_fields($ownClinic, $specialties, $doctor, false); ?>
+                            <?php render_doctor_fields($clinicOptions, $specialties, $doctor, false, $isSuperAdmin); ?>
                             <button class="button small" type="submit">Salvar</button>
                         </form>
 
@@ -192,11 +193,11 @@ function render_admin_doctors(array $user): void
     <?php
 }
 /** Campos do formulário de médico (nome, e-mail, CRM, especialidade) —
- * reaproveitados entre os formulários de "cadastrar" e "editar". A
- * clínica NÃO é mais uma escolha: um médico sempre entra/permanece na
- * mesma clínica do administrador logado, por isso é um campo travado
- * (readonly) em vez de um <select> com todas as clínicas do sistema. */
-function render_doctor_fields(array $ownClinic, array $specialties, array $doctor = [], bool $includeEmail = true): void
+ * reaproveitados entre os formulários de "cadastrar" e "editar". Pra
+ * um admin comum, a clínica é um campo travado (readonly) — só a
+ * própria clínica dele; pra um super admin (que gerencia todas), vira
+ * um <select> de verdade, com a lista completa em $clinics. */
+function render_doctor_fields(array $clinics, array $specialties, array $doctor = [], bool $includeEmail = true, bool $isSuperAdmin = false): void
 {
     ?>
     <div class="grid two">
@@ -217,7 +218,18 @@ function render_doctor_fields(array $ownClinic, array $specialties, array $docto
             </select>
         </label>
         <label>Clínica
-            <input value="<?= h($ownClinic['name'] ?? '') ?>" readonly disabled>
+            <?php if ($isSuperAdmin): ?>
+                <select name="clinic_id" required>
+                    <?php foreach ($clinics as $clinic): ?>
+                        <option value="<?= (int) $clinic['id'] ?>" <?= (int) ($doctor['clinic_id'] ?? 0) === (int) $clinic['id'] ? 'selected' : '' ?>>
+                            <?= h($clinic['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            <?php else: ?>
+                <?php $onlyClinic = $clinics[0] ?? null; ?>
+                <input value="<?= h($onlyClinic['name'] ?? '') ?>" readonly disabled>
+            <?php endif; ?>
         </label>
         <label>Especialidade
             <select name="specialty_id" required>

@@ -4,7 +4,7 @@
  * dentro de um período escolhido pelo filtro De/Até. */
 function render_admin_reports(array $user): void
 {
-    $clinicId = (int) $user['clinic_id'];
+    $clinicId = admin_clinic_scope($user);
     $from = $_GET['from'] ?? (new DateTime('first day of this month'))->format('Y-m-d');
     $to = $_GET['to'] ?? (new DateTime('last day of this month'))->format('Y-m-d');
     $report = report_data($from, $to, $clinicId);

@@ -1,5 +1,7 @@
-<?php
 
+Repository · PHP
+<?php
+ 
 /**
  * Repositório de dados — versão MySQL.
  *
@@ -11,25 +13,25 @@
  * às da versão anterior, então nenhuma página em pages/ precisou ser
  * alterada — apenas a origem dos dados mudou.
  */
-
+ 
 const REPOSITORY_TABLES = [
     'clinics', 'specialties', 'users', 'doctors', 'doctor_schedules',
     'schedule_blocks', 'appointment_slots', 'appointments',
     'medical_records', 'payments', 'notifications', 'password_resets',
 ];
-
+ 
 function repo_assert_table(string $table): void
 {
     if (!in_array($table, REPOSITORY_TABLES, true)) {
         throw new RuntimeException('Tabela desconhecida: ' . $table);
     }
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Helpers genéricos de CRUD (usados pelas funções de negócio abaixo e,
  * por compatibilidade, também por app/auth.php).
  * ------------------------------------------------------------------- */
-
+ 
 function repository_find(string $table, int $id): ?array
 {
     repo_assert_table($table);
@@ -38,7 +40,7 @@ function repository_find(string $table, int $id): ?array
     $row = $stmt->fetch();
     return $row ?: null;
 }
-
+ 
 function repository_append(string $table, array $data): int
 {
     repo_assert_table($table);
@@ -50,7 +52,7 @@ function repository_append(string $table, array $data): int
     $stmt->execute(array_values($data));
     return (int) db()->lastInsertId();
 }
-
+ 
 function repository_replace(string $table, int $id, array $data): void
 {
     repo_assert_table($table);
@@ -62,7 +64,7 @@ function repository_replace(string $table, int $id, array $data): void
     $stmt = db()->prepare("UPDATE `$table` SET $set WHERE id = ?");
     $stmt->execute([...array_values($data), $id]);
 }
-
+ 
 function repository_next_id(array $rows): int
 {
     // Mantida apenas por compatibilidade histórica; o MySQL gera os IDs via
@@ -70,24 +72,24 @@ function repository_next_id(array $rows): int
     $ids = array_map(static fn(array $row): int => (int) ($row['id'] ?? 0), $rows);
     return ($ids ? max($ids) : 0) + 1;
 }
-
+ 
 function repository_find_user(int $id): ?array
 {
     return repository_find('users', $id);
 }
-
+ 
 function repository_find_doctor(int $id): ?array
 {
     return repository_find('doctors', $id);
 }
-
+ 
 function repository_user_with_clinic(array $user): array
 {
     $clinic = !empty($user['clinic_id']) ? repository_find('clinics', (int) $user['clinic_id']) : null;
     $user['clinic_name'] = $clinic['name'] ?? null;
     return $user;
 }
-
+ 
 function repository_doctor_row(array $doctor): array
 {
     $user = repository_find_user((int) $doctor['user_id']) ?: [];
@@ -101,17 +103,17 @@ function repository_doctor_row(array $doctor): array
         'specialty_name' => $specialty['name'] ?? '',
     ]);
 }
-
+ 
 function repository_slot(int $id): ?array
 {
     return repository_find('appointment_slots', $id);
 }
-
+ 
 function repository_find_appointment(int $id): ?array
 {
     return repository_find('appointments', $id);
 }
-
+ 
 function repository_appointment_row(array $appointment): array
 {
     $slot = repository_slot((int) $appointment['slot_id']) ?: [];
@@ -120,11 +122,11 @@ function repository_appointment_row(array $appointment): array
     $doctorUser = repository_find_user((int) ($doctor['user_id'] ?? 0)) ?: [];
     $clinic = repository_find('clinics', (int) $appointment['clinic_id']) ?: [];
     $specialty = repository_find('specialties', (int) $appointment['specialty_id']) ?: [];
-
+ 
     $stmt = db()->prepare('SELECT * FROM payments WHERE appointment_id = ? LIMIT 1');
     $stmt->execute([(int) $appointment['id']]);
     $payment = $stmt->fetch() ?: null;
-
+ 
     return array_merge($appointment, [
         'slot_start' => $slot['slot_start'] ?? null,
         'slot_end' => $slot['slot_end'] ?? null,
@@ -149,13 +151,13 @@ function repository_appointment_row(array $appointment): array
         'paid_at' => $payment['paid_at'] ?? null,
     ]);
 }
-
+ 
 function repository_update_user(int $id, array $changes): void
 {
     $changes['updated_at'] = now_sql();
     repository_replace('users', $id, $changes);
 }
-
+ 
 function ensure_runtime_schema(): void
 {
     // Garante que a conexão com o MySQL está disponível e que a tabela
@@ -171,21 +173,21 @@ function ensure_runtime_schema(): void
         );
     }
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Cadastros de apoio
  * ------------------------------------------------------------------- */
-
+ 
 function clinics(): array
 {
     return db()->query('SELECT * FROM clinics ORDER BY name')->fetchAll();
 }
-
+ 
 function specialties(): array
 {
     return db()->query('SELECT * FROM specialties ORDER BY name')->fetchAll();
 }
-
+ 
 function active_doctors(array $filters = []): array
 {
     $sql = 'SELECT d.*, u.name AS name, u.email AS email, u.phone AS phone,
@@ -196,7 +198,7 @@ function active_doctors(array $filters = []): array
             JOIN specialties sp ON sp.id = d.specialty_id
             WHERE d.active = 1 AND u.status = "active"';
     $params = [];
-
+ 
     if (!empty($filters['clinic_id'])) {
         $sql .= ' AND d.clinic_id = ?';
         $params[] = (int) $filters['clinic_id'];
@@ -218,13 +220,13 @@ function active_doctors(array $filters = []): array
         $params[] = $term;
         $params[] = $term;
     }
-
+ 
     $sql .= ' ORDER BY u.name';
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
 }
-
+ 
 /**
  * Lista todos os usuários "de sistema" (admin + doctor) para a tela de
  * Gestão de Acessos. Pacientes não entram aqui: eles não fazem login
@@ -250,13 +252,13 @@ function staff_users(?int $clinicId = null): array
     $stmt->execute($params);
     return $stmt->fetchAll();
 }
-
+ 
 function count_active_admins(): int
 {
     $sql = 'SELECT COUNT(*) FROM users WHERE role = "admin" AND status = "active"';
     return (int) db()->query($sql)->fetchColumn();
 }
-
+ 
 /**
  * Regra de negócio da concessão/revogação de privilégio de ADM.
  *
@@ -275,36 +277,36 @@ function update_user_role(int $targetUserId, string $newRole, int $actingUserId)
     if (!in_array($newRole, ['admin', 'doctor'], true)) {
         throw new RuntimeException('Perfil de acesso inválido.');
     }
-
+ 
     if ($targetUserId === $actingUserId) {
         throw new RuntimeException('Você não pode alterar o seu próprio nível de acesso.');
     }
-
+ 
     $target = repository_find_user($targetUserId);
     if (!$target || !in_array($target['role'], ['admin', 'doctor'], true)) {
         throw new RuntimeException('Usuário não encontrado.');
     }
-
+ 
     if ($target['role'] === $newRole) {
         return $target;
     }
-
+ 
     if ($target['role'] === 'admin' && $newRole === 'doctor' && count_active_admins() <= 1) {
         throw new RuntimeException('Não é possível remover o último administrador do sistema.');
     }
-
+ 
     if ($newRole === 'doctor' && !doctor_by_user($targetUserId)) {
         throw new RuntimeException('Este usuário não possui um cadastro de médico (CRM/especialidade) para voltar ao perfil de médico.');
     }
-
+ 
     repository_replace('users', $targetUserId, [
         'role' => $newRole,
         'updated_at' => now_sql(),
     ]);
-
+ 
     return repository_find_user($targetUserId) ?? $target;
 }
-
+ 
 function doctor_by_user(int $userId): ?array
 {
     foreach (active_doctors() as $doctor) {
@@ -314,16 +316,16 @@ function doctor_by_user(int $userId): ?array
     }
     return null;
 }
-
+ 
 function doctor_detail(int $doctorId): ?array
 {
     return active_doctors(['doctor_id' => $doctorId])[0] ?? null;
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Agenda: horários recorrentes, bloqueios e slots
  * ------------------------------------------------------------------- */
-
+ 
 function slot_overlaps_blocks(DateTime $start, DateTime $end, array $blocks): ?array
 {
     foreach ($blocks as $block) {
@@ -335,34 +337,34 @@ function slot_overlaps_blocks(DateTime $start, DateTime $end, array $blocks): ?a
     }
     return null;
 }
-
+ 
 function ensure_slots(int $doctorId, string $fromDate, string $toDate): void
 {
     $doctor = repository_find_doctor($doctorId);
     if (!$doctor || !(int) ($doctor['active'] ?? 0)) {
         return;
     }
-
+ 
     $scheduleStmt = db()->prepare('SELECT * FROM doctor_schedules WHERE doctor_id = ? AND active = 1');
     $scheduleStmt->execute([$doctorId]);
     $schedules = $scheduleStmt->fetchAll();
-
+ 
     $blockStmt = db()->prepare('SELECT * FROM schedule_blocks WHERE doctor_id = ? AND block_date >= ? AND block_date <= ?');
     $blockStmt->execute([$doctorId, $fromDate, $toDate]);
     $blocks = $blockStmt->fetchAll();
-
+ 
     $existingStmt = db()->prepare('SELECT slot_start FROM appointment_slots WHERE doctor_id = ?');
     $existingStmt->execute([$doctorId]);
     $existing = array_fill_keys(
         array_map(static fn(string $s): string => $doctorId . '|' . $s, array_column($existingStmt->fetchAll(), 'slot_start')),
         true
     );
-
+ 
     $duration = max(10, (int) ($doctor['appointment_duration'] ?? 30));
     $current = new DateTime($fromDate);
     $endDate = (new DateTime($toDate))->modify('+1 day');
     $newSlots = [];
-
+ 
     while ($current < $endDate) {
         $weekday = (int) $current->format('w');
         foreach ($schedules as $schedule) {
@@ -394,25 +396,25 @@ function ensure_slots(int $doctorId, string $fromDate, string $toDate): void
         }
         $current->modify('+1 day');
     }
-
+ 
     if (!$newSlots) {
         return;
     }
-
+ 
     db_transaction(function () use ($newSlots): void {
         foreach ($newSlots as $slot) {
             repository_append('appointment_slots', $slot);
         }
     });
 }
-
+ 
 function ensure_slots_for_all(string $fromDate, string $toDate): void
 {
     foreach (active_doctors() as $doctor) {
         ensure_slots((int) $doctor['id'], $fromDate, $toDate);
     }
 }
-
+ 
 function available_slots(int $doctorId, string $date): array
 {
     ensure_slots($doctorId, $date, $date);
@@ -428,7 +430,7 @@ function available_slots(int $doctorId, string $date): array
         'slot_end' => $row['slot_end'],
     ], $stmt->fetchAll());
 }
-
+ 
 /**
  * Dias da semana (0=domingo ... 6=sábado, mesma convenção de
  * doctor_schedules.weekday) em que o médico tem algum bloco de
@@ -444,7 +446,7 @@ function doctor_working_weekdays(int $doctorId): array
     $stmt->execute([$doctorId]);
     return array_map('intval', array_column($stmt->fetchAll(), 'weekday'));
 }
-
+ 
 function doctor_day_slots(int $doctorId, string $date): array
 {
     ensure_slots($doctorId, $date, $date);
@@ -462,16 +464,16 @@ function doctor_day_slots(int $doctorId, string $date): array
         return $row;
     }, $stmt->fetchAll());
 }
-
+ 
 function can_change_appointment(string $slotStart, int $hours): bool
 {
     return (new DateTime())->modify('+' . $hours . ' hours') <= new DateTime($slotStart);
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Notificações
  * ------------------------------------------------------------------- */
-
+ 
 function create_notification(int $userId, ?int $appointmentId, string $type, string $title, string $message, ?string $sendAt = null): void
 {
     repository_append('notifications', [
@@ -487,7 +489,7 @@ function create_notification(int $userId, ?int $appointmentId, string $type, str
         'created_at' => now_sql(),
     ]);
 }
-
+ 
 function notifications_for_user(int $userId): array
 {
     $sql = 'SELECT n.*, a.status AS appointment_status, s.slot_start AS slot_start
@@ -501,30 +503,30 @@ function notifications_for_user(int $userId): array
     $stmt->execute([$userId]);
     return $stmt->fetchAll();
 }
-
+ 
 function unread_notifications_count(int $userId): int
 {
     $stmt = db()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL');
     $stmt->execute([$userId]);
     return (int) $stmt->fetchColumn();
 }
-
+ 
 function mark_notifications_read(int $userId): void
 {
     $stmt = db()->prepare('UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL');
     $stmt->execute([now_sql(), $userId]);
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Consultas (appointments)
  * ------------------------------------------------------------------- */
-
+ 
 function doctor_user_id(int $doctorId): ?int
 {
     $doctor = repository_find_doctor($doctorId);
     return $doctor ? (int) $doctor['user_id'] : null;
 }
-
+ 
 function create_appointment(
     int $patientId,
     int $doctorId,
@@ -537,13 +539,13 @@ function create_appointment(
         $slotStmt = db()->prepare('SELECT * FROM appointment_slots WHERE id = ? FOR UPDATE');
         $slotStmt->execute([$slotId]);
         $slot = $slotStmt->fetch();
-
+ 
         $doctor = repository_find_doctor($doctorId);
-
+ 
         if (!$slot || !$doctor || $slot['status'] !== 'available') {
             throw new RuntimeException('Horário não encontrado ou indisponível.');
         }
-
+ 
         $conflictStmt = db()->prepare(
             'SELECT COUNT(*) FROM appointments WHERE slot_id = ? AND status IN ("pending", "confirmed")'
         );
@@ -551,7 +553,7 @@ function create_appointment(
         if ((int) $conflictStmt->fetchColumn() > 0) {
             throw new RuntimeException('Este horário já foi reservado.');
         }
-
+ 
         try {
             $appointmentId = repository_append('appointments', [
                 'slot_id' => $slotId,
@@ -575,9 +577,9 @@ function create_appointment(
             // amigável em vez de erro fatal.
             throw new RuntimeException('Este horário acabou de ser reservado por outra solicitação. Escolha outro horário.');
         }
-
+ 
         repository_replace('appointment_slots', $slotId, ['status' => 'booked']);
-
+ 
         repository_append('payments', [
             'appointment_id' => $appointmentId,
             'patient_id' => $patientId,
@@ -589,21 +591,21 @@ function create_appointment(
             'created_at' => now_sql(),
             'updated_at' => null,
         ]);
-
+ 
         return $appointmentId;
     });
 }
-
+ 
 function appointments_for_user(array $user, string $scope = 'future'): array
 {
     $doctor = $user['role'] === 'doctor' ? doctor_by_user((int) $user['id']) : null;
     if ($user['role'] === 'doctor' && !$doctor) {
         return [];
     }
-
+ 
     $sql = 'SELECT a.id FROM appointments a JOIN appointment_slots s ON s.id = a.slot_id WHERE 1=1';
     $params = [];
-
+ 
     if ($user['role'] === 'doctor') {
         $sql .= ' AND a.doctor_id = ?';
         $params[] = (int) $doctor['id'];
@@ -611,7 +613,7 @@ function appointments_for_user(array $user, string $scope = 'future'): array
         $sql .= ' AND a.patient_id = ?';
         $params[] = (int) $user['id'];
     }
-
+ 
     if ($scope === 'future') {
         $sql .= ' AND s.slot_start >= ? AND a.status IN ("pending", "confirmed")';
         $params[] = now_sql();
@@ -619,22 +621,22 @@ function appointments_for_user(array $user, string $scope = 'future'): array
         $sql .= ' AND (s.slot_start < ? OR a.status NOT IN ("pending", "confirmed"))';
         $params[] = now_sql();
     }
-
+ 
     $sql .= ' ORDER BY s.slot_start ASC';
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
-
+ 
     return array_map(
         static fn(array $row): array => repository_appointment_row(repository_find_appointment((int) $row['id'])),
         $stmt->fetchAll()
     );
 }
-
+ 
 function appointments_for_admin(array $filters = []): array
 {
     $sql = 'SELECT a.id FROM appointments a JOIN appointment_slots s ON s.id = a.slot_id WHERE 1=1';
     $params = [];
-
+ 
     if (!empty($filters['date'])) {
         $sql .= ' AND DATE(s.slot_start) = ?';
         $params[] = $filters['date'];
@@ -654,23 +656,23 @@ function appointments_for_admin(array $filters = []): array
         $sql .= ' AND a.clinic_id = ?';
         $params[] = (int) $filters['clinic_id'];
     }
-
+ 
     $sql .= ' ORDER BY s.slot_start DESC LIMIT 300';
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
-
+ 
     return array_map(
         static fn(array $row): array => repository_appointment_row(repository_find_appointment((int) $row['id'])),
         $stmt->fetchAll()
     );
 }
-
+ 
 function appointment_by_id(int $appointmentId): ?array
 {
     $appointment = repository_find_appointment($appointmentId);
     return $appointment ? repository_appointment_row($appointment) : null;
 }
-
+ 
 function cancel_appointment(int $appointmentId, array $actor, string $reason = ''): void
 {
     db_transaction(function () use ($appointmentId, $actor, $reason): void {
@@ -678,38 +680,38 @@ function cancel_appointment(int $appointmentId, array $actor, string $reason = '
         if (!$appointment || !in_array($appointment['status'], ['pending', 'confirmed'], true)) {
             throw new RuntimeException('Consulta não pode ser cancelada.');
         }
-
+ 
         $doctor = $actor['role'] === 'doctor' ? doctor_by_user((int) $actor['id']) : null;
         if ($actor['role'] === 'doctor' && (!$doctor || (int) $appointment['doctor_id'] !== (int) $doctor['id'])) {
             abort_forbidden();
         }
-
+ 
         repository_replace('appointments', $appointmentId, [
             'status' => 'cancelled',
             'cancel_reason' => $reason ?: null,
             'cancelled_at' => now_sql(),
             'updated_at' => now_sql(),
         ]);
-
+ 
         $slot = repository_slot((int) $appointment['slot_id']);
         if ($slot && new DateTime($slot['slot_start']) > new DateTime()) {
             repository_replace('appointment_slots', (int) $slot['id'], ['status' => 'available']);
         }
-
+ 
         create_notification((int) $appointment['doctor_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
     });
 }
-
+ 
 function reschedule_appointment(int $appointmentId, int $newSlotId, array $actor): void
 {
     throw new RuntimeException('A remarcação é realizada pelo administrador nesta versão.');
 }
-
+ 
 function confirm_appointment(int $appointmentId, int $patientId): void
 {
     throw new RuntimeException('A confirmação pelo paciente foi desativada.');
 }
-
+ 
 function mark_appointment(int $appointmentId, array $actor, string $status): void
 {
     if (!in_array($status, ['completed', 'no_show'], true)) {
@@ -727,18 +729,18 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
     } elseif ($actor['role'] !== 'admin') {
         abort_forbidden();
     }
-
+ 
     repository_replace('appointments', $appointmentId, [
         'status' => $status,
         'completed_at' => now_sql(),
         'updated_at' => now_sql(),
     ]);
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Perfis e usuários
  * ------------------------------------------------------------------- */
-
+ 
 function find_user_by_email(string $email): ?array
 {
     $stmt = db()->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
@@ -746,18 +748,18 @@ function find_user_by_email(string $email): ?array
     $row = $stmt->fetch();
     return $row ?: null;
 }
-
+ 
 function email_in_use(string $email): bool
 {
     $stmt = db()->prepare('SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER(?)');
     $stmt->execute([$email]);
     return (int) $stmt->fetchColumn() > 0;
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Recuperação de senha ("Esqueci minha senha")
  * ------------------------------------------------------------------- */
-
+ 
 /**
  * Define a nova senha do usuário (já com a identidade confirmada via
  * pergunta de segurança — ver password_reset_can_set_new_password() em
@@ -769,18 +771,18 @@ function reset_user_password(int $userId, string $newPassword): void
     if (strlen($newPassword) < 6) {
         throw new RuntimeException('A senha deve ter pelo menos 6 caracteres.');
     }
-
+ 
     repository_replace('users', $userId, [
         'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
         'updated_at' => now_sql(),
     ]);
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Pergunta de segurança (rota alternativa de verificação em
  * "Esqueci minha senha", além do código enviado por e-mail).
  * ------------------------------------------------------------------- */
-
+ 
 /**
  * Normaliza a resposta antes de gerar/validar o hash: remove espaços nas
  * pontas, colapsa espaços internos repetidos e ignora maiúsculas/minúsculas
@@ -800,7 +802,7 @@ function normalize_security_answer(string $answer): string
     $answer = preg_replace('/\s+/', ' ', $answer) ?? $answer;
     return trim($answer);
 }
-
+ 
 /**
  * Cadastra ou atualiza a pergunta de segurança do usuário. A resposta é
  * normalizada e, em seguida, armazenada apenas como hash — nunca em
@@ -810,17 +812,17 @@ function set_user_security_question(int $userId, string $question, string $answe
 {
     $question = trim($question);
     $normalizedAnswer = normalize_security_answer($answer);
-
+ 
     if ($question === '' || $normalizedAnswer === '') {
         throw new RuntimeException('Selecione uma pergunta de segurança e informe a resposta.');
     }
-
+ 
     repository_update_user($userId, [
         'security_question' => $question,
         'security_answer_hash' => password_hash($normalizedAnswer, PASSWORD_DEFAULT),
     ]);
 }
-
+ 
 /**
  * Retorna a pergunta de segurança cadastrada por um usuário (texto puro,
  * sem a resposta) — usada para exibi-la na etapa 2 alternativa do fluxo
@@ -832,7 +834,7 @@ function get_user_security_question(int $userId): ?string
     $question = $user['security_question'] ?? null;
     return $question !== null && $question !== '' ? $question : null;
 }
-
+ 
 /**
  * Verifica a resposta informada contra o hash salvo, usando a mesma
  * normalização (case/acentos/espaços) aplicada no cadastro.
@@ -843,15 +845,15 @@ function verify_user_security_answer(int $userId, string $answer): bool
     if (!$user || empty($user['security_answer_hash'])) {
         return false;
     }
-
+ 
     return password_verify(normalize_security_answer($answer), $user['security_answer_hash']);
 }
-
+ 
     function mark_tutorial_seen(int $userId): void
 {
     repository_update_user($userId, ['tutorial_seen' => 1]);
 }
-
+ 
 /**
  * Registra o aceite dos Termos de Uso e Política de Privacidade
  * (chamado ao clicar "Prosseguir" no modal bloqueante — ver
@@ -861,7 +863,7 @@ function accept_terms(int $userId): void
 {
     repository_update_user($userId, ['terms_accepted' => 1]);
 }
-
+ 
 function update_profile(int $userId, array $data): void
 {
     repository_update_user($userId, [
@@ -872,7 +874,7 @@ function update_profile(int $userId, array $data): void
         'address' => $data['address'] ?: null,
     ]);
 }
-
+ 
 function update_patient_admin(int $patientId, array $data): void
 {
     $patient = repository_find_user($patientId);
@@ -882,7 +884,7 @@ function update_patient_admin(int $patientId, array $data): void
     update_profile($patientId, $data);
     repository_update_user($patientId, ['status' => $data['status'] === 'inactive' ? 'inactive' : 'active']);
 }
-
+ 
 function update_staff_profile(int $userId, array $data): void
 {
     $user = repository_find_user($userId);
@@ -891,7 +893,7 @@ function update_staff_profile(int $userId, array $data): void
     }
     update_profile($userId, $data);
 }
-
+ 
 function update_own_password(int $userId, string $currentPassword, string $newPassword, string $confirmPassword): void
 {
     if ($newPassword === '' && $confirmPassword === '') {
@@ -906,11 +908,11 @@ function update_own_password(int $userId, string $currentPassword, string $newPa
     }
     repository_update_user($userId, ['password_hash' => password_hash($newPassword, PASSWORD_DEFAULT)]);
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Gestão de médicos, agenda e bloqueios (admin)
  * ------------------------------------------------------------------- */
-
+ 
 function create_doctor(array $data): int
 {
     if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
@@ -919,7 +921,7 @@ function create_doctor(array $data): int
     if (email_in_use($data['email'])) {
         throw new RuntimeException('Já existe usuário com este e-mail.');
     }
-
+ 
     return db_transaction(function () use ($data): int {
         $userId = repository_append('users', [
             'name' => $data['name'],
@@ -936,7 +938,7 @@ function create_doctor(array $data): int
             'updated_at' => null,
             'last_login_at' => null,
         ]);
-
+ 
         return repository_append('doctors', [
             'user_id' => $userId,
             'clinic_id' => (int) $data['clinic_id'],
@@ -949,7 +951,7 @@ function create_doctor(array $data): int
         ]);
     });
 }
-
+ 
 function update_doctor(int $doctorId, array $data): void
 {
     $doctor = repository_find_doctor($doctorId);
@@ -969,7 +971,7 @@ function update_doctor(int $doctorId, array $data): void
         'appointment_duration' => (int) ($data['appointment_duration'] ?: 30),
     ]);
 }
-
+ 
 function deactivate_doctor(int $doctorId): void
 {
     $doctor = repository_find_doctor($doctorId);
@@ -979,7 +981,7 @@ function deactivate_doctor(int $doctorId): void
     repository_replace('doctors', $doctorId, ['active' => 0]);
     repository_update_user((int) $doctor['user_id'], ['status' => 'inactive']);
 }
-
+ 
 function add_schedule(array $data): void
 {
     if ($data['start_time'] >= $data['end_time']) {
@@ -993,12 +995,12 @@ function add_schedule(array $data): void
         'active' => 1,
     ]);
 }
-
+ 
 function delete_schedule(int $scheduleId): void
 {
     repository_replace('doctor_schedules', $scheduleId, ['active' => 0]);
 }
-
+ 
 function add_block(array $data): void
 {
     if ($data['start_time'] >= $data['end_time']) {
@@ -1007,7 +1009,7 @@ function add_block(array $data): void
     $doctorId = (int) $data['doctor_id'];
     $start = $data['block_date'] . ' ' . $data['start_time'];
     $end = $data['block_date'] . ' ' . $data['end_time'];
-
+ 
     db_transaction(function () use ($data, $doctorId, $start, $end): void {
         $conflictStmt = db()->prepare(
             'SELECT COUNT(*) FROM appointment_slots
@@ -1017,7 +1019,7 @@ function add_block(array $data): void
         if ((int) $conflictStmt->fetchColumn() > 0) {
             throw new RuntimeException('Não é possível bloquear horário com consulta agendada.');
         }
-
+ 
         repository_append('schedule_blocks', [
             'doctor_id' => $doctorId,
             'block_date' => $data['block_date'],
@@ -1026,7 +1028,7 @@ function add_block(array $data): void
             'reason' => $data['reason'] ?: null,
             'created_at' => now_sql(),
         ]);
-
+ 
         $updateStmt = db()->prepare(
             'UPDATE appointment_slots SET status = "blocked", block_reason = ?
              WHERE doctor_id = ? AND status = "available" AND slot_start < ? AND slot_end > ?'
@@ -1034,25 +1036,25 @@ function add_block(array $data): void
         $updateStmt->execute([$data['reason'] ?: 'Bloqueado pela clínica', $doctorId, $end, $start]);
     });
 }
-
+ 
 function doctor_schedules(int $doctorId): array
 {
     $stmt = db()->prepare('SELECT * FROM doctor_schedules WHERE doctor_id = ? AND active = 1 ORDER BY weekday, start_time');
     $stmt->execute([$doctorId]);
     return $stmt->fetchAll();
 }
-
+ 
 function doctor_blocks(int $doctorId): array
 {
     $stmt = db()->prepare('SELECT * FROM schedule_blocks WHERE doctor_id = ? AND block_date >= ? ORDER BY block_date, start_time');
     $stmt->execute([$doctorId, current_date_value()]);
     return $stmt->fetchAll();
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Pacientes
  * ------------------------------------------------------------------- */
-
+ 
 function patient_list(string $search = '', ?int $clinicId = null): array
 {
     $sql = 'SELECT u.*,
@@ -1062,14 +1064,14 @@ function patient_list(string $search = '', ?int $clinicId = null): array
             LEFT JOIN appointments a ON a.patient_id = u.id
             WHERE u.role = "patient"';
     $params = [];
-
+ 
     if ($clinicId !== null) {
         // Isola por clínica: só pacientes cadastrados na mesma clínica
         // do administrador logado.
         $sql .= ' AND u.clinic_id = ?';
         $params[] = $clinicId;
     }
-
+ 
     if ($search !== '') {
         // Busca por nome, e-mail, telefone ou CPF — cobre os jeitos
         // mais comuns de alguém procurar um paciente na lista.
@@ -1080,7 +1082,7 @@ function patient_list(string $search = '', ?int $clinicId = null): array
         $params[] = $term;
         $params[] = $term;
     }
-
+ 
     $sql .= ' GROUP BY u.id ORDER BY u.name';
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
@@ -1091,20 +1093,20 @@ function patient_list(string $search = '', ?int $clinicId = null): array
         return $row;
     }, $rows);
 }
-
+ 
 function doctor_patient_list(int $doctorId, string $search = ''): array
 {
     $idsStmt = db()->prepare('SELECT DISTINCT patient_id FROM appointments WHERE doctor_id = ?');
     $idsStmt->execute([$doctorId]);
     $patientIds = array_map('intval', array_column($idsStmt->fetchAll(), 'patient_id'));
-
+ 
     $rows = [];
     foreach ($patientIds as $patientId) {
         $patient = repository_find_user($patientId);
         if (!$patient || ($search !== '' && stripos($patient['name'], $search) === false)) {
             continue;
         }
-
+ 
         $apptStmt = db()->prepare(
             'SELECT s.slot_start FROM appointments a
              JOIN appointment_slots s ON s.id = a.slot_id
@@ -1113,20 +1115,20 @@ function doctor_patient_list(int $doctorId, string $search = ''): array
         );
         $apptStmt->execute([$doctorId, $patientId]);
         $dates = array_column($apptStmt->fetchAll(), 'slot_start');
-
+ 
         $future = array_values(array_filter($dates, static fn(string $date): bool => $date >= now_sql()));
         $past = array_values(array_filter($dates, static fn(string $date): bool => $date < now_sql()));
-
+ 
         $patient['last_appointment'] = $past ? end($past) : null;
         $patient['next_appointment'] = $future[0] ?? null;
         $patient['total_appointments'] = count($dates);
         $rows[] = $patient;
     }
-
+ 
     usort($rows, static fn(array $a, array $b): int => strcasecmp($a['name'], $b['name']));
     return $rows;
 }
-
+ 
 function patient_detail_for_doctor(int $doctorId, int $patientId): ?array
 {
     foreach (doctor_patient_list($doctorId) as $patient) {
@@ -1136,11 +1138,11 @@ function patient_detail_for_doctor(int $doctorId, int $patientId): ?array
     }
     return null;
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Prontuário eletrônico
  * ------------------------------------------------------------------- */
-
+ 
 function medical_record_by_appointment(int $appointmentId): ?array
 {
     $stmt = db()->prepare('SELECT * FROM medical_records WHERE appointment_id = ? LIMIT 1');
@@ -1148,7 +1150,7 @@ function medical_record_by_appointment(int $appointmentId): ?array
     $row = $stmt->fetch();
     return $row ?: null;
 }
-
+ 
 function medical_records_for_patient(int $patientId, ?int $doctorId = null): array
 {
     $sql = 'SELECT r.*, a.status AS appointment_status, s.slot_start AS slot_start, du.name AS doctor_name
@@ -1159,18 +1161,18 @@ function medical_records_for_patient(int $patientId, ?int $doctorId = null): arr
             JOIN users du ON du.id = d.user_id
             WHERE r.patient_id = ?';
     $params = [$patientId];
-
+ 
     if ($doctorId) {
         $sql .= ' AND r.doctor_id = ?';
         $params[] = $doctorId;
     }
-
+ 
     $sql .= ' ORDER BY s.slot_start DESC';
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
 }
-
+ 
 function save_medical_record(int $appointmentId, array $actor, array $data): void
 {
     db_transaction(function () use ($appointmentId, $actor, $data): void {
@@ -1182,12 +1184,12 @@ function save_medical_record(int $appointmentId, array $actor, array $data): voi
         if (!$doctor || (int) $appointment['doctor_id'] !== (int) $doctor['id']) {
             abort_forbidden();
         }
-
+ 
         $fields = [];
         foreach (['weight', 'height', 'temperature', 'heart_rate', 'blood_pressure', 'symptoms', 'diagnosis', 'prescription', 'follow_up'] as $field) {
             $fields[$field] = $data[$field] ?: null;
         }
-
+ 
         $existing = medical_record_by_appointment($appointmentId);
         if ($existing) {
             $fields['updated_at'] = now_sql();
@@ -1202,13 +1204,13 @@ function save_medical_record(int $appointmentId, array $actor, array $data): voi
                 'updated_at' => now_sql(),
             ]));
         }
-
+ 
         repository_replace('appointments', $appointmentId, [
             'status' => 'completed',
             'completed_at' => now_sql(),
             'updated_at' => now_sql(),
         ]);
-
+ 
         $paymentStmt = db()->prepare('SELECT id FROM payments WHERE appointment_id = ? AND status = "pending" LIMIT 1');
         $paymentStmt->execute([$appointmentId]);
         $paymentId = $paymentStmt->fetchColumn();
@@ -1221,16 +1223,16 @@ function save_medical_record(int $appointmentId, array $actor, array $data): voi
         }
     });
 }
-
+ 
 function age_from_birth(?string $birthDate): string
 {
     return $birthDate ? (new DateTime($birthDate))->diff(new DateTime())->y . ' anos' : '-';
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Calendário, relatórios e dashboard
  * ------------------------------------------------------------------- */
-
+ 
 function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?int $clinicId = null): array
 {
     $prefix = sprintf('%04d-%02d-', $year, $month);
@@ -1255,11 +1257,11 @@ function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?in
     }
     return $days;
 }
-
+ 
 function report_data(string $fromDate, string $toDate, ?int $clinicId = null): array
 {
     ensure_slots_for_all($fromDate, $toDate);
-
+ 
     // IMPORTANTE: não reaproveitar appointments_for_admin() aqui — ela
     // tem um "LIMIT 300, mais recentes primeiro" pensado pra tela de
     // listagem, não pra relatório. Com mais de 300 consultas no banco
@@ -1279,14 +1281,14 @@ function report_data(string $fromDate, string $toDate, ?int $clinicId = null): a
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     $appointments = $stmt->fetchAll();
-
+ 
     $summary = ['total' => count($appointments), 'completed' => 0, 'no_shows' => 0, 'active' => 0];
     foreach ($appointments as $row) {
         if ($row['status'] === 'completed') $summary['completed']++;
         if ($row['status'] === 'no_show') $summary['no_shows']++;
         if (in_array($row['status'], ['pending', 'confirmed'], true)) $summary['active']++;
     }
-
+ 
     // appointment_slots não tem clinic_id direto (só doctor_id) — filtra
     // por clínica através da tabela doctors.
     $slotSql = 'SELECT COUNT(*) AS total_slots,
@@ -1309,7 +1311,7 @@ function report_data(string $fromDate, string $toDate, ?int $clinicId = null): a
         'booked_slots' => (int) ($slotRow['booked_slots'] ?? 0),
         'blocked_slots' => (int) ($slotRow['blocked_slots'] ?? 0),
     ];
-
+ 
     $byDoctor = [];
     $doctorFilters = $clinicId !== null ? ['clinic_id' => $clinicId] : [];
     foreach (active_doctors($doctorFilters) as $doctor) {
@@ -1321,14 +1323,14 @@ function report_data(string $fromDate, string $toDate, ?int $clinicId = null): a
             'completed' => count(array_filter($doctorAppointments, static fn(array $row): bool => $row['status'] === 'completed')),
         ];
     }
-
+ 
     return ['summary' => $summary, 'slots' => $slotSummary, 'by_doctor' => $byDoctor];
 }
-
+ 
 function dashboard_metrics(?int $clinicId = null): array
 {
     $today = current_date_value();
-
+ 
     $todaySql = 'SELECT COUNT(*) FROM appointments a JOIN appointment_slots s ON s.id = a.slot_id
                  WHERE DATE(s.slot_start) = ? AND a.status IN ("pending", "confirmed")';
     $todayParams = [$today];
@@ -1338,7 +1340,7 @@ function dashboard_metrics(?int $clinicId = null): array
     $patientsParams = [];
     $doctorsSql = 'SELECT COUNT(*) FROM doctors WHERE active = 1';
     $doctorsParams = [];
-
+ 
     if ($clinicId !== null) {
         // Todo indicador do painel principal fica restrito à clínica do
         // administrador logado — sem isso, os números mostrados
@@ -1352,7 +1354,7 @@ function dashboard_metrics(?int $clinicId = null): array
         $doctorsSql .= ' AND clinic_id = ?';
         $doctorsParams[] = $clinicId;
     }
-
+ 
     $todayStmt = db()->prepare($todaySql);
     $todayStmt->execute($todayParams);
     $pendingStmt = db()->prepare($pendingSql);
@@ -1361,7 +1363,7 @@ function dashboard_metrics(?int $clinicId = null): array
     $patientsStmt->execute($patientsParams);
     $doctorsStmt = db()->prepare($doctorsSql);
     $doctorsStmt->execute($doctorsParams);
-
+ 
     return [
         'today' => (int) $todayStmt->fetchColumn(),
         'pending' => (int) $pendingStmt->fetchColumn(),
@@ -1369,13 +1371,13 @@ function dashboard_metrics(?int $clinicId = null): array
         'doctors' => (int) $doctorsStmt->fetchColumn(),
     ];
 }
-
+ 
 function create_due_reminders(int $hoursAhead = 24): int
 {
     $from = (new DateTime())->modify('+' . max(0, $hoursAhead - 1) . ' hours');
     $to = (new DateTime())->modify('+' . ($hoursAhead + 1) . ' hours');
     $created = 0;
-
+ 
     foreach (appointments_for_admin() as $appointment) {
         $slot = new DateTime($appointment['slot_start']);
         if (!in_array($appointment['status'], ['pending', 'confirmed'], true) || $slot < $from || $slot > $to) {
@@ -1384,6 +1386,6 @@ function create_due_reminders(int $hoursAhead = 24): int
         create_notification((int) $appointment['doctor_id'], (int) $appointment['id'], 'in_app', 'Lembrete de consulta', 'Você tem uma consulta marcada para ' . format_datetime($appointment['slot_start']) . '.');
         $created++;
     }
-
+ 
     return $created;
 }

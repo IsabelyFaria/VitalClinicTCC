@@ -107,7 +107,7 @@ function render_admin_calendar(array $user): void
     $first = new DateTime(sprintf('%04d-%02d-01', $year, $month));
     $prev = (clone $first)->modify('-1 month');
     $next = (clone $first)->modify('+1 month');
-    $calendar = calendar_appointments($year, $month, null, (int) $user['clinic_id']);
+    $calendar = calendar_appointments($year, $month, null, admin_clinic_scope($user));
 
     render_calendar_component('admin_calendar', $first, $prev, $next, $calendar);
 }

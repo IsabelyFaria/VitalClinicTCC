@@ -45,6 +45,30 @@ function require_role($roles): array
 }
 
 /**
+ * O "escopo de clínica" de um administrador: um ID de clínica pra
+ * filtrar tudo que ele vê (o caso comum), ou `null` pra super admin
+ * (is_super_admin = 1), que enxerga todas as clínicas sem filtro
+ * nenhum. Toda função de listagem/relatório do painel admin recebe
+ * exatamente o que isto devolve — nunca lê users.clinic_id direto,
+ * pra não esquecer desse caso especial em algum lugar.
+ */
+function admin_clinic_scope(array $user): ?int
+{
+    return !empty($user['is_super_admin']) ? null : (int) $user['clinic_id'];
+}
+
+/**
+ * Verifica se o admin logado pode acessar/alterar um registro que
+ * pertence à clínica $targetClinicId — usada nas checagens de posse
+ * (require_admin_owns_doctor, edição de paciente, etc.) em vez de
+ * comparar users.clinic_id direto, pra super admin sempre passar.
+ */
+function admin_can_access_clinic(array $user, int $targetClinicId): bool
+{
+    return !empty($user['is_super_admin']) || (int) $user['clinic_id'] === $targetClinicId;
+}
+
+/**
  * Tenta autenticar o usuário e devolve o MOTIVO da falha (ou null se
  * deu certo). Isso existe porque, neste painel, quem loga é sempre uma
  * conta provisionada pela própria clínica (admin/médico) — diferente

@@ -56,6 +56,12 @@ INSERT INTO users (clinic_id, name, email, password_hash, role, phone, document,
 (1, 'Paciente de Demonstração', 'paciente.demo@clinica.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'patient', '(11) 90000-0003', '111.111.111-11', '1995-05-10', 'Endereço de demonstração', 'active', NULL, NULL),
 (1, 'João Pereira', 'joao.pereira@email.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'patient', '(11) 90000-0005', '222.222.222-22', '1988-03-22', 'Rua A, 10', 'active', NULL, NULL);
 
+-- admin@clinica.local é a única conta de super admin do projeto: ela
+-- enxerga e gerencia os dados de TODAS as clínicas cadastradas. Os
+-- demais administradores (incluindo os gerados pelos lotes de seed
+-- abaixo) ficam restritos à própria clínica.
+UPDATE users SET is_super_admin = 1 WHERE email = 'admin@clinica.local';
+
 -- 4. doctors (user_id 2 e 3 são médicos)
 INSERT INTO doctors (user_id, clinic_id, specialty_id, crm, bio, appointment_duration, active) VALUES
 (2, 1, 1, 'CRM-SP 123456', 'Atendimento clínico com foco em acompanhamento preventivo.', 30, 1),

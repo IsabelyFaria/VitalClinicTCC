@@ -2,7 +2,7 @@
 
 function render_admin_dashboard(array $user): void
 {
-    $clinicId = (int) $user['clinic_id'];
+    $clinicId = admin_clinic_scope($user);
     $metrics = dashboard_metrics($clinicId);
     $today = current_date_value();
     ensure_slots_for_all($today, $today);

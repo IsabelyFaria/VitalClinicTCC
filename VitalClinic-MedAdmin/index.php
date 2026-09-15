@@ -148,7 +148,7 @@ function slots_endpoint(): void
     // manipulando o doctor_id direto na URL.
     if ($user['role'] === 'admin') {
         $doctor = repository_find_doctor($doctorId);
-        if (!$doctor || (int) $doctor['clinic_id'] !== (int) $user['clinic_id']) {
+        if (!$doctor || !admin_can_access_clinic($user, (int) $doctor['clinic_id'])) {
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Nao autorizado.']);
@@ -204,7 +204,7 @@ function doctor_weekdays_endpoint(): void
 
     if ($user['role'] === 'admin') {
         $doctor = repository_find_doctor($doctorId);
-        if (!$doctor || (int) $doctor['clinic_id'] !== (int) $user['clinic_id']) {
+        if (!$doctor || !admin_can_access_clinic($user, (int) $doctor['clinic_id'])) {
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Nao autorizado.']);
@@ -244,7 +244,7 @@ function monthly_movement_endpoint(): void
     $from = $monthObj->format('Y-m-01');
     $to = $monthObj->format('Y-m-t');
 
-    $report = report_data($from, $to, (int) $user['clinic_id']);
+    $report = report_data($from, $to, admin_clinic_scope($user));
     $total = (int) ($report['summary']['total'] ?? 0);
     $noShows = (int) ($report['summary']['no_shows'] ?? 0);
     $noShowRate = $total ? round(($noShows / $total) * 100, 1) : 0.0;
@@ -394,7 +394,7 @@ function handle_post(): void
             $doctorId = (int) ($_POST['doctor_id'] ?? 0);
 
             $patient = repository_find_user($patientId);
-            if (!$patient || $patient['role'] !== 'patient' || (int) $patient['clinic_id'] !== (int) $adminUser['clinic_id']) {
+            if (!$patient || $patient['role'] !== 'patient' || !admin_can_access_clinic($adminUser, (int) $patient['clinic_id'])) {
                 throw new RuntimeException('Selecione um paciente válido.');
             }
             if (!$doctorId) {
@@ -423,10 +423,16 @@ function handle_post(): void
         case 'admin_create_doctor':
             $adminUser = require_role('admin');
             $doctorData = doctor_form_data();
-            // Nunca confia no clinic_id do formulário — um médico
-            // cadastrado por um admin sempre entra na MESMA clínica
-            // desse admin.
-            $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            if (!empty($adminUser['is_super_admin'])) {
+                // Super admin escolhe a clínica no formulário — ainda
+                // validamos que é uma clínica real antes de confiar.
+                $doctorData['clinic_id'] = repository_find('clinics', $doctorData['clinic_id']) ? $doctorData['clinic_id'] : 0;
+            } else {
+                // Nunca confia no clinic_id do formulário — um médico
+                // cadastrado por um admin comum sempre entra na MESMA
+                // clínica desse admin.
+                $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            }
             create_doctor($doctorData);
             flash('success', 'Medico cadastrado.');
             redirect(['page' => 'admin_doctors']);
@@ -436,8 +442,12 @@ function handle_post(): void
             $doctorId = (int) ($_POST['doctor_id'] ?? 0);
             require_admin_owns_doctor($adminUser, $doctorId);
             $doctorData = doctor_form_data(false);
-            // Idem: edição nunca muda o médico de clínica.
-            $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            if (!empty($adminUser['is_super_admin'])) {
+                $doctorData['clinic_id'] = repository_find('clinics', $doctorData['clinic_id']) ? $doctorData['clinic_id'] : 0;
+            } else {
+                // Idem: admin comum nunca muda o médico de clínica.
+                $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
+            }
             update_doctor($doctorId, $doctorData);
             flash('success', 'Medico atualizado.');
             redirect(['page' => 'admin_doctors']);
@@ -493,9 +503,10 @@ function handle_post(): void
             $adminUser = require_role('admin');
             $patientId = (int) ($_POST['patient_id'] ?? 0);
             $targetPatient = repository_find_user($patientId);
-            if (!$targetPatient || $targetPatient['role'] !== 'patient' || (int) $targetPatient['clinic_id'] !== (int) $adminUser['clinic_id']) {
+            if (!$targetPatient || $targetPatient['role'] !== 'patient' || !admin_can_access_clinic($adminUser, (int) $targetPatient['clinic_id'])) {
                 // Nunca deixa um admin editar um paciente de outra
-                // clínica, mesmo que o ID tenha sido forjado no POST.
+                // clínica, mesmo que o ID tenha sido forjado no POST
+                // (super admin é a única exceção prevista).
                 throw new RuntimeException('Paciente não encontrado.');
             }
             update_patient_admin($patientId, [
@@ -515,6 +526,17 @@ function handle_post(): void
             if ($initialPassword === '') {
                 $initialPassword = '123456';
             }
+            if (!empty($adminUser['is_super_admin'])) {
+                // Super admin escolhe a clínica no formulário — ainda
+                // assim validamos que o ID enviado é de uma clínica
+                // real, nunca confiando cegamente no POST.
+                $chosenClinicId = (int) ($_POST['clinic_id'] ?? 0);
+                $patientClinicId = repository_find('clinics', $chosenClinicId) ? $chosenClinicId : 0;
+            } else {
+                // Admin comum: sempre a própria clínica, nunca o que
+                // vier do formulário.
+                $patientClinicId = (int) $adminUser['clinic_id'];
+            }
             $patientId = register_patient([
                 'name' => post_value('name'),
                 'email' => post_value('email'),
@@ -523,10 +545,7 @@ function handle_post(): void
                 'document' => post_value('document'),
                 'birth_date' => post_value('birth_date'),
                 'address' => post_value('address'),
-                // Nunca confia no clinic_id vindo do formulário — um
-                // paciente cadastrado por um admin sempre pertence à
-                // MESMA clínica desse admin, sem exceção.
-                'clinic_id' => (int) $adminUser['clinic_id'],
+                'clinic_id' => $patientClinicId,
             ]);
             flash('success', 'Paciente cadastrado. Senha inicial: ' . $initialPassword);
             redirect(['page' => 'admin_patients', 'patient_id' => $patientId]);
@@ -551,9 +570,9 @@ function handle_post(): void
             $actor = require_role('admin');
             $targetUserId = (int) ($_POST['user_id'] ?? 0);
             $targetUser = repository_find_user($targetUserId);
-            if (!$targetUser || (int) $targetUser['clinic_id'] !== (int) $actor['clinic_id']) {
+            if (!$targetUser || !admin_can_access_clinic($actor, (int) $targetUser['clinic_id'])) {
                 // Um admin só pode conceder/revogar acesso ADM de gente
-                // da própria clínica, nunca de outra.
+                // da própria clínica (super admin é exceção).
                 throw new RuntimeException('Usuário não encontrado.');
             }
             update_user_role(
@@ -590,7 +609,7 @@ function handle_post(): void
 function require_admin_owns_doctor(array $adminUser, int $doctorId): array
 {
     $doctor = repository_find_doctor($doctorId);
-    if (!$doctor || (int) $doctor['clinic_id'] !== (int) $adminUser['clinic_id']) {
+    if (!$doctor || !admin_can_access_clinic($adminUser, (int) $doctor['clinic_id'])) {
         throw new RuntimeException('Médico não encontrado.');
     }
     return $doctor;

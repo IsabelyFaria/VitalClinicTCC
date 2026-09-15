@@ -5,7 +5,7 @@
  * calendário visual de dias disponíveis e seleção de horário). */
 function render_admin_appointments(array $user): void
 {
-    $clinicId = (int) $user['clinic_id'];
+    $clinicId = admin_clinic_scope($user);
     $filters = [
         'date' => $_GET['date'] ?? '',
         'status' => $_GET['status'] ?? '',

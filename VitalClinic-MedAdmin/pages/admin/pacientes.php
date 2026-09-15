@@ -2,7 +2,7 @@
 
 function render_admin_patients(array $user): void
 {
-    $clinicId = (int) $user['clinic_id'];
+    $clinicId = admin_clinic_scope($user);
     $patientId = (int) ($_GET['patient_id'] ?? 0);
     $search = trim((string) ($_GET['q'] ?? ''));
     ?>
@@ -46,7 +46,7 @@ function render_admin_patients(array $user): void
             <?php
             if ($patientId) {
                 $patient = repository_find_user($patientId);
-                if ($patient && ($patient['role'] !== 'patient' || (int) $patient['clinic_id'] !== $clinicId)) {
+                if ($patient && ($patient['role'] !== 'patient' || !admin_can_access_clinic($user, (int) $patient['clinic_id']))) {
                     // Bloqueia acesso cruzado: um paciente de outra
                     // clínica (ou um ID forjado na URL) nunca deve
                     // aparecer aqui, mesmo que o ID exista no banco.
@@ -94,8 +94,19 @@ function render_admin_patients(array $user): void
                         <label>Documento <input name="document"></label>
                         <label>Nascimento <input type="date" name="birth_date"></label>
                         <label>Endereço <input name="address"></label>
+                        <?php if (!empty($user['is_super_admin'])): ?>
+                            <label>Clínica
+                                <select name="clinic_id" required>
+                                    <?php foreach (clinics() as $clinic): ?>
+                                        <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                        <?php endif; ?>
                     </div>
-                    <p class="muted">O paciente será cadastrado na sua clínica.</p>
+                    <?php if (empty($user['is_super_admin'])): ?>
+                        <p class="muted">O paciente será cadastrado na sua clínica.</p>
+                    <?php endif; ?>
                     <button class="button primary" type="submit">Cadastrar paciente</button>
                 </form>
                 <?php
