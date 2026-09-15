@@ -578,11 +578,11 @@ function find_doctor_details(int $medicoId): ?array
 /**
  * Garante que, entre $fromDate e $toDate, todo dia da semana em que esse
  * médico atende (cadastro em doctor_schedules, a "Atendimento semanal" do
- * painel do médico/admin) já tenha um horário DE VERDADE criado na tabela
+ * painel do médico/admin) já tenha um horário de verdade criado na tabela
  * appointment_slots. Sem essa função, um dia novo cadastrado no
  * Atendimento semanal só virava horário visível depois que alguém abria
  * aquele dia específico lá no painel do médico/admin (é lá que essa
- * mesma "criação sob demanda" já acontecia) — aqui replicamos a mesma
+ * mesma "criação sob demanda" já acontecia), aqui replicamos a mesma
  * ideia, agora do lado do paciente também.
  */
 function ensure_slots_for_doctor(int $doctorId, string $fromDate, string $toDate): void
@@ -608,7 +608,7 @@ function ensure_slots_for_doctor(int $doctorId, string $fromDate, string $toDate
     $stmtBloqueios->execute([$doctorId, $fromDate, $toDate]);
     $bloqueios = $stmtBloqueios->fetchAll();
 
-    // pega todos os slot_start que esse médico JÁ TEM no banco, pra nunca
+    // pega todos os slot_start que esse médico já tem no banco, pra nunca
     // tentar criar um horário duplicado (a tabela tem uma trava UNIQUE em
     // (doctor_id, slot_start) que barraria isso de qualquer jeito, mas é
     // mais barato já conferir aqui do que deixar o banco recusar)
@@ -699,7 +699,7 @@ function available_slots_for_doctor(int $medicoId): array
     // abrisse aquele dia específico no painel do médico/admin
     ensure_slots_for_doctor($medicoId, date('Y-m-d'), date('Y-m-d', strtotime('+90 days')));
 
-    // busca os horários LIVRES desse médico, só os que ainda vão acontecer
+    // busca os horários livres desse médico, só os que ainda vão acontecer
     // (slot_start >= NOW(), NOW() é uma função do próprio MySQL que pega a
     // data/hora atual do servidor do banco), ordenados do mais próximo pro
     // mais distante
