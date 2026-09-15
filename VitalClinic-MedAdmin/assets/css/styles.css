@@ -709,6 +709,24 @@ textarea:focus {
     background: var(--surface);
 }
 
+/* Campo de link do convite (tela "Convites", super admin) — clicável
+   pra selecionar o texto inteiro de uma vez e copiar. */
+.invite-link {
+    margin-top: 8px;
+}
+
+.invite-link input {
+    width: 100%;
+    min-height: 38px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface-alt);
+    color: var(--text);
+    font-size: 12px;
+    font-family: monospace;
+}
+
 .list-row strong,
 .list-row span,
 .list-row small {

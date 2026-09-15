@@ -44,6 +44,11 @@ return [
         // real da sua clínica.
         'movement_low' => 40,
         'movement_high' => 120,
+        // Validade do link de convite de primeiro acesso do admin (ver
+        // "Convites", tela exclusiva do super admin): depois desse
+        // prazo, o link para de funcionar sozinho, sem precisar de
+        // nenhuma tarefa agendada rodando por trás.
+        'invite_valid_hours' => 72,
     ],
     // Lista fixa de perguntas de segurança que o usuário pode escolher no
     // seu perfil. Guardamos o texto exato (não apenas uma chave) na coluna

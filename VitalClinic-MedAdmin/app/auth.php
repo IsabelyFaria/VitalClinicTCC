@@ -139,6 +139,59 @@ function register_patient(array $data): int
     ]);
 }
 
+/**
+ * Finaliza um convite de primeiro acesso: revalida o token (mesma
+ * checagem de find_pending_invite — nunca confia que o token já foi
+ * validado antes só porque a tela apareceu), cria a conta de
+ * administrador vinculada à clínica do convite, e marca o convite como
+ * usado — tudo numa transação só, pra nunca sobrar um convite "usado"
+ * sem a conta ter sido criada de fato (ou vice-versa).
+ */
+function complete_admin_invite(string $token, string $name, string $password): array
+{
+    $invite = find_pending_invite($token);
+    if (!$invite) {
+        throw new RuntimeException('Este link de convite é inválido ou já expirou.');
+    }
+    if (strlen($password) < 6) {
+        throw new RuntimeException('A senha deve ter pelo menos 6 caracteres.');
+    }
+    if (trim($name) === '') {
+        throw new RuntimeException('Informe seu nome.');
+    }
+    if (email_in_use($invite['invitee_email'])) {
+        throw new RuntimeException('Este e-mail já está cadastrado no sistema.');
+    }
+
+    return db_transaction(function () use ($invite, $name, $password): array {
+        $userId = repository_append('users', [
+            'clinic_id' => (int) $invite['clinic_id'],
+            'name' => trim($name),
+            'email' => strtolower($invite['invitee_email']),
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'role' => 'admin',
+            'phone' => null,
+            'document' => null,
+            'birth_date' => null,
+            'address' => null,
+            'status' => 'active',
+            'security_question' => null,
+            'security_answer_hash' => null,
+            'tutorial_seen' => 0,
+            'terms_accepted' => 0,
+            'is_super_admin' => 0, // convite nunca cria outro super admin
+            'created_at' => now_sql(),
+            'updated_at' => null,
+            'last_login_at' => null,
+        ]);
+
+        $stmt = db()->prepare('UPDATE admin_invites SET status = "used", used_at = NOW() WHERE id = ?');
+        $stmt->execute([(int) $invite['id']]);
+
+        return ['user_id' => $userId, 'clinic_id' => (int) $invite['clinic_id']];
+    });
+}
+
 /* ---------------------------------------------------------------------
  * "Esqueci minha senha" — estado do fluxo fica em $_SESSION['pwd_reset'],
  * nunca em cookies/URL. A verificação de identidade é feita 100% pela

@@ -26,12 +26,14 @@ require __DIR__ . '/app/auth.php';
 foreach ([
     'pages/auth/login.php',
     'pages/auth/recuperar_senha.php',
+    'pages/auth/aceitar_convite.php',
     'pages/admin/dashboard.php',
     'pages/admin/calendario.php',
     'pages/admin/consultas.php',
     'pages/admin/pacientes.php',
     'pages/admin/medicos.php',
     'pages/admin/relatorios.php',
+    'pages/admin/convites.php',
     'pages/medico/dashboard.php',
     'pages/medico/calendario.php',
     'pages/medico/consultas.php',
@@ -93,7 +95,7 @@ function run_app(): void
     }
 
     $page = $_GET['page'] ?? 'dashboard';
-    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password'];
+    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password', 'accept_invite'];
     $user = current_user();
 
     if (!$user && !in_array($page, $publicPages, true)) {
@@ -583,6 +585,66 @@ function handle_post(): void
             flash('success', 'Nível de acesso atualizado.');
             redirect(['page' => 'admin_doctors']);
 
+        case 'admin_create_invite':
+            $actor = require_role('admin');
+            if (empty($actor['is_super_admin'])) {
+                abort_forbidden();
+            }
+            $cnpj = post_value('clinic_cnpj');
+            $email = post_value('invitee_email');
+            if (trim(post_value('clinic_name')) === '' || trim($cnpj) === '') {
+                throw new RuntimeException('Informe o nome e o CNPJ da clínica.');
+            }
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new RuntimeException('Informe um e-mail válido para o convite.');
+            }
+            create_admin_invite([
+                'clinic_name' => post_value('clinic_name'),
+                'clinic_cnpj' => $cnpj,
+                'clinic_address' => post_value('clinic_address'),
+                'clinic_phone' => post_value('clinic_phone'),
+                'clinic_whatsapp' => post_value('clinic_whatsapp'),
+                'clinic_email' => post_value('clinic_email'),
+                'invitee_email' => strtolower($email),
+            ], (int) $actor['id']);
+            flash('success', 'Convite gerado. Copie o link abaixo e envie para o administrador da clínica.');
+            redirect(['page' => 'admin_invites']);
+
+        case 'admin_revoke_invite':
+            $actor = require_role('admin');
+            if (empty($actor['is_super_admin'])) {
+                abort_forbidden();
+            }
+            revoke_admin_invite((int) ($_POST['invite_id'] ?? 0));
+            flash('success', 'Convite revogado.');
+            redirect(['page' => 'admin_invites']);
+
+        case 'accept_invite':
+            // Ação pública (quem está abrindo o link ainda não tem
+            // conta) — a validação de verdade do token acontece dentro
+            // de complete_admin_invite(), não aqui. Trata o erro aqui
+            // mesmo (em vez de deixar subir pro catch genérico lá em
+            // cima) porque aquele só sabe redirecionar de volta pra
+            // ?page=X — perderia o token da URL, e a pessoa cairia de
+            // novo na tela de "link inválido" mesmo com um convite
+            // válido, só por ter digitado uma senha curta, por exemplo.
+            $token = (string) ($_POST['token'] ?? '');
+            try {
+                $result = complete_admin_invite(
+                    $token,
+                    post_value('name'),
+                    (string) ($_POST['password'] ?? '')
+                );
+            } catch (RuntimeException $e) {
+                flash('error', $e->getMessage());
+                redirect(['page' => 'accept_invite', 'token' => $token]);
+            }
+            // Loga a pessoa automaticamente, já na conta recém-criada —
+            // evita mais uma etapa manual depois de definir a senha.
+            $_SESSION['user_id'] = $result['user_id'];
+            flash('success', 'Conta criada com sucesso! Bem-vindo(a) ao Vital Clinic.');
+            redirect(['page' => 'dashboard']);
+
         case 'mark_appointment':
             $user = require_role(['doctor', 'admin']);
             mark_appointment((int) ($_POST['appointment_id'] ?? 0), $user, post_value('status'));
@@ -709,6 +771,11 @@ function render_nav(string $page, ?array $user): void
             'admin_reports' => 'Relatórios',
             'notifications' => 'Notificações',
         ];
+        if (!empty($user['is_super_admin'])) {
+            // "Convites" só existe pro super admin — é como uma clínica
+            // nova ganha o primeiro acesso (ver render_admin_invites()).
+            $items['admin_invites'] = 'Convites';
+        }
     } else {
         $items = [
             'dashboard' => 'Geral',
@@ -956,6 +1023,16 @@ function render_tutorial_modal(?array $user): void
 
 function render_page(string $page, ?array $user): void
 {
+    // Abrir um link de convite estando LOGADO (ex.: o próprio super
+    // admin testando o link que acabou de gerar, no mesmo navegador)
+    // não pode simplesmente cair no painel de quem já está logado —
+    // desloga primeiro, pra sempre mostrar a tela de aceitar o
+    // convite, não importa quem estava conectado antes.
+    if ($page === 'accept_invite' && $user) {
+        logout_user();
+        $user = null;
+    }
+
     if (!$user) {
         if ($page === 'forgot_password') {
             render_forgot_password();
@@ -963,6 +1040,8 @@ function render_page(string $page, ?array $user): void
             render_reset_security_question();
         } elseif ($page === 'reset_password') {
             render_reset_password();
+        } elseif ($page === 'accept_invite') {
+            render_accept_invite();
         } else {
             render_login();
         }
@@ -995,6 +1074,8 @@ function render_page(string $page, ?array $user): void
             render_admin_patients($user);
         } elseif ($page === 'admin_reports') {
             render_admin_reports($user);
+        } elseif ($page === 'admin_invites' && !empty($user['is_super_admin'])) {
+            render_admin_invites($user);
         } elseif ($page === 'profile') {
             render_staff_profile($user);
         } else {

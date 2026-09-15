@@ -39,6 +39,20 @@ function app_url(array $params = []): string
 }
 
 /**
+ * Igual a app_url(), mas devolve o endereço COMPLETO (com domínio) —
+ * necessário para o link de convite de admin, que é copiado e enviado
+ * por fora do site (WhatsApp, e-mail) e precisa funcionar sozinho,
+ * sem depender de estar navegando dentro do site no momento do clique.
+ */
+function full_url(array $params = []): string
+{
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php')), '/');
+    return $scheme . '://' . $host . $basePath . '/' . app_url($params);
+}
+
+/**
  * Gera a URL de um arquivo estático (imagens, css, js) acrescentando
  * a data de modificação do arquivo como versão (?v=...).
  * Isso evita que o navegador ou o service worker sirvam uma versão

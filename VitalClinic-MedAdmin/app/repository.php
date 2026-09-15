@@ -16,6 +16,7 @@ const REPOSITORY_TABLES = [
     'clinics', 'specialties', 'users', 'doctors', 'doctor_schedules',
     'schedule_blocks', 'appointment_slots', 'appointments',
     'medical_records', 'payments', 'notifications', 'password_resets',
+    'admin_invites',
 ];
  
 function repo_assert_table(string $table): void
@@ -180,7 +181,88 @@ function clinics(): array
 {
     return db()->query('SELECT * FROM clinics ORDER BY name')->fetchAll();
 }
- 
+
+/**
+ * Cria uma clínica nova e já gera o convite de primeiro acesso pra ela
+ * — usado só pelo super admin, na tela "Convites". O e-mail do
+ * convidado NÃO vira conta de usuário aqui: só quando o link for
+ * aberto e o formulário de primeiro acesso for preenchido (ver
+ * complete_admin_invite(), em app/auth.php).
+ */
+function create_admin_invite(array $data, int $createdBy): array
+{
+    return db_transaction(function () use ($data, $createdBy): array {
+        $stmt = db()->prepare(
+            'INSERT INTO clinics (name, cnpj, address, phone, whatsapp, email) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            $data['clinic_name'],
+            $data['clinic_cnpj'],
+            $data['clinic_address'] ?: null,
+            $data['clinic_phone'] ?: null,
+            $data['clinic_whatsapp'] ?: null,
+            $data['clinic_email'] ?: null,
+        ]);
+        $clinicId = (int) db()->lastInsertId();
+
+        $token = bin2hex(random_bytes(32)); // 64 caracteres, imprevisível
+        $expiresAt = (new DateTime())->modify('+' . (int) config('rules.invite_valid_hours') . ' hours');
+
+        $inviteStmt = db()->prepare(
+            'INSERT INTO admin_invites (clinic_id, invitee_email, token, status, created_by, expires_at)
+             VALUES (?, ?, ?, "pending", ?, ?)'
+        );
+        $inviteStmt->execute([
+            $clinicId,
+            $data['invitee_email'],
+            $token,
+            $createdBy,
+            $expiresAt->format('Y-m-d H:i:s'),
+        ]);
+
+        return [
+            'id' => (int) db()->lastInsertId(),
+            'clinic_id' => $clinicId,
+            'token' => $token,
+            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+        ];
+    });
+}
+
+/** Lista os convites já gerados, mais recentes primeiro — pra tela do
+ * super admin acompanhar o que já foi enviado/usado. */
+function admin_invites_list(): array
+{
+    $sql = 'SELECT i.*, c.name AS clinic_name
+            FROM admin_invites i
+            JOIN clinics c ON c.id = i.clinic_id
+            ORDER BY i.created_at DESC';
+    return db()->query($sql)->fetchAll();
+}
+
+/** Busca um convite pelo token — devolve null se não existir, já tiver
+ * sido usado/revogado, ou tiver expirado (a expiração é checada aqui,
+ * na hora, sem precisar de nenhuma tarefa agendada rodando por trás). */
+function find_pending_invite(string $token): ?array
+{
+    $stmt = db()->prepare(
+        'SELECT i.*, c.name AS clinic_name
+         FROM admin_invites i
+         JOIN clinics c ON c.id = i.clinic_id
+         WHERE i.token = ? AND i.status = "pending" AND i.expires_at > NOW()
+         LIMIT 1'
+    );
+    $stmt->execute([$token]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function revoke_admin_invite(int $inviteId): void
+{
+    $stmt = db()->prepare('UPDATE admin_invites SET status = "revoked" WHERE id = ? AND status = "pending"');
+    $stmt->execute([$inviteId]);
+}
+
 function specialties(): array
 {
     return db()->query('SELECT * FROM specialties ORDER BY name')->fetchAll();
