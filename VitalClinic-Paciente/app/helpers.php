@@ -258,7 +258,7 @@ function status_badge_class(string $status): string
     // Ausência). Status que não está na lista cai no 'badge' padrão
     // (mesmo teal usado em Consultas/Início), pra nunca quebrar a página
     $classes = [
-        'completed' => 'badge badge-realizada',
+        'completed' => 'badge badge-concluida',
         'cancelled' => 'badge badge-cancelada',
         'no_show'   => 'badge badge-ausencia',
     ];
@@ -274,11 +274,11 @@ function notificacao_badge_class(string $titulo): string
     // verde do badge-realizada do Histórico (as duas são "notícia boa"),
     // 'Consulta cancelada' reaproveita o vermelho de lá também
     $classes = [
-        'Consulta confirmada' => 'badge badge-realizada',
-        'Consulta realizada'  => 'badge badge-realizada',
-        'Consulta cancelada'  => 'badge badge-cancelada',
-        'Consulta pendente'   => 'badge badge-pendente',
-        'Consulta com ausência'    => 'badge badge-ausencia',
+        'Consulta confirmada'     => 'badge badge-realizada',
+        'Consulta realizada'      => 'badge badge-concluida',
+        'Consulta cancelada'      => 'badge badge-cancelada',
+        'Consulta pendente'       => 'badge badge-pendente',
+        'Consulta com ausência'   => 'badge badge-ausencia',
     ];
 
     // título que não está na lista (ex.: algo novo que ainda não previmos)
@@ -293,12 +293,12 @@ function notificacao_titulo_amigavel(string $tituloBanco): string
     // que vai aparecer em negrito no cartão, a mesma ideia de "tradução"
     // que já usamos em status_label()
     $titulos = [
-        'Consulta confirmada' => 'Sua consulta foi confirmada',
-        'Consulta cancelada'  => 'Consulta cancelada',
-        'Consulta pendente'   => 'Sua consulta está aguardando confirmação',
-        'Consulta realizada'  => 'Sua consulta foi concluída',
-         'Consulta com ausência' => 'Você não compareceu à sua consulta',
-        'Lembrete'            => 'Sua consulta está chegando',
+        'Consulta confirmada'    => 'Sua consulta foi confirmada',
+        'Consulta cancelada'     => 'Consulta cancelada',
+        'Consulta pendente'      => 'Sua consulta está aguardando confirmação',
+        'Consulta realizada'     => 'Sua consulta foi concluída',
+        'Consulta com ausência'  => 'Você não compareceu à sua consulta',
+        'Lembrete'               => 'Sua consulta está chegando',
     ];
 
     // título que a gente não previu (ex.: um aviso geral do sistema) só

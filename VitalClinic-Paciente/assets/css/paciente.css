@@ -1198,6 +1198,14 @@ body {
     /* mesmo verde do .flash-success, "sucesso" sempre com a mesma cor */
 }
 
+.badge-concluida {
+    background: #e3ecfd;
+    color: #1d4ed8;
+    /* azul, só pra "Realizada"/"Consulta realizada": diferencia de
+       "Confirmada" (verde) mesmo as duas sendo notícia boa, e também do
+       teal principal do site, que já é usado em outro monte de lugar */
+}
+
 .badge-cancelada {
     background: #fdecea;
     color: #c0392b;
