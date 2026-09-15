@@ -3,39 +3,37 @@
 ## `vitalclinic_estrutura.sql`
 
 Só estrutura: `DROP DATABASE` / `CREATE DATABASE`, todos os
-`CREATE TABLE`, chaves estrangeiras e índices. **Nenhum dado.** Rode
+`CREATE TABLE` (incluindo `admin_invites`, a tabela dos convites de
+primeiro acesso), chaves estrangeiras e índices. **Nenhum dado.** Rode
 este primeiro — ele apaga e recria o banco `vitalclinic` do zero.
 
 ## `vitalclinic_dados.sql`
 
 Só `INSERT INTO` — todos os dados fictícios do projeto, mesclados num
-arquivo só, nesta ordem:
-
-1. Dados de demonstração originais (3 contas fixas + exemplos)
-2. Lote com e-mails `@seed2.local`
-3. Lote com e-mails `@seed4.local`
-4. Lote com e-mails `@seed5.local`
-
-Rode **depois** do `vitalclinic_estrutura.sql` (ele começa com
-`USE vitalclinic;`, então não recria nada, só popula).
+arquivo só: os 4 registros fixos de demonstração (admin, 2 médicos,
+paciente) + vários lotes de clínicas/médicos/pacientes/consultas
+fictícios, gerados em momentos diferentes do desenvolvimento. Rode
+**depois** do `vitalclinic_estrutura.sql`.
 
 Senha de login de **todos** os usuários deste arquivo: `password`.
-Cada lote usa um domínio de e-mail e um prefixo de CNPJ só dele, pra
-dar pra identificar/remover depois, se quiser:
+`admin@clinica.local` é marcado como **super admin**
+(`is_super_admin = 1`) — o único que enxerga todas as clínicas, os
+demais ficam isolados na própria.
+
+## Como ver as credenciais de cada clínica
+
+Como os lotes foram gerados em momentos diferentes (e um script
+gerador, `scripts/seed_producao.php`, cria contas novas a cada
+execução), a forma confiável de ver **quem pertence a qual clínica
+agora** é consultar direto o banco:
 
 ```sql
--- ver quantos registros cada lote tem
-SELECT COUNT(*) FROM users WHERE email LIKE '%@seed2.local';
-SELECT COUNT(*) FROM users WHERE email LIKE '%@seed4.local';
-SELECT COUNT(*) FROM users WHERE email LIKE '%@seed5.local';
-
--- remover um lote específico, se quiser
-DELETE FROM users   WHERE email LIKE '%@seed4.local';
-DELETE FROM clinics WHERE cnpj  LIKE '99.%';
+SELECT c.name AS clinica, u.role AS perfil, u.name AS nome, u.email AS email
+FROM users u
+JOIN clinics c ON c.id = u.clinic_id
+WHERE u.role IN ('admin', 'doctor')
+ORDER BY c.name, u.role DESC, u.name;
 ```
-
-Veja a lista completa de credenciais geradas no `README.md` da raiz do
-projeto (seção "Credenciais de acesso").
 
 ## Como rodar
 
@@ -43,9 +41,8 @@ Pela aba **Importar** do phpMyAdmin (não pela aba SQL — o arquivo de
 dados tem alguns MB, e colar textos muito grandes na caixa de SQL pode
 cortar no meio sem avisar):
 
-1. phpMyAdmin → banco `vitalclinic` (crie-o rodando `vitalclinic_estrutura.sql` primeiro) → aba **Importar**
-2. Selecione `vitalclinic_estrutura.sql` → Executar
-3. Repita com `vitalclinic_dados.sql`
+1. phpMyAdmin → aba **Importar** → `vitalclinic_estrutura.sql` → Executar
+2. Repita com `vitalclinic_dados.sql`
 
 ## Se você já tem um banco e não quer apagar nada
 

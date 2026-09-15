@@ -2,18 +2,18 @@
 
 Sistema de agendamento e gestão de consultas para clínicas médicas. Esta
 pasta (`VitalClinic-MedAdmin`) contém o **painel web** (PHP + MySQL)
-usado por **administradores da clínica** e **médicos** para gerenciar
-consultas, pacientes, prontuários, relatórios e a própria agenda.
+usado por **administradores de clínica** e **médicos** para gerenciar
+consultas, pacientes, prontuários, relatórios e a própria agenda —
+agora com **múltiplas clínicas isoladas entre si** e um fluxo de
+**convite de primeiro acesso** para ativar cada clínica nova.
 
 > Este projeto tem uma pasta irmã, `VitalClinic-Paciente`, com o
-> portal de acesso do próprio paciente (login, agendamento,
-> notificações). Este README documenta só o **MedAdmin** — o painel
-> administrativo/médico, que foi o escopo deste desenvolvimento.
+> portal de acesso do próprio paciente (login, agendamento, histórico,
+> notificações). Este README documenta só o **MedAdmin**.
 
-Cada pasta principal tem seu próprio `README.md` com detalhes de
-arquivo por arquivo:
+Cada pasta principal tem seu próprio `README.md`:
 
-- [`app/README.md`](app/README.md) — a "lógica" do sistema (PHP puro)
+- [`app/README.md`](app/README.md) — a lógica do sistema (PHP puro)
 - [`pages/README.md`](pages/README.md) — as telas (uma função por página)
 - [`assets/README.md`](assets/README.md) — CSS, JavaScript e a logo
 - [`db/README.md`](db/README.md) — os dois arquivos SQL (estrutura + dados)
@@ -29,21 +29,25 @@ arquivo por arquivo:
 3. [Credenciais de acesso](#3-credenciais-de-acesso)
 4. [Como o sistema funciona por dentro](#4-como-o-sistema-funciona-por-dentro)
 5. [Funcionalidades — tela por tela](#5-funcionalidades--tela-por-tela)
-6. [Recursos de experiência do usuário](#6-recursos-de-experiência-do-usuário)
-7. [Recuperação de senha](#7-recuperação-de-senha)
-8. [Banco de dados](#8-banco-de-dados)
-9. [Scripts de população (dados fictícios)](#9-scripts-de-população-dados-fictícios)
-10. [Segurança](#10-segurança)
-11. [Estrutura de pastas](#11-estrutura-de-pastas)
-12. [Referência das ações do sistema](#12-referência-das-ações-do-sistema)
-13. [Limitações conhecidas](#13-limitações-conhecidas)
+6. [Isolamento por clínica e super admin](#6-isolamento-por-clínica-e-super-admin)
+7. [Convite de primeiro acesso](#7-convite-de-primeiro-acesso)
+8. [Recursos de experiência do usuário](#8-recursos-de-experiência-do-usuário)
+9. [Recuperação de senha](#9-recuperação-de-senha)
+10. [Banco de dados](#10-banco-de-dados)
+11. [Scripts de população (dados fictícios)](#11-scripts-de-população-dados-fictícios)
+12. [Segurança](#12-segurança)
+13. [Estrutura de pastas](#13-estrutura-de-pastas)
+14. [Referência das ações do sistema](#14-referência-das-ações-do-sistema)
+15. [Limitações conhecidas](#15-limitações-conhecidas)
 
 ---
 
 ## 1. O que é o sistema
 
-O Vital Clinic MedAdmin é o painel administrativo de uma rede de
-clínicas. Nele, a equipe consegue:
+O Vital Clinic MedAdmin é o painel administrativo de uma **rede de
+clínicas** — cada clínica só vê e gerencia os próprios dados (mais
+detalhes na [seção 6](#6-isolamento-por-clínica-e-super-admin)). Nele,
+a equipe consegue:
 
 - Cadastrar e gerenciar **médicos** (especialidade, CRM, horários de
   atendimento semanais, bloqueios pontuais de agenda);
@@ -51,19 +55,16 @@ clínicas. Nele, a equipe consegue:
 - **Agendar consultas**, com um calendário visual que já mostra os dias
   em que cada médico atende;
 - Acompanhar a **agenda do dia/mês** de toda a clínica ou de um médico
-  específico;
+  específico, com um seletor de mês pra pular direto pra qualquer
+  período, sem precisar navegar mês a mês;
 - Registrar o **prontuário** de cada consulta concluída;
 - Acompanhar **relatórios** com gráficos (consultas x faltas, um
   indicador de "movimentação mensal" — alta/boa/baixa — e um relatório
   pronto pra imprimir em A4);
 - Fazer um **tour guiado** na primeira vez que loga, e aceitar os
   **Termos de Uso** antes de usar o sistema;
-- Gerenciar o próprio **perfil**, senha e pergunta de segurança.
-
-Não existe fluxo de cadastro público neste painel — todo administrador
-ou médico é cadastrado por um administrador já existente (ou, para o
-primeiro admin de uma clínica nova, direto no banco — veja a seção de
-[migrations](#12-referência-das-ações-do-sistema)).
+- Gerenciar o próprio **perfil** (agora num menu com a foto/inicial do
+  usuário, no canto superior direito — Perfil, Sobre nós e Sair).
 
 ---
 
@@ -71,28 +72,20 @@ primeiro admin de uma clínica nova, direto no banco — veja a seção de
 
 **Requisitos:** XAMPP (Apache + MySQL/MariaDB + PHP 8+), navegador atual.
 
-1. Copie esta pasta (`VitalClinic-MedAdmin`) para dentro do seu
-   `htdocs`.
+1. Copie esta pasta (`VitalClinic-MedAdmin`) para dentro do seu `htdocs`.
 2. Ligue **Apache** e **MySQL** no painel do XAMPP.
 3. Abra o **phpMyAdmin** e execute, **nesta ordem**, os dois arquivos
-   da pasta `db/`:
+   da pasta `db/` (pela aba **Importar**, não colando na aba SQL —
+   arquivos grandes podem cortar no meio ao colar):
    1. `db/vitalclinic_estrutura.sql` — cria o banco `vitalclinic` do
-      zero (⚠️ apaga qualquer banco de mesmo nome que já exista) e
-      todas as tabelas.
+      zero (⚠️ apaga qualquer banco de mesmo nome que já exista).
    2. `db/vitalclinic_dados.sql` — popula com os dados de demonstração
-      e vários lotes de dados fictícios (veja a
-      [seção 9](#9-scripts-de-população-dados-fictícios)).
-
-   Arquivo grande (alguns MB)? Prefira a aba **Importar** do
-   phpMyAdmin em vez de colar o conteúdo na aba SQL — colar textos
-   muito grandes pode cortar no meio sem avisar.
-4. Acesse a URL da pasta no navegador (ex.:
-   `http://localhost/VitalClinic-SITE.v3.03/VitalClinicTCC/VitalClinic-MedAdmin/`).
+      e vários lotes de dados fictícios.
+4. Acesse a URL da pasta no navegador.
 
 > **Já tem um banco criado e não quer perder dados?** Não rode
-> `db/vitalclinic_estrutura.sql` de novo (ele apaga tudo). Aplique só
-> as migrations que ainda faltam — veja
-> [`migrations/README.md`](migrations/README.md).
+> `db/vitalclinic_estrutura.sql` de novo. Aplique só as migrations que
+> ainda faltam — veja [`migrations/README.md`](migrations/README.md).
 
 ---
 
@@ -100,20 +93,20 @@ primeiro admin de uma clínica nova, direto no banco — veja a seção de
 
 Senha de **todas** as contas abaixo: **`password`**.
 
-### Contas fixas de demonstração
+### Contas fixas — sempre existem, uma por clínica
 
-| Perfil | E-mail | Observação |
-|---|---|---|
-| Administrador | `admin@clinica.local` | Clínica Central |
-| Médico | `medico@clinica.local` | Dra. Ana Souza — Clínico geral |
-| Médico | `carlos.lima@clinicanorte.local` | Dr. Carlos Lima — Cardiologia, Clínica Norte |
+Essas são as contas mais confiáveis pra testar o isolamento por
+clínica: cada uma pertence a uma clínica diferente, então dá pra
+comparar lado a lado o que cada uma vê.
 
-Na tela de login, escolha o botão **"Clínica"** para entrar como
-administrador, ou **"Médico"** para entrar como médico.
+| Clínica | Perfil | Nome | E-mail |
+|---|---|---|---|
+| **Clínica Central** | 👑 Super admin (vê TODAS as clínicas) | Administrador da Clínica | `admin@clinica.local` |
+| **Clínica Central** | Médico | Dra. Ana Souza — Clínico geral | `medico@clinica.local` |
+| **Clínica Norte** | Médico | Dr. Carlos Lima — Cardiologia | `carlos.lima@clinicanorte.local` |
 
 Essas 3 contas já têm uma **pergunta de segurança** cadastrada, pra
-testar a recuperação de senha sem configurar nada antes (veja a
-[seção 7](#7-recuperação-de-senha)):
+testar a recuperação de senha sem configurar nada antes:
 
 | Conta | Pergunta | Resposta |
 |---|---|---|
@@ -121,94 +114,39 @@ testar a recuperação de senha sem configurar nada antes (veja a
 | `medico@clinica.local` | Qual foi o nome da sua primeira escola? | `Colégio Santa Rita` |
 | `carlos.lima@clinicanorte.local` | Qual é a sua cidade natal? | `Recife` |
 
-### Contas fictícias (geradas pelo `db/vitalclinic_dados.sql`)
+### Contas fictícias (dos lotes de seed) — agrupadas por clínica
 
-Todas com senha `password` também — extraídas direto do arquivo de
-dados que está no seu projeto agora:
+O banco também vem com **mais de 20 clínicas** e dezenas de médicos e
+administradores fictícios, todos com senha `password` — úteis
+principalmente pra testar o isolamento (logar com o admin de uma
+clínica e confirmar que só aparece o que é dela).
 
-### Administradores gerados por seed (24)
+Como esses lotes foram gerados em momentos diferentes do
+desenvolvimento, listar cada um manualmente aqui ficaria desatualizado
+rápido. Em vez disso, rode esta consulta no phpMyAdmin sempre que
+precisar da lista **atual e correta**, já agrupada por clínica:
 
-| Nome | E-mail |
-|---|---|
-| Alexandre Carvalho Ribeiro | `alexandre.carvalho.ribeiro.8498@seed5.local` |
-| Aline Pinto Ferreira | `aline.pinto.ferreira.8673@seed5.local` |
-| André Andrade Ferreira | `andre.andrade.ferreira.7402@seed5.local` |
-| Carlos Almeida Cardoso | `carlos.almeida.cardoso.5607@seed4.local` |
-| Carlos Barbosa Cavalcanti | `carlos.barbosa.cavalcanti.9449@seed4.local` |
-| Carlos Martins Rocha | `carlos.martins.rocha.adm.383@seed2.local` |
-| Cristiano Pereira Ramos | `cristiano.pereira.ramos.adm.309@seed2.local` |
-| Daniel Cavalcanti Rocha | `daniel.cavalcanti.rocha.5903@seed4.local` |
-| Eliane Rodrigues Pinto | `eliane.rodrigues.pinto.adm.465@seed2.local` |
-| Fábio Ramos Ribeiro | `fabio.ramos.ribeiro.5722@seed4.local` |
-| Henrique Pinto Gomes | `henrique.pinto.gomes.6619@seed4.local` |
-| Larissa Carvalho Nascimento | `larissa.carvalho.nascimento.6167@seed5.local` |
-| Marcelo Ferreira Ribeiro | `marcelo.ferreira.ribeiro.adm.161@seed2.local` |
-| Marcos Reis Cavalcanti | `marcos.reis.cavalcanti.7977@seed5.local` |
-| Maria Dias Castro | `maria.dias.castro.2732@seed5.local` |
-| Natalia Santos Pereira | `natalia.santos.pereira.8107@seed5.local` |
-| Paulo Cardoso Fernandes | `paulo.cardoso.fernandes.4648@seed4.local` |
-| Pedro Rodrigues Gomes | `pedro.rodrigues.gomes.9906@seed5.local` |
-| Priscila Lima Gomes | `priscila.lima.gomes.8220@seed4.local` |
-| Priscila Nascimento Machado | `priscila.nascimento.machado.7559@seed5.local` |
-| Ricardo Pinto Fernandes | `ricardo.pinto.fernandes.5176@seed5.local` |
-| Roberto Almeida Correia | `roberto.almeida.correia.1933@seed5.local` |
-| Sandra Almeida Vieira | `sandra.almeida.vieira.7638@seed4.local` |
-| Sérgio Lima Andrade | `sergio.lima.andrade.4718@seed4.local` |
+```sql
+SELECT c.name AS clinica, u.role AS perfil, u.name AS nome, u.email AS email
+FROM users u
+JOIN clinics c ON c.id = u.clinic_id
+WHERE u.role IN ('admin', 'doctor')
+ORDER BY c.name, u.role DESC, u.name;
+```
 
-### Médicos gerados por seed (38)
+Isso devolve uma linha por administrador/médico, ordenada por clínica
+— é só rolar pra ver, por exemplo, os 2-3 primeiros de cada clínica
+diferente e usar um admin e um médico de clínicas diferentes pra testar
+se um não está vendo os dados do outro (veja o roteiro de teste na
+[seção 6](#6-isolamento-por-clínica-e-super-admin)).
 
-| Nome | E-mail |
-|---|---|
-| Dr(a). Adriana Silva Pinto | `adriana.silva.pinto.915@seed2.local` |
-| Dr(a). Daniel Marques Soares | `daniel.marques.soares.365@seed2.local` |
-| Dr(a). Gustavo Oliveira Vieira | `gustavo.oliveira.vieira.973@seed2.local` |
-| Dr(a). Igor Cavalcanti Andrade | `igor.cavalcanti.andrade.427@seed2.local` |
-| Dr(a). Leonardo Freitas Marques | `leonardo.freitas.marques.290@seed2.local` |
-| Dr(a). Otávio Nascimento Marques | `otavio.nascimento.marques.780@seed2.local` |
-| Dr(a). Paulo Almeida Santos | `paulo.almeida.santos.745@seed2.local` |
-| Dr(a). Roberto Fernandes Carvalho | `roberto.fernandes.carvalho.156@seed2.local` |
-| Dr(a). Sérgio Lopes Martins | `sergio.lopes.martins.611@seed2.local` |
-| Dr(a). Sérgio Ramos Andrade | `sergio.ramos.andrade.716@seed2.local` |
-| Dr(a). Talita Lima Machado | `talita.lima.machado.471@seed2.local` |
-| Dr(a). Viviane Dias Cavalcanti | `viviane.dias.cavalcanti.307@seed2.local` |
-| Dr. André Vieira Lima | `andre.vieira.lima.4626@seed5.local` |
-| Dr. Antônio Santos Gomes | `antonio.santos.gomes.1526@seed5.local` |
-| Dr. Cristiano Castro Alves | `cristiano.castro.alves.3413@seed4.local` |
-| Dr. Cristiano Souza Teixeira | `cristiano.souza.teixeira.5708@seed5.local` |
-| Dr. Felipe Lima Monteiro | `felipe.lima.monteiro.9035@seed5.local` |
-| Dr. Gilberto Silva Almeida | `gilberto.silva.almeida.3189@seed5.local` |
-| Dr. Gustavo Souza Ramos | `gustavo.souza.ramos.2558@seed5.local` |
-| Dr. Igor Freitas Fernandes | `igor.freitas.fernandes.5692@seed5.local` |
-| Dr. Matheus Soares Reis | `matheus.soares.reis.9928@seed5.local` |
-| Dr. Pedro Alves Santos | `pedro.alves.santos.7617@seed5.local` |
-| Dr. Rafael Andrade Marques | `rafael.andrade.marques.7422@seed5.local` |
-| Dr. Roberto Alves Monteiro | `roberto.alves.monteiro.8729@seed4.local` |
-| Dr. Sérgio Cardoso Pereira | `sergio.cardoso.pereira.1075@seed5.local` |
-| Dr. Thiago Ramos Fernandes | `thiago.ramos.fernandes.6758@seed4.local` |
-| Dr. Vinícius Ribeiro Vieira | `vinicius.ribeiro.vieira.9365@seed4.local` |
-| Dra. Adriana Lopes Nascimento | `adriana.lopes.nascimento.6231@seed4.local` |
-| Dra. Amanda Ribeiro Gomes | `amanda.ribeiro.gomes.9408@seed4.local` |
-| Dra. Camila Cavalcanti Nascimento | `camila.cavalcanti.nascimento.7691@seed5.local` |
-| Dra. Camila Nascimento Soares | `camila.nascimento.soares.5869@seed5.local` |
-| Dra. Debora Reis Fernandes | `debora.reis.fernandes.9883@seed4.local` |
-| Dra. Gabriela Soares Teixeira | `gabriela.soares.teixeira.9631@seed4.local` |
-| Dra. Leticia Alves Rodrigues | `leticia.alves.rodrigues.5308@seed5.local` |
-| Dra. Leticia Santos Martins | `leticia.santos.martins.6725@seed4.local` |
-| Dra. Maria Cavalcanti Fernandes | `maria.cavalcanti.fernandes.9536@seed4.local` |
-| Dra. Talita Reis Ferreira | `talita.reis.ferreira.2357@seed4.local` |
-| Dra. Talita Ribeiro Nunes | `talita.ribeiro.nunes.8398@seed4.local` |
+> Rodando `scripts/seed_producao.php`, mais contas são geradas (e-mail
+> terminado em `@seed3.local`) — a consulta acima já pega essas também,
+> sem precisar de nada extra.
 
-> Se você rodar `scripts/seed_producao.php` depois, ele gera **mais**
-> contas (com e-mails aleatórios a cada execução, terminados em
-> `@seed3.local`) — essas não entram nesta lista porque mudam a cada
-> vez. Veja quais existem com:
-> ```sql
-> SELECT name, email, role FROM users WHERE email LIKE '%@seed3.local';
-> ```
-
-**Cadastrando o primeiro admin de uma clínica nova:** não existe tela
-de "criar conta" — o primeiro administrador é inserido direto no
-banco. Veja o exemplo em `migrations/007_criar_primeiro_admin.sql`.
+**Cadastrando o admin de uma clínica nova:** não precisa mexer em SQL
+— use o fluxo de convite (ver [seção 7](#7-convite-de-primeiro-acesso)),
+disponível pro super admin (`admin@clinica.local`).
 
 ---
 
@@ -219,32 +157,11 @@ com JavaScript "vanilla" (sem React/Vue) e CSS puro (sem Tailwind).
 
 - **`index.php`** — único ponto de entrada. Toda URL passa por ele
   (`?page=...` decide a tela, `?action=...` processa um formulário ou
-  uma chamada AJAX). Ele decide se a pessoa pode ver aquela página e
-  desenha o layout comum (topo + menu + conteúdo + modais de primeiro
-  acesso).
+  uma chamada AJAX).
 - **`app/`** — a lógica de negócio (ver `app/README.md`).
-- **`pages/`** — uma função por tela, agrupadas por área (ver
-  `pages/README.md`).
+- **`pages/`** — uma função por tela (ver `pages/README.md`).
 - **`assets/`** — CSS, JavaScript e a logo (ver `assets/README.md`).
 - **`db/`** — os dois arquivos SQL: estrutura e dados (ver `db/README.md`).
-
-**Como uma ação típica funciona, de ponta a ponta** (exemplo: agendar
-uma consulta):
-
-1. O admin clica em **"+ Adicionar Nova Consulta"** — abre um modal,
-   sem recarregar a página.
-2. Digita o nome do paciente e do médico — autocompletar local (sem ida
-   ao servidor a cada letra).
-3. Ao escolher o médico, um **calendário visual** dentro do modal busca
-   (`?action=doctor_weekdays`) os dias da semana em que ele atende, e
-   já destaca esses dias.
-4. Ao clicar num dia disponível, busca (`?action=slots`) os horários
-   livres daquele médico naquele dia.
-5. Ao confirmar, o formulário é enviado via `fetch()` para
-   `index.php?action=admin_create_appointment`, que grava numa única
-   transação (`appointment_slots` + `appointments` + `payments`).
-6. O servidor responde em **JSON**; o modal fecha, um aviso de sucesso
-   aparece, e a lista de consultas se atualiza sozinha.
 
 ---
 
@@ -254,136 +171,170 @@ uma consulta):
 
 | Menu | O que faz |
 |---|---|
-| **Geral** | Números do dia (consultas de hoje, pendentes, total de pacientes, total de médicos) e a agenda do dia. |
-| **Calendário** | Visão do mês inteiro, com rolagem horizontal em telas estreitas. |
-| **Consultas** | Lista com filtros + modal "Adicionar Nova Consulta" (autocompletar, calendário visual de dias disponíveis, horário, tipo, observações). |
+| **Geral** | Números do dia (consultas de hoje, pendentes, total de pacientes, total de médicos) e a agenda do dia — sempre restritos à própria clínica (exceto pro super admin). |
+| **Calendário** | Visão do mês inteiro, com um seletor de mês/ano pra pular direto pra qualquer período, além das setas "mês anterior/próximo". |
+| **Consultas** | Lista com filtros + modal "Adicionar Nova Consulta" (autocompletar de paciente/médico da própria clínica, calendário visual de dias disponíveis, horário, tipo, observações). |
 | **Pacientes** | Lista/busca, cadastro, edição, histórico de consultas de cada um. |
 | **Médicos** | Lista, cadastro/edição, agenda semanal e bloqueios pontuais. |
-| **Relatórios** | Tabela com filtro De/Até; card de **"Movimentação mensal"** com gráfico (Consultas x Faltas) e classificação automática (Alta/Boa/Baixa movimentação) para qualquer mês escolhido; botão para **imprimir um relatório em A4** com os mesmos dados. |
-| **Perfil** | Dados da conta, trocar senha, pergunta de segurança. |
-| **Notificações** | Avisos do sistema sobre consultas. |
+| **Relatórios** | Tabela com filtro De/Até; card de "Movimentação mensal" com gráfico (Consultas x Faltas) e classificação automática (Alta/Boa/Baixa movimentação); botão para imprimir um relatório em A4. |
+| **Convites** *(só super admin)* | Cadastra uma clínica nova e gera um link de primeiro acesso pra ela — ver [seção 7](#7-convite-de-primeiro-acesso). |
+| **Menu do avatar** (bolinha no canto superior direito) | Perfil, Sobre nós, Sair. |
 
 ### Médico
 
 | Menu | O que faz |
 |---|---|
 | **Geral** | Agenda do dia deste médico. |
-| **Calendário** | Igual ao do admin, só com a agenda deste médico. |
+| **Calendário** | Igual ao do admin, só com a agenda deste médico — mesmo seletor de mês/ano. |
 | **Consultas** | Lista das consultas deste médico, com filtros. |
 | **Pacientes** | Pacientes já atendidos por este médico, com busca. |
-| **Prontuário / Histórico** | Registro do prontuário (peso, sinais vitais, diagnóstico, prescrição) e histórico de prontuários anteriores de cada paciente. |
-| **Perfil** | Dados da conta, trocar senha, pergunta de segurança. |
-| **Notificações** | Avisos sobre as consultas do médico. |
+| **Prontuário / Histórico** | Registro do prontuário e histórico de prontuários anteriores de cada paciente. |
+| **Menu do avatar** | Perfil, Sobre nós, Sair. |
 
 ---
 
-## 6. Recursos de experiência do usuário
+## 6. Isolamento por clínica e super admin
+
+Cada administrador **só vê os dados da própria clínica** (`users.clinic_id`)
+— consultas, pacientes, médicos, calendário e relatórios. Um médico já
+era isolado por natureza (só enxerga o que é dele mesmo).
+
+A única exceção é o **super admin** — hoje, só `admin@clinica.local`
+(marcado por `users.is_super_admin = 1`) — que enxerga e gerencia
+**todas** as clínicas cadastradas, inclusive podendo escolher a clínica
+ao cadastrar médico/paciente (os demais admins não têm essa escolha:
+todo cadastro que eles fazem entra automaticamente na própria clínica).
+
+Isso vale tanto pra **visualização** quanto pra **escrita** — um admin
+não consegue editar/remover um médico, paciente ou conceder acesso ADM
+de outra clínica, mesmo tentando forçar o ID direto na URL/formulário.
+
+### Como testar
+
+1. Logue como `admin@clinica.local` (super admin) → confirme que vê
+   várias clínicas nos filtros/listas.
+2. Logue como um admin comum de uma clínica específica (use a consulta
+   SQL da [seção 3](#3-credenciais-de-acesso) pra achar um) → confirme
+   que só aparecem pacientes/médicos/consultas daquela clínica.
+3. Logue como um admin de **outra** clínica → confirme que os dados
+   são diferentes do passo anterior (nenhuma sobreposição).
+
+---
+
+## 7. Convite de primeiro acesso
+
+Em vez de cadastrar o admin de uma clínica nova direto no banco, o
+**super admin** consegue fazer isso pela própria tela (**menu
+"Convites"**, só visível pra ele):
+
+1. Preenche os dados da clínica (nome, CNPJ, endereço, etc.) e o
+   e-mail de quem vai ser a administradora dela.
+2. O sistema cadastra a clínica e gera um **link de convite** — único,
+   com validade de 72h (configurável em `app/config.php`,
+   `rules.invite_valid_hours`), mostrado na tela pra copiar.
+3. Esse link é enviado por fora do sistema (WhatsApp, e-mail — não
+   depende de nenhum envio automático).
+4. Quem recebe o link define o próprio nome e senha, e já entra
+   logada como administradora daquela clínica.
+
+Um convite só pode ser usado **uma vez**; dá pra revogar antes disso
+se for enviado por engano.
+
+---
+
+## 8. Recursos de experiência do usuário
 
 - **Menu centralizado em pílula** — no desktop, fica centralizado no
-  topo, num formato de pílula flutuante (matematicamente centralizado
-  entre a logo e o espaço reservado do botão "Sair", via flexbox — não
-  é um valor fixo em pixel). No celular/tablet vira uma gaveta com ☰.
-- **Botão "Sair"** fixo no canto superior direito, em vermelho, sempre
-  visível, em qualquer tamanho de tela.
-- **Tutorial guiado de primeiro acesso** — na primeira vez que um
-  admin ou médico loga, um tour destaca (com uma "luz" ao redor) os
-  itens do menu, explicando o que cada um faz. Diferente por perfil.
-  Não aparece de novo depois de concluído ou pulado.
-- **Aceite de Termos de Uso** — no primeiro login, um modal bloqueante
-  (sem X, sem Esc, sem clique fora) mostra os Termos de Uso e a
-  Política de Privacidade; só libera o uso do site depois de aceitar.
-  Vem antes do tutorial.
+  topo, entre a logo e o menu do avatar, via flexbox (não é um valor
+  fixo em pixel — se ajusta sozinho). No celular/tablet vira uma
+  gaveta com ☰.
+- **Menu do avatar** — bolinha com a inicial do nome, no canto
+  superior direito; passar o mouse (ou tocar, no celular) abre Perfil
+  / Sobre nós / Sair.
+- **Tutorial guiado de primeiro acesso** — tour com destaque visual
+  sobre os itens reais do menu, diferente por perfil.
+- **Aceite de Termos de Uso** — modal bloqueante no primeiro login.
 - **Calendário visual no agendamento** — o modal de nova consulta
   mostra um calendário de verdade, destacando os dias em que o médico
   escolhido atende.
-- **Relatórios com gráfico** — usa Chart.js (carregado só nessa tela)
-  pra montar o gráfico de "Movimentação mensal" e o relatório
-  imprimível, formatado especificamente pra folha A4 (`@page` com
-  margem definida, sem cortar linhas de tabela ao meio).
-- **Busca padronizada** — os campos de busca de Pacientes e Médicos
-  têm o mesmo visual: mesma altura, ícone de lupa, cantos arredondados.
-- **Totalmente responsivo** — mobile-first, 3 níveis: celular
-  (< 640px), tablet (640–1024px), desktop (> 1024px). Tabelas viram
-  cartões empilhados no celular; o calendário mensal ganha rolagem
-  horizontal em vez de espremer os 7 dias.
+- **Seletor de mês no calendário** — além das setas de navegação, um
+  campo de mês/ano pra pular direto pra qualquer período.
+- **Relatórios com gráfico** — Chart.js (carregado só nessa tela),
+  com um relatório imprimível formatado pra A4.
+- **Busca padronizada** — campos de busca de Pacientes e Médicos com
+  o mesmo visual, ocupando o espaço disponível certinho.
+- **Totalmente responsivo** — mobile-first, 3 níveis de tela.
 - **Fonte Nunito** (Google Fonts) em todo o site.
 
 ---
 
-## 7. Recuperação de senha
+## 9. Recuperação de senha
 
-O sistema **não envia código por e-mail** — a recuperação de senha é
-feita inteiramente pela **Pergunta de Segurança** cadastrada no
-perfil de cada administrador/médico.
+O sistema **não envia código por e-mail** — a recuperação é feita
+inteiramente pela **Pergunta de Segurança** cadastrada no perfil.
 
-1. Na tela de login, clique em **"Esqueci minha senha"**.
-2. Digite o e-mail cadastrado.
-3. O sistema mostra a pergunta de segurança daquela conta (ou uma
-   mensagem genérica, se a conta não existir/não tiver pergunta — pra
-   não revelar quais e-mails existem no sistema).
-4. Digite a resposta — maiúsculas/minúsculas, espaços extras e
-   acentos não importam.
-5. Se bater, libera a tela de nova senha.
+1. Tela de login → "Esqueci minha senha" → informa o e-mail.
+2. Sistema mostra a pergunta de segurança (ou uma mensagem genérica,
+   se a conta não existir/não tiver pergunta — pra não revelar quais
+   e-mails existem).
+3. Responde (ignora maiúsculas/acentos/espaços) → libera nova senha.
 
-A resposta nunca é salva em texto puro — só o hash. Errar várias vezes
-bloqueia temporariamente essa etapa.
-
-**Login (diferente do "esqueci a senha"):** as mensagens de erro do
-login em si são específicas — conta não encontrada, conta inativa,
-perfil errado (botão Clínica/Médico trocado) ou senha incorreta. Isso é
-seguro aqui porque quem loga é sempre uma conta provisionada pela
-própria clínica, não um cadastro público.
+A resposta nunca é salva em texto puro — só o hash. Login em si já dá
+mensagens específicas (conta não encontrada, inativa, perfil errado,
+senha incorreta) — seguro aqui porque quem loga é sempre uma conta
+provisionada pela própria clínica.
 
 ---
 
-## 8. Banco de dados
+## 10. Banco de dados
 
 | Tabela | O que guarda |
 |---|---|
 | `clinics` | Unidades/clínicas cadastradas (multi-clínica). |
 | `specialties` | Especialidades médicas. |
-| `users` | Tabela única para administradores, médicos e pacientes — `role` diferencia quem é quem, `is_admin` é calculado automaticamente. Inclui pergunta de segurança, aceite de termos e status do tutorial. |
-| `doctors` | Dados profissionais do médico — ligado 1:1 a um registro em `users`. |
+| `users` | Administradores, médicos e pacientes — `role` diferencia quem é quem; `clinic_id` isola por clínica; `is_super_admin` marca a exceção que vê tudo. |
+| `doctors` | Dados profissionais do médico — 1:1 com `users`. |
 | `doctor_schedules` | Grade semanal fixa de atendimento. |
 | `schedule_blocks` | Bloqueios pontuais (férias, congresso, feriado). |
-| `appointment_slots` | Cada horário específico gerado (disponível, reservado ou bloqueado). |
-| `appointments` | As consultas — liga paciente, médico, clínica e horário. |
-| `medical_records` | O prontuário de cada consulta concluída. |
+| `appointment_slots` | Cada horário específico gerado. |
+| `appointments` | As consultas. |
+| `medical_records` | Prontuário de cada consulta concluída. |
 | `payments` | Cobrança de cada consulta. |
-| `notifications` | Avisos enviados a um usuário sobre uma consulta. |
+| `notifications` | Avisos sobre consultas. |
+| `admin_invites` | Convites de primeiro acesso (token, clínica, validade, status). |
 
 Veja a lista completa de colunas em `db/vitalclinic_estrutura.sql`, e
-o histórico de como cada uma foi adicionada em
-[`migrations/README.md`](migrations/README.md).
+o histórico de cada mudança em [`migrations/README.md`](migrations/README.md).
 
 ---
 
-## 9. Scripts de população (dados fictícios)
+## 11. Scripts de população (dados fictícios)
 
 | Onde | Como rodar | O que gera |
 |---|---|---|
-| `db/vitalclinic_dados.sql` | Já roda junto na instalação (seção 2) | Todos os lotes de dados fictícios já mesclados num arquivo só — veja `db/README.md` |
-| `scripts/seed_producao.php` | `php scripts/seed_producao.php` no terminal | Mais um lote, com quantidades ajustáveis (`--clinics=8 --patients=200`), e-mails aleatórios a cada execução |
+| `db/vitalclinic_dados.sql` | Já roda junto na instalação (seção 2) | Vários lotes de dados fictícios já mesclados num arquivo só |
+| `scripts/seed_producao.php` | `php scripts/seed_producao.php` no terminal | Mais um lote, com quantidades ajustáveis, e-mails aleatórios a cada execução |
 
-Todos os usuários fictícios usam senha **`password`**, com e-mail em
-domínio próprio por lote (fácil de identificar/remover depois — veja
-`db/README.md` para a lista de domínios usados).
+Todos usam senha **`password`**. Veja `db/README.md` para os detalhes
+de cada lote.
 
 ---
 
-## 10. Segurança
+## 12. Segurança
 
-- Senhas: hash com `password_hash()` (bcrypt), nunca texto puro.
-- Resposta da pergunta de segurança: mesmo hash, com normalização
-  (ignora maiúsculas/acentos/espaços).
+- Senhas: hash com `password_hash()` (bcrypt).
+- Resposta da pergunta de segurança: mesmo hash, normalizada.
 - Todo formulário usa **token CSRF**.
-- Mensagens do "Esqueci minha senha" são genéricas (evita revelar
-  quais e-mails existem); mensagens de **login** já são específicas
-  (ver seção 7).
+- **Isolamento por clínica** reforçado no servidor (nunca só na tela)
+  — ver [seção 6](#6-isolamento-por-clínica-e-super-admin).
+- Convite de primeiro acesso: token aleatório de 64 caracteres, uso
+  único, com validade.
+- Mensagens do "Esqueci minha senha" são genéricas; as de login já são
+  específicas (ver seção 9).
 
 ---
 
-## 11. Estrutura de pastas
+## 13. Estrutura de pastas
 
 ```
 VitalClinic-MedAdmin/
@@ -404,7 +355,7 @@ VitalClinic-MedAdmin/
 
 ---
 
-## 12. Referência das ações do sistema
+## 14. Referência das ações do sistema
 
 Toda ação que grava algo no banco passa por `index.php?action=...`
 (via `POST`):
@@ -419,30 +370,27 @@ Toda ação que grava algo no banco passa por `index.php?action=...`
 | `admin_create_appointment` | Agenda uma nova consulta |
 | `cancel` | Cancela uma consulta |
 | `mark_appointment` | Muda o status de uma consulta |
-| `admin_create_doctor` / `admin_update_doctor` / `admin_delete_doctor` | Gerenciar médicos |
+| `admin_create_doctor` / `admin_update_doctor` / `admin_delete_doctor` | Gerenciar médicos (sempre restrito à própria clínica) |
 | `admin_add_schedule` / `admin_delete_schedule` | Grade semanal do médico |
 | `admin_add_block` | Bloqueio pontual na agenda de um médico |
 | `admin_create_patient` / `admin_update_patient` | Gerenciar pacientes |
 | `save_medical_record` | Salvar o prontuário de uma consulta |
-| `admin_update_user_role` | Alterar perfil/status de um usuário |
+| `admin_update_user_role` | Conceder/revogar acesso ADM (mesma clínica) |
+| `admin_create_invite` / `admin_revoke_invite` | Gerar/revogar convite de primeiro acesso *(só super admin)* |
+| `accept_invite` | Finalizar o cadastro a partir de um link de convite *(ação pública, sem login)* |
 | `mark_notifications_read` | Marcar notificações como lidas |
 
-Ações do tipo `GET` (só consultam, não gravam):
-`?action=slots` (horários livres de um médico num dia),
-`?action=doctor_weekdays` (dias da semana em que um médico atende),
-`?action=monthly_movement` (dados do gráfico de movimentação mensal,
-por mês).
+Ações do tipo `GET` (só consultam): `?action=slots`,
+`?action=doctor_weekdays`, `?action=monthly_movement`.
 
 ---
 
-## 13. Limitações conhecidas
+## 15. Limitações conhecidas
 
-- Este README documenta só o **MedAdmin** (painel admin/médico). O
-  acesso do paciente é feito pelo projeto irmão `VitalClinic-Paciente`
-  — não documentado aqui, por não fazer parte deste desenvolvimento.
+- Este README documenta só o **MedAdmin**. O acesso do paciente é
+  feito pelo projeto irmão `VitalClinic-Paciente`.
 - `app/mailer.php` e `app/api_client.php` continuam no projeto, mas
-  não são chamados no funcionamento atual.
-- As migrations `007`, `008` e `009` (primeiro admin, tutorial,
-  termos de uso) já estão refletidas em `db/vitalclinic_estrutura.sql`
-  — só precisa rodá-las manualmente se você tiver um banco criado
-  **antes** dessas mudanças (veja `migrations/README.md`).
+  não são chamados no funcionamento atual — o convite de primeiro
+  acesso é copiado manualmente, não enviado por e-mail automático.
+- Hoje só existe **um** super admin (`admin@clinica.local`). Pra tornar
+  outra conta super admin: `UPDATE users SET is_super_admin = 1 WHERE email = '...';`
