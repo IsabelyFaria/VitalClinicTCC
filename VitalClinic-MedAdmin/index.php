@@ -419,6 +419,12 @@ function handle_post(): void
                 post_value('modality') === 'teleconsulta' ? 'teleconsulta' : 'presencial',
                 'confirmed'
             );
+
+            // avisa o paciente que uma consulta nova foi marcada pra ele.
+            // Como o app do Paciente lê da mesma tabela "notifications",
+            // basta criar essa linha aqui pra ela aparecer sozinha lá
+            create_notification($patientId, $novoAgendamentoId, 'in_app', 'Consulta confirmada', 'Sua consulta foi confirmada.');
+            
             flash('success', 'Consulta agendada com sucesso.');
             redirect(['page' => 'admin_appointments']);
 

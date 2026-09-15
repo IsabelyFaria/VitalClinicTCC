@@ -778,7 +778,20 @@ function cancel_appointment(int $appointmentId, array $actor, string $reason = '
             repository_replace('appointment_slots', (int) $slot['id'], ['status' => 'available']);
         }
  
-        create_notification((int) $appointment['doctor_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
+        // avisa o PACIENTE (é ele quem o app do paciente escuta, através
+        // da mesma tabela "notifications" compartilhada pelos dois sites)
+        create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'Sua consulta foi cancelada.');
+
+        // avisa o MÉDICO também. ATENÇÃO: $appointment['doctor_id'] é o id
+        // da linha em "doctors", NÃO o id do usuário dele em "users", por
+        // isso passamos ele pela doctor_user_id() antes, que já existe
+        // aqui embaixo nesse mesmo arquivo e faz essa conversão certinha.
+        // A versão antiga mandava a notificação usando doctor_id DIRETO
+        // como se já fosse um user_id, por isso ela caía na conta errada
+        $doctorUserId = doctor_user_id((int) $appointment['doctor_id']);
+        if ($doctorUserId !== null) {
+            create_notification($doctorUserId, $appointmentId, 'in_app', 'Consulta cancelada', 'Uma consulta da sua agenda foi cancelada.');
+        }
     });
 }
  
@@ -821,7 +834,15 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
     // "notifications" do mesmo banco, essa notificação aparece sozinha
     // na tela de Notificações do app do paciente, sem precisar de
     // nenhuma mudança lá
-    if ($status === 'no_show') {
+        if ($status === 'completed') {
+        create_notification(
+            (int) $appointment['patient_id'],
+            $appointmentId,
+            'in_app',
+            'Consulta realizada',
+            'Sua consulta foi realizada.'
+        );
+    } elseif ($status === 'no_show') {
         create_notification(
             (int) $appointment['patient_id'],
             $appointmentId,
@@ -831,7 +852,7 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
         );
     }
 }
- 
+
 /* ---------------------------------------------------------------------
  * Perfis e usuários
  * ------------------------------------------------------------------- */
@@ -1484,3 +1505,5 @@ function create_due_reminders(int $hoursAhead = 24): int
  
     return $created;
 }
+
+// mark_appointment

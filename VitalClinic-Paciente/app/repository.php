@@ -860,7 +860,7 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
                 $slot['doctor_id'],
                 $medico['clinic_id'],
                 $medico['specialty_id'],
-                'pending',
+                'confirmed',
                 'presencial',
                 $consultaAntiga['id'],
             ]);
@@ -881,7 +881,7 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
                 $slot['doctor_id'],
                 $medico['clinic_id'],
                 $medico['specialty_id'],
-                'pending',
+                'confirmed',
                 'presencial',
             ]);
 
@@ -895,15 +895,14 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
         $stmtOcupa = $pdo->prepare('UPDATE appointment_slots SET status = ? WHERE id = ?');
         $stmtOcupa->execute(['booked', $slotId]);
 
-        // avisa o paciente que a consulta foi marcada. O título "Consulta
-        // pendente" é o mesmo que o notificacao_badge_class() já sabe
-        // colorir (bolinha âmbar), porque toda consulta nasce com esse
-        // status, esperando confirmação. Não precisamos escrever nome de
-        // médico/data na mensagem: a tela de Notificações já busca isso
-        // sozinha através do appointment_id, sempre que a notificação
-        // tiver um vinculado (foi por isso que o LEFT JOIN foi montado
-        // daquele jeito lá no notifications_for_patient())
-        notificar_paciente($pacienteId, $appointmentId, 'Consulta pendente', 'Sua consulta foi marcada e está aguardando confirmação.');
+         // avisa o paciente que a consulta foi confirmada. O agendamento
+        // não passa por uma etapa separada de aprovação (o MedAdmin
+        // inclusive já desativou essa confirmação manual), então a
+        // consulta nasce direto como 'confirmed', e a notificação reflete
+        // isso. Não precisamos escrever nome de médico/data na mensagem:
+        // a tela de Notificações já busca isso sozinha através do
+        // appointment_id, sempre que a notificação tiver um vinculado
+        notificar_paciente($pacienteId, $appointmentId, 'Consulta confirmada', 'Sua consulta foi confirmada.');
 
         $pdo->commit();
     } catch (Exception $e) {
