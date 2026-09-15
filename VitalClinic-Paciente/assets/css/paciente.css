@@ -1430,3 +1430,54 @@ body {
     text-transform: uppercase;
     color: var(--color-primary);
 }
+
+/* ===== LEGENDA DO CALENDÁRIO (Agendar) ===== */
+
+.calendario-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border, #d7e4ea);
+    /* uma linha fina separando a legenda do resto do calendário, e
+       flex-wrap deixa os itens quebrarem pra segunda linha sozinhos em
+       telas estreitas, em vez de espremer tudo numa linha só */
+}
+
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.legenda-bolinha {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+    /* border-radius: 50% num elemento redondinho vira um círculo perfeito,
+       mesma receita do .perfil-avatar que já existe */
+}
+
+/* essas 3 classes têm o mesmo nome das classes que já pintam as casinhas
+   do calendário (.selected, .available, .disabled), de propósito: assim
+   a bolinha da legenda sempre usa exatamente a mesma cor da casinha real,
+   sem duplicar nenhum valor de cor aqui */
+.legenda-bolinha.selected {
+    background: var(--color-navy);
+}
+
+.legenda-bolinha.available {
+    background: var(--color-primary);
+}
+
+.legenda-bolinha.disabled {
+    background: var(--color-badge-bg);
+    border: 1px solid var(--color-border, #d7e4ea);
+    /* essa cor é bem clarinha (quase igual ao fundo da página), então só
+       ela ganha uma bordinha fina, pra bolinha continuar visível na
+       legenda mesmo assim */
+}
