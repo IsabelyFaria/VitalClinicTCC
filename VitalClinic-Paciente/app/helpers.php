@@ -278,6 +278,7 @@ function notificacao_badge_class(string $titulo): string
         'Consulta realizada'  => 'badge badge-realizada',
         'Consulta cancelada'  => 'badge badge-cancelada',
         'Consulta pendente'   => 'badge badge-pendente',
+        'Consulta com ausência'    => 'badge badge-ausencia',
     ];
 
     // título que não está na lista (ex.: algo novo que ainda não previmos)
@@ -296,6 +297,7 @@ function notificacao_titulo_amigavel(string $tituloBanco): string
         'Consulta cancelada'  => 'Consulta cancelada',
         'Consulta pendente'   => 'Sua consulta está aguardando confirmação',
         'Consulta realizada'  => 'Sua consulta foi concluída',
+         'Consulta com ausência' => 'Você não compareceu à sua consulta',
         'Lembrete'            => 'Sua consulta está chegando',
     ];
 
