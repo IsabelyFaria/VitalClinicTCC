@@ -249,7 +249,7 @@ function render_terms_modal(): void
             <p class="text-muted">Versão 1.0 – Vital Clinic</p>
         </div>
 
-        <form method="post" action="<?= h(app_url()) ?>">
+        <form method="post" action="<?= h(app_url()) ?>" id="terms-form">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="aceitar_termos">
             <input type="hidden" name="agree" value="0" id="terms-agree-value">
@@ -257,7 +257,20 @@ function render_terms_modal(): void
                 <input type="checkbox" id="terms-checkbox">
                 Li e aceito os Termos de Uso e a Política de Privacidade.
             </label>
-            <button type="submit" class="btn btn-primary" id="terms-submit" disabled>Prosseguir</button>
+
+            <p id="terms-erro" style="color: var(--color-danger); font-size: 13px; margin: -6px 0 12px;" hidden>
+                Você precisa marcar a caixa de aceite para continuar.
+            </p>
+            <!-- essa mensagem começa escondida ("hidden"). O JavaScript logo
+                 abaixo decide quando ela aparece: quando a pessoa clica em
+                 "Prosseguir" sem ter marcado a caixa -->
+
+            <button type="submit" class="btn btn-primary" id="terms-submit">Prosseguir</button>
+            <!-- tiramos o "disabled" fixo: antes o botão ficava travado e
+                 clicar nele não fazia NADA (nem enviava o formulário, nem
+                 mostrava nada), por isso não aparecia mensagem nenhuma.
+                 Agora o botão sempre pode ser clicado, e quem decide se
+                 deixa passar ou não é o JavaScript do envio, logo abaixo -->
         </form>
     </div>
 
@@ -268,11 +281,32 @@ function render_terms_modal(): void
         // com o estado do checkbox de verdade
         var termosCheckbox = document.getElementById('terms-checkbox');
         var termosAgreeValue = document.getElementById('terms-agree-value');
-        var termosBotao = document.getElementById('terms-submit');
+        var termosErro = document.getElementById('terms-erro');
+        var termosForm = document.getElementById('terms-form');
 
         termosCheckbox.addEventListener('change', function () {
-            termosBotao.disabled = !termosCheckbox.checked;
             termosAgreeValue.value = termosCheckbox.checked ? '1' : '0';
+
+            // assim que a pessoa marca a caixa, já esconde a mensagem de
+            // erro, caso ela tivesse aparecido numa tentativa anterior
+            if (termosCheckbox.checked) {
+                termosErro.hidden = true;
+            }
+        });
+
+        // antes, quem impedia o envio sem a caixa marcada era o atributo
+        // "disabled" do botão, só que isso também impedia qualquer
+        // mensagem de aparecer. Agora quem confere isso é esse listener de
+        // "submit" do formulário
+        termosForm.addEventListener('submit', function (evento) {
+            if (!termosCheckbox.checked) {
+                evento.preventDefault();
+                // preventDefault() cancela o envio: a página não recarrega
+                // nem manda nada pro servidor
+
+                termosErro.hidden = false;
+                // mostra a mensagem que estava escondida
+            }
         });
     </script>
     <?php
