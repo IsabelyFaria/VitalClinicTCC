@@ -269,7 +269,7 @@ function render_dashboard(array $paciente, ?array $proximaConsulta, array $resul
     <?php endif; ?>
 
     <!-- PRÓXIMAS CONSULTAS: igual já era -->
-    <h2 style="margin-bottom: 10px;">Próxima consultas</h2>
+    <h2 style="margin-bottom: 10px;">Próxima consulta</h2>
     <?php if ($proximaConsulta): ?>
         <div class="appointment-card">
             <div class="clinica-avatar medico-avatar">
