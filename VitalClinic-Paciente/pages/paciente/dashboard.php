@@ -268,7 +268,7 @@ function render_dashboard(array $paciente, ?array $proximaConsulta, array $resul
         </div>
     <?php endif; ?>
 
-    <!-- PRÓXIMAS CONSULTAS: igual já era -->
+    <!-- PRÓXIMA CONSULTA -->
     <h2 style="margin-bottom: 10px;">Próxima consulta</h2>
     <?php if ($proximaConsulta): ?>
         <div class="appointment-card">
@@ -288,7 +288,7 @@ function render_dashboard(array $paciente, ?array $proximaConsulta, array $resul
     <?php endif; ?>
 
     <script>
-        // ---------- BUSCA DA HOME (igual já era, só reorganizado aqui) ----------
+        // ---------- BUSCA DA HOME  ----------
         var campoBuscaHome = document.getElementById('busca-home');
         var containerResultados = document.getElementById('resultados-busca-home');
         var secaoMedicos = document.getElementById('secao-medicos-home');
