@@ -23,7 +23,8 @@ function render_registro(): void
             <label class="field-label">Nome completo</label>
             <input type="text" name="name" class="field-input" required>
             <!-- o "name" desse input precisa ser exatamente "name", porque é essa a
-                 chave que o register_patient() vai procurar dentro de $data['name'] -->
+                 chave que o register_patient() vai procurar dentro de $data['name'].
+                 required deixa esse campo como obrigatório -->
 
             <label class="field-label">E-mail</label>
             <input type="email" name="email" class="field-input" required>
@@ -37,20 +38,20 @@ function render_registro(): void
                  pode ser burlada por alguém mandando a requisição de outro jeito -->
 
             <label class="field-label">Telefone</label>
-            <input type="text" name="phone" class="field-input" placeholder="(11) 90000-0000">
-            <!-- sem "required": olhando o register_patient(), phone é opcional
-                 ($data['phone'] ?: null), se vier vazio, vira null no banco -->
-
+            <input type="text" name="phone" class="field-input" placeholder="(11) 90000-0000" required>
+          
             <label class="field-label">CPF</label>
-            <input type="text" name="document" class="field-input" placeholder="000.000.000-00">
+            <input type="text" name="document" class="field-input" placeholder="000.000.000-00" required>
 
             <label class="field-label">Data de nascimento</label>
-            <input type="date" name="birth_date" class="field-input">
+            <input type="date" name="birth_date" class="field-input" required>
             <!-- type="date" faz o navegador mostrar um calendariozinho pra escolher a data,
                  em vez da pessoa ter que digitar no formato certo na mão -->
 
             <label class="field-label">Endereço</label>
             <input type="text" name="address" class="field-input">
+            <!-- esse é sem "required": é o único campo do cadastro que
+                 é opcional -->
 
             <button type="submit" class="btn btn-primary" style="width: 100%;">Criar conta</button>
         </form>

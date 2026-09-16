@@ -128,23 +128,36 @@ function register_patient(array $data): int
     if (email_in_use($data['email'])) {
         throw new RuntimeException('Este e-mail já está cadastrado.');
     }
-    //   chama a função do repository.php que confere se esse e-mail já existe. Se existir,
-    //   não deixa cadastrar de novo (e-mail é único no nosso sistema)
+
+    $phone = trim((string) ($data['phone'] ?? ''));
+    if ($phone === '') {
+        throw new RuntimeException('Informe seu telefone.');
+    }
+    //   mesma lógica do "$name" lá em cima: tira espaço das pontas e confere se não
+    //   ficou vazio. Antes esse campo não tinha checagem nenhuma (era opcional)
+
+    $document = trim((string) ($data['document'] ?? ''));
+    if ($document === '') {
+        throw new RuntimeException('Informe seu CPF.');
+    }
+
+    if (empty($data['birth_date'])) {
+        throw new RuntimeException('Informe sua data de nascimento.');
+    }
+    //   empty() aqui é suficiente, porque uma data vazia chega como string vazia
+    //   ("") vinda do formulário, e empty('') é true
 
     return repository_append('users', [
         'name' => $name,
         'email' => strtolower(trim($data['email'])),
         'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
         'role' => 'patient',
-        'phone' => $data['phone'] ?: null,
-        'document' => $data['document'] ?: null,
-        'birth_date' => $data['birth_date'] ?: null,
+        'phone' => $phone,
+        'document' => $document,
+        'birth_date' => $data['birth_date'],
         'address' => $data['address'] ?: null,
-        'clinic_id' => $data['clinic_id'] ?: null,
-        'status' => 'active',
-        'created_at' => now_sql(),
-        'updated_at' => null,
-        'last_login_at' => null,
+        //   'address' continua com "?: null": é o único campo que ainda pode
+        //   ficar vazio e virar null no banco
     ]);
     //  passou em todas as checagens: monta um array com os dados prontos e chama
     //   repository_append('users', [...]) pra fazer o INSERT de verdade. Explicando cada chave:
