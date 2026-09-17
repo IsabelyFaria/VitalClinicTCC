@@ -11,6 +11,7 @@ function render_admin_appointments(array $user): void
         'status' => $_GET['status'] ?? '',
         'doctor_id' => (int) ($_GET['doctor_id'] ?? 0),
         'clinic_id' => $clinicId,
+        'patient_search' => trim((string) ($_GET['patient'] ?? '')),
     ];
     $appointments = appointments_for_admin($filters);
     $doctors = active_doctors(['clinic_id' => $clinicId]);
@@ -30,6 +31,7 @@ function render_admin_appointments(array $user): void
     <section class="panel" data-appointments-panel>
         <form method="get" class="filters">
             <input type="hidden" name="page" value="admin_appointments">
+            <label>Paciente <input type="text" name="patient" value="<?= h($filters['patient_search']) ?>" placeholder="Nome do paciente"></label>
             <label>Data <input type="date" name="date" value="<?= h($filters['date']) ?>"></label>
             <label>Status
                 <select name="status">
@@ -42,7 +44,7 @@ function render_admin_appointments(array $user): void
             <label>Médico
                 <select name="doctor_id">
                     <option value="">Todos</option>
-                    <?php foreach (active_doctors() as $doctor): ?>
+                    <?php foreach ($doctors as $doctor): ?>
                         <option value="<?= (int) $doctor['id'] ?>" <?= (int) $filters['doctor_id'] === (int) $doctor['id'] ? 'selected' : '' ?>>
                             <?= h($doctor['name']) ?>
                         </option>

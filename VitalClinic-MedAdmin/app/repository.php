@@ -745,6 +745,10 @@ function appointments_for_admin(array $filters = []): array
         $sql .= ' AND a.clinic_id = ?';
         $params[] = (int) $filters['clinic_id'];
     }
+    if (!empty($filters['patient_search'])) {
+        $sql .= ' AND a.patient_id IN (SELECT id FROM users WHERE role = "patient" AND name LIKE ?)';
+        $params[] = '%' . $filters['patient_search'] . '%';
+    }
  
     $sql .= ' ORDER BY s.slot_start DESC LIMIT 300';
     $stmt = db()->prepare($sql);
@@ -787,20 +791,7 @@ function cancel_appointment(int $appointmentId, array $actor, string $reason = '
             repository_replace('appointment_slots', (int) $slot['id'], ['status' => 'available']);
         }
  
-        // avisa o PACIENTE (é ele quem o app do paciente escuta, através
-        // da mesma tabela "notifications" compartilhada pelos dois sites)
-        create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'Sua consulta foi cancelada.');
-
-        // avisa o MÉDICO também. ATENÇÃO: $appointment['doctor_id'] é o id
-        // da linha em "doctors", NÃO o id do usuário dele em "users", por
-        // isso passamos ele pela doctor_user_id() antes, que já existe
-        // aqui embaixo nesse mesmo arquivo e faz essa conversão certinha.
-        // A versão antiga mandava a notificação usando doctor_id DIRETO
-        // como se já fosse um user_id, por isso ela caía na conta errada
-        $doctorUserId = doctor_user_id((int) $appointment['doctor_id']);
-        if ($doctorUserId !== null) {
-            create_notification($doctorUserId, $appointmentId, 'in_app', 'Consulta cancelada', 'Uma consulta da sua agenda foi cancelada.');
-        }
+        create_notification((int) $appointment['doctor_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
     });
 }
  
@@ -837,31 +828,8 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
         'completed_at' => now_sql(),
         'updated_at' => now_sql(),
     ]);
-
-    // avisa o PACIENTE quando ele é marcado como ausente. Como as duas
-    // aplicações (MedAdmin e Paciente) leem a mesma tabela
-    // "notifications" do mesmo banco, essa notificação aparece sozinha
-    // na tela de Notificações do app do paciente, sem precisar de
-    // nenhuma mudança lá
-        if ($status === 'completed') {
-        create_notification(
-            (int) $appointment['patient_id'],
-            $appointmentId,
-            'in_app',
-            'Consulta realizada',
-            'Sua consulta foi realizada.'
-        );
-    } elseif ($status === 'no_show') {
-        create_notification(
-            (int) $appointment['patient_id'],
-            $appointmentId,
-            'in_app',
-            'Consulta com ausência',
-            'Você não compareceu à sua consulta.'
-        );
-    }
 }
-
+ 
 /* ---------------------------------------------------------------------
  * Perfis e usuários
  * ------------------------------------------------------------------- */
@@ -1530,5 +1498,3 @@ function create_due_reminders(int $hoursAhead = 24): int
  
     return $created;
 }
-
-// mark_appointment
