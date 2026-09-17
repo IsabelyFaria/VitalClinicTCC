@@ -30,14 +30,15 @@ function render_admin_invites(array $user): void
 
                 <label>Clínica
                     <select name="existing_clinic_id">
-                        <option value="">— Cadastrar clínica nova (preencha abaixo) —</option>
+                        <option value="">— Escolha a clinica —</option>
                         <?php foreach (clinics() as $clinic): ?>
-                            <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?> (já existe — adiciona mais um admin a ela)</option>
+                            <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <span class="muted">Caso não encontre a clínica desejada, cadastre uma nova</span>
                 </label>
 
-                <h3>Dados da clínica nova <span class="muted">(ignorado se você escolheu uma já existente acima)</span></h3>
+                <h3>Dados da clínica nova <span class="muted">— só necessário se você optou por cadastrar uma clínica nova acima</span></h3>
                 <div class="grid two">
                     <label>Nome da clínica <input name="clinic_name"></label>
                     <label>CNPJ <input name="clinic_cnpj" placeholder="00.000.000/0001-00"></label>
