@@ -78,7 +78,7 @@ a equipe consegue:
    da pasta `db/` (pela aba **Importar**, não colando na aba SQL —
    arquivos grandes podem cortar no meio ao colar):
    1. `db/vitalclinic_estrutura.sql` — cria o banco `vitalclinic` do
-      zero (⚠️ apaga qualquer banco de mesmo nome que já exista).
+      zero (apaga qualquer banco de mesmo nome que já exista).
    2. `db/vitalclinic_dados.sql` — popula com os dados de demonstração
       e vários lotes de dados fictícios.
 4. Acesse a URL da pasta no navegador.
@@ -91,21 +91,20 @@ a equipe consegue:
 
 ## 3. Credenciais de acesso
 
-Senha de **todas** as contas abaixo: **`password`**.
+### Senha de **todas** as contas abaixo: **`password`**.
 
 Extraído diretamente do `db/vitalclinic_dados.sql` (parseando o arquivo
 na mesma ordem que o MySQL executaria, resolvendo as variáveis
 `@clinicN` de verdade) — reflete exatamente o que entra no banco
 quando você importa esse arquivo.
 
-### Clínica Central (contas fixas de demonstração)
+### Conta fixa de demonstração ADMIN (acesso total a todas as informações do site)
 
 | Perfil | Nome | E-mail |
 |---|---|---|
-| 👑 Super admin | Administrador da Clínica | `admin@clinica.local` |
-| Médico | Dra. Ana Souza — Clínico geral | `medico@clinica.local` |
+| Super admin | Administrador da Clínica | `admin@clinica.local` |
 
-### Clínica Norte (conta fixa de demonstração)
+### Conta fixa de demonstração MÉDICO
 
 | Perfil | Nome | E-mail |
 |---|---|---|
