@@ -272,6 +272,32 @@ CREATE TABLE notifications (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+-- ---------------------------------------------------------------------
+-- 12. admin_invites — convites de primeiro acesso para o administrador
+-- de uma clínica (nova ou já existente). Um super admin gera o link
+-- aqui (sem depender de e-mail automático: o link é só copiado e
+-- enviado por fora do sistema); quem recebe o link define a própria
+-- senha e vira admin da clínica vinculada. Token de uso único, com
+-- validade.
+-- ---------------------------------------------------------------------
+CREATE TABLE admin_invites (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    clinic_id       INT UNSIGNED        NOT NULL,
+    invitee_email   VARCHAR(150)        NOT NULL,
+    token           VARCHAR(64)         NOT NULL UNIQUE,
+    status          ENUM('pending','used','revoked') NOT NULL DEFAULT 'pending',
+    created_by      INT UNSIGNED        NULL,
+    created_at      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at      DATETIME            NOT NULL,
+    used_at         DATETIME            NULL,
+    CONSTRAINT fk_invites_clinic
+        FOREIGN KEY (clinic_id) REFERENCES clinics(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_invites_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
 -- Observação: a antiga tabela `password_resets` (códigos de verificação
 -- por e-mail) foi REMOVIDA deste schema. A recuperação de senha agora
 -- usa exclusivamente a Pergunta de Segurança (colunas `security_question`
@@ -285,3 +311,4 @@ CREATE INDEX idx_appt_patient            ON appointments(patient_id);
 CREATE INDEX idx_appt_doctor_status      ON appointments(doctor_id, status);
 CREATE INDEX idx_payments_status         ON payments(status);
 CREATE INDEX idx_notifications_user      ON notifications(user_id, status);
+CREATE INDEX idx_invites_token           ON admin_invites(token);

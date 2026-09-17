@@ -192,18 +192,26 @@ function clinics(): array
 function create_admin_invite(array $data, int $createdBy): array
 {
     return db_transaction(function () use ($data, $createdBy): array {
-        $stmt = db()->prepare(
-            'INSERT INTO clinics (name, cnpj, address, phone, whatsapp, email) VALUES (?, ?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([
-            $data['clinic_name'],
-            $data['clinic_cnpj'],
-            $data['clinic_address'] ?: null,
-            $data['clinic_phone'] ?: null,
-            $data['clinic_whatsapp'] ?: null,
-            $data['clinic_email'] ?: null,
-        ]);
-        $clinicId = (int) db()->lastInsertId();
+        // Se veio um clinic_id de uma clínica JÁ existente, usa ela
+        // direto — não cria clínica nova nesse caso (permite convidar
+        // um segundo/terceiro administrador para uma clínica que já
+        // está no sistema, não só cadastrar uma clínica do zero).
+        if (!empty($data['existing_clinic_id'])) {
+            $clinicId = (int) $data['existing_clinic_id'];
+        } else {
+            $stmt = db()->prepare(
+                'INSERT INTO clinics (name, cnpj, address, phone, whatsapp, email) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                $data['clinic_name'],
+                $data['clinic_cnpj'],
+                $data['clinic_address'] ?: null,
+                $data['clinic_phone'] ?: null,
+                $data['clinic_whatsapp'] ?: null,
+                $data['clinic_email'] ?: null,
+            ]);
+            $clinicId = (int) db()->lastInsertId();
+        }
 
         $token = bin2hex(random_bytes(32)); // 64 caracteres, imprevisível
         $expiresAt = (new DateTime())->modify('+' . (int) config('rules.invite_valid_hours') . ' hours');
@@ -315,10 +323,11 @@ function active_doctors(array $filters = []): array
 function staff_users(?int $clinicId = null): array
 {
     $sql = 'SELECT u.id, u.name, u.email, u.role, u.is_admin, u.status,
-                   d.crm AS crm, sp.name AS specialty_name
+                   d.crm AS crm, sp.name AS specialty_name, c.name AS clinic_name
             FROM users u
             LEFT JOIN doctors d ON d.user_id = u.id
             LEFT JOIN specialties sp ON sp.id = d.specialty_id
+            LEFT JOIN clinics c ON c.id = u.clinic_id
             WHERE u.role IN ("admin", "doctor")';
     $params = [];
     if ($clinicId !== null) {
@@ -1174,16 +1183,32 @@ function patient_list(string $search = '', ?int $clinicId = null): array
     }, $rows);
 }
  
+/**
+ * Pacientes são compartilhados pelo sistema inteiro — essa lista NÃO
+ * fica mais restrita a quem já foi atendido por ESTE médico
+ * especificamente; mostra todo mundo cadastrado, com a última/próxima
+ * consulta COM ESTE médico (fica em branco se esse paciente nunca foi
+ * atendido por ele, mas ele continua aparecendo e pode ser achado na
+ * busca — útil, por exemplo, pra abrir o histórico de um paciente
+ * novo que ainda não teve consulta nenhuma com este médico).
+ */
 function doctor_patient_list(int $doctorId, string $search = ''): array
 {
-    $idsStmt = db()->prepare('SELECT DISTINCT patient_id FROM appointments WHERE doctor_id = ?');
-    $idsStmt->execute([$doctorId]);
-    $patientIds = array_map('intval', array_column($idsStmt->fetchAll(), 'patient_id'));
- 
+    $sql = 'SELECT id FROM users WHERE role = "patient"';
+    $params = [];
+    if ($search !== '') {
+        $sql .= ' AND name LIKE ?';
+        $params[] = '%' . $search . '%';
+    }
+    $sql .= ' ORDER BY name';
+    $idsStmt = db()->prepare($sql);
+    $idsStmt->execute($params);
+    $patientIds = array_map('intval', array_column($idsStmt->fetchAll(), 'id'));
+
     $rows = [];
     foreach ($patientIds as $patientId) {
         $patient = repository_find_user($patientId);
-        if (!$patient || ($search !== '' && stripos($patient['name'], $search) === false)) {
+        if (!$patient) {
             continue;
         }
  

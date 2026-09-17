@@ -235,7 +235,7 @@ function format_time(?string $value): string
 function status_label(string $status): string
 {
     $labels = [
-        'pending' => 'Aguardando confirmação',
+        'pending' => 'Consulta agendada',
         'confirmed' => 'Confirmada',
         'completed' => 'Realizada',
         'cancelled' => 'Cancelada',
@@ -248,6 +248,62 @@ function status_label(string $status): string
     //   tenta achar a tradução de $status dentro do dicionário. Se esse status não
     //   estiver na lista, o "??" cai no plano B: ucfirst() deixa só a primeira letra
     //   maiúscula do texto original, em vez de quebrar o site
+}
+
+function status_badge_class(string $status): string
+{
+    // igual à status_label(), só que aqui a "tradução" é pra uma classe
+    // CSS em vez de um texto. É o que decide a COR de cada selo no
+    // Histórico (verde pra Realizada, vermelho pra Cancelada, âmbar pra
+    // Ausência). Status que não está na lista cai no 'badge' padrão
+    // (mesmo teal usado em Consultas/Início), pra nunca quebrar a página
+    $classes = [
+        'completed' => 'badge badge-concluida',
+        'cancelled' => 'badge badge-cancelada',
+        'no_show'   => 'badge badge-ausencia',
+    ];
+
+    return $classes[$status] ?? 'badge';
+}
+
+function notificacao_badge_class(string $titulo): string
+{
+    // igual à status_badge_class(), só que aqui quem decide a cor não é
+    // o status da consulta, é o "title" que já vem gravado na notificação.
+    // 'Consulta confirmada' e 'Consulta realizada' reaproveitam o mesmo
+    // verde do badge-realizada do Histórico (as duas são "notícia boa"),
+    // 'Consulta cancelada' reaproveita o vermelho de lá também
+    $classes = [
+        'Consulta confirmada'     => 'badge badge-realizada',
+        'Consulta realizada'      => 'badge badge-concluida',
+        'Consulta cancelada'      => 'badge badge-cancelada',
+        'Consulta pendente'       => 'badge badge-pendente',
+        'Consulta com ausência'   => 'badge badge-ausencia',
+    ];
+
+    // título que não está na lista (ex.: algo novo que ainda não previmos)
+    // cai no 'badge' cinza/teal padrão, em vez de quebrar a página
+    return $classes[$titulo] ?? 'badge';
+}
+
+function notificacao_titulo_amigavel(string $tituloBanco): string
+{
+    // o "title" que vem do banco é curto e meio técnico ("Consulta
+    // confirmada"). Essa função traduz pra uma frase mais humana, que é o
+    // que vai aparecer em negrito no cartão, a mesma ideia de "tradução"
+    // que já usamos em status_label()
+    $titulos = [
+        'Consulta confirmada'    => 'Sua consulta foi confirmada',
+        'Consulta cancelada'     => 'Consulta cancelada',
+        'Consulta pendente'      => 'Sua consulta está aguardando confirmação',
+        'Consulta realizada'     => 'Sua consulta foi concluída',
+        'Consulta com ausência'  => 'Você não compareceu à sua consulta',
+        'Lembrete'               => 'Sua consulta está chegando',
+    ];
+
+    // título que a gente não previu (ex.: um aviso geral do sistema) só
+    // devolve o próprio título sem tradução, em vez de quebrar a página
+    return $titulos[$tituloBanco] ?? $tituloBanco;
 }
 
 function current_date_value(): string

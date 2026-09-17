@@ -14,7 +14,11 @@ function render_admin_appointments(array $user): void
     ];
     $appointments = appointments_for_admin($filters);
     $doctors = active_doctors(['clinic_id' => $clinicId]);
-    $patients = patient_list('', $clinicId);
+    // O paciente pode ser atendido em mais de uma clínica — por isso o
+    // autocompletar de paciente mostra TODO mundo cadastrado no
+    // sistema, sem filtrar por clínica (diferente do médico, que fica
+    // restrito à clínica do admin logado).
+    $patients = patient_list('');
     ?>
     <section class="page-head">
         <div>

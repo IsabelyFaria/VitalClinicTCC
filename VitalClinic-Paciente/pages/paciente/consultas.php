@@ -35,7 +35,7 @@ function render_consultas(array $paciente, array $consultas): void
 
                 <div class="appointment-doctor"><?= h($consulta['doctor_name']) ?></div>
                 <div class="appointment-meta">
-                    <?= h($consulta['specialty_name']) ?> · <?= h($consulta['clinic_name']) ?> · <?= h(format_datetime($consulta['slot_start'])) ?>
+                    <strong style="color: var(--color-text-dark);"><?= h($consulta['specialty_name']) ?></strong> · <?= h($consulta['clinic_name']) ?> · <?= h(format_datetime($consulta['slot_start'])) ?>
                 </div>
                 <!-- juntei especialidade, clínica E data/hora numa linha só (com
                      "·" separando), em vez de duas linhas separadas, menos

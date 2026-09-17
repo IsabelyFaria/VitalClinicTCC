@@ -55,7 +55,7 @@ function render_admin_doctors(array $user): void
                         <summary>
                             <span>
                                 <strong><?= h($doctor['name']) ?></strong>
-                                <small><?= h($doctor['specialty_name']) ?> - <?= h($doctor['crm']) ?></small>
+                                <small><?= h($doctor['specialty_name']) ?> - <?= h($doctor['crm']) ?><?= $isSuperAdmin ? ' · ' . h($doctor['clinic_name']) : '' ?></small>
                             </span>
                         </summary>
                         <form method="post" class="subform" autocomplete="off">
@@ -143,6 +143,7 @@ function render_admin_doctors(array $user): void
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>CRM / Especialidade</th>
+                        <?php if ($isSuperAdmin): ?><th>Clínica</th><?php endif; ?>
                         <th>Perfil</th>
                         <th>Acesso ADM</th>
                     </tr>
@@ -157,6 +158,7 @@ function render_admin_doctors(array $user): void
                             </td>
                             <td><?= h($person['email']) ?></td>
                             <td><?= h($person['crm'] ? $person['crm'] . ' - ' . $person['specialty_name'] : '-') ?></td>
+                            <?php if ($isSuperAdmin): ?><td><?= h($person['clinic_name'] ?? '-') ?></td><?php endif; ?>
                             <td>
                                 <span class="status <?= $person['is_admin'] ? 'confirmed' : 'pending' ?>">
                                     <?= $person['is_admin'] ? 'Administrador' : 'Médico' ?>

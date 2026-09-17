@@ -69,6 +69,9 @@ require __DIR__ . '/pages/paciente/historico.php';
 require __DIR__ . '/pages/paciente/perfil.php';
 // importa render_perfil()
 
+require __DIR__ . '/pages/paciente/sobre.php';
+// importa render_sobre()
+
 require __DIR__ . '/pages/paciente/notificacoes.php';
 // importa render_notificacoes()
 
@@ -237,6 +240,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         redirect(['page' => 'perfil']);
     }
+
+    if ($action === 'aceitar_termos') {
+        // de novo, current_user() direto aqui (mesmo motivo dos outros
+        // "action" acima: $user só existe mais tarde nesse arquivo)
+        $usuarioLogado = current_user();
+
+        if (post_value('agree') !== '1') {
+            // segurança extra: mesmo o botão "Prosseguir" já vindo desabilitado
+            // no HTML até marcar a caixa, alguém poderia tentar mandar esse POST
+            // direto, sem passar pelo checkbox. Aqui a gente barra de novo, no
+            // servidor, que é onde a segurança de verdade precisa estar
+            flash('error', 'É necessário marcar a caixa de aceite para continuar.');
+            redirect(['page' => $_GET['page'] ?? 'dashboard']);
+        }
+
+        accept_terms((int) $usuarioLogado['id']);
+        // grava terms_accepted = 1 pra esse paciente. A partir de agora o
+        // render_terms_modal()(no layout.php) não desenha
+        // mais o modal pra ele
+
+        redirect(['page' => $_GET['page'] ?? 'dashboard']);
+        // volta pra MESMA página que a pessoa estava vendo quando aceitou,
+        // em vez de forçar ir pro dashboard
+    }
+
+    if ($action === 'marcar_tutorial_visto') {
+        $usuarioLogado = current_user();
+        mark_tutorial_seen((int) $usuarioLogado['id']);
+        redirect(['page' => $_GET['page'] ?? 'dashboard']);
+        // esse aqui o JavaScript vai chamar sozinho, em segundo plano
+        // (via fetch), sem a pessoa notar, não precisa de mensagem de
+        // flash nenhuma, só gravar que ela já viu o tutorial
+    }
+
+
 }
 //   fim do bloco "só roda se foi POST". Se o pedido era um GET normal (só visitando
 //   uma página), esse bloco inteiro é pulado
@@ -276,21 +314,36 @@ if ($page === 'login') {
     render_registro();
      //   mais uma opção na "escada" de decisão, do mesmo jeito que o login
 } elseif ($page === 'dashboard'){
-    $proximaConsulta = next_appointment_for_patient((int) $user['id']);
-    //   busca a próxima consulta desse paciente especificamente, chamando a
-    //   função que criamos e já testamos no teste_dashboard.php
+   $proximaConsulta = next_appointment_for_patient((int) $user['id']);
 
-    render_dashboard($user, $proximaConsulta);
-    //   manda desenhar a tela do dashboard, passando quem é o
-    //   paciente logado e a consulta que acabamos de buscar (ou null, se
-    //   não tiver nenhuma)
+    $resultadoBusca = search_doctors_and_clinics('');
+    // busca vazia ('') traz TODOS os médicos ativos e TODAS as clínicas com
+    // pelo menos 1 médico ativo, sem filtrar nada ainda. É esse conjunto
+    // completo que vai ficar escondido no HTML da Home, esperando o
+    // JavaScript da busca ao vivo filtrar ele conforme a pessoa digita,
+    // a mesma ideia que já usamos no Agendar
+
+    // pega até 5 clínicas (pra não lotar a Home) e todas as especialidades
+    // que têm médico de verdade, pra montar as pílulas e os cards
+    $clinicasHome = array_slice(active_clinics_with_doctor_count(), 0, 5);
+    $especialidadesHome = active_specialties();
+
+    render_dashboard($user, $proximaConsulta, $resultadoBusca, $clinicasHome, $especialidadesHome);
 
 } elseif ($page === 'agendar') {
-    // pega o id do médico, SE algum foi escolhido (?page=agendar&medico=5).
-    // isset() confere se essa chave existe no array $_GET antes de tentar ler
+    // pega os 3 possíveis "filtros" que podem vir na URL: qual médico, qual
+    // clínica, e o texto de busca. Todos são opcionais (podem não vir)
     $medicoId = isset($_GET['medico']) ? (int) $_GET['medico'] : null;
+    $clinicaId = isset($_GET['clinica']) ? (int) $_GET['clinica'] : null;
+    $busca = isset($_GET['busca']) && trim((string) $_GET['busca']) !== '' ? trim((string) $_GET['busca']) : null;
+    // essa linha da $busca é um pouco mais cheia: além de conferir se
+    // "busca" veio na URL, já tira os espaços em branco (trim) e transforma
+    // uma busca vazia (a pessoa clicou em "Buscar" sem digitar nada) em
+    // null, é mais fácil de checar "if ($busca)" depois do que "if
+    // ($busca !== '')"
 
     if ($medicoId) {
+        // TELA 3: horários de um médico específico já escolhido
         $medico = find_doctor_details($medicoId);
 
         if (!$medico) {
@@ -299,24 +352,45 @@ if ($page === 'login') {
         }
 
         $horarios = available_slots_for_doctor($medicoId);
-
-        // pega a data escolhida na URL (?data=2026-09-20), SE tiver alguma.
-        // Se não tiver, vira null, e a função sabe escolher uma data padrão
         $dataSelecionada = isset($_GET['data']) ? (string) $_GET['data'] : null;
-
-        // pega o mês escolhido na URL (?mes=2026-09), SE tiver algum
         $mesSelecionado = isset($_GET['mes']) ? (string) $_GET['mes'] : null;
 
         render_agendar_horarios($user, $medico, $horarios, $dataSelecionada, $mesSelecionado);
+
+    } elseif ($clinicaId) {
+        // TELA 2: lista de médicos de UMA clínica específica já escolhida
+        $clinica = find_clinic_details($clinicaId);
+
+        if (!$clinica) {
+            flash('error', 'Clínica não encontrada.');
+            redirect(['page' => 'agendar']);
+        }
+
+        $medicos = active_doctors_with_details($clinicaId, $busca);
+        render_agendar_medicos($user, $clinica, $medicos, $busca);
+
     } else {
-        $medicos = active_doctors_with_details();
-        render_agendar_medicos($user, $medicos);
+        // TELA 1: lista de clínicas OU lista de médicos (duas abas)
+        $clinicas = active_clinics_with_doctor_count($busca);
+        $especialidades = active_specialties();
+        $todosOsMedicos = search_doctors_and_clinics('')['medicos'];
+        // busca vazia ('') traz TODOS os médicos ativos, de QUALQUER
+        // clínica, é a lista completa que vai alimentar a aba "Médicos"
+        // dessa tela, escondida até a pessoa clicar nessa aba
+
+        // se a pessoa clicou numa pílula de especialidade lá na Home, ela
+        // chega aqui com "?especialidade=Pediatria" na URL, por exemplo
+        $especialidadeInicial = isset($_GET['especialidade']) && trim((string) $_GET['especialidade']) !== ''
+        ? trim((string) $_GET['especialidade'])
+        : null;
+
+        render_agendar_clinicas($user, $clinicas, $busca, $especialidades, $todosOsMedicos, $especialidadeInicial);
     }
 } elseif ($page === 'historico') {
     // reaproveitando a mesma função de sempre, só que pedindo os status de
     // consultas já ENCERRADAS (completed = aconteceu, cancelled = cancelada,
     // no_show = paciente faltou), em vez das que ainda estão por vir
-    $historico = appointments_for_patient((int) $user['id'], ['completed', 'cancelled', 'no_show'], 'DESC');
+    $historico = appointments_for_patient((int) $user['id'], ['completed', 'cancelled', 'no_show'], 'DESC', false, 'a.updated_at');
     render_historico($user, $historico);
 
 } elseif ($page === 'consultas') {
@@ -334,6 +408,11 @@ if ($page === 'login') {
 
 } elseif ($page === 'perfil') {
     render_perfil($user);
+    
+} elseif ($page === 'sobre') {
+    render_sobre($user);
+    // página só de leitura, não precisa buscar nada no banco antes,
+    // por isso passamos $user direto pra função, sem nenhuma consulta
 
 } else {
     //   pega qualquer página que a gente ainda não construiu (consultas,

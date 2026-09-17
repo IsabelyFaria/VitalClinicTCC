@@ -27,10 +27,20 @@ function render_admin_invites(array $user): void
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="admin_create_invite">
                 <input type="hidden" name="page_after" value="admin_invites">
-                <h3>Dados da clínica</h3>
+
+                <label>Clínica
+                    <select name="existing_clinic_id">
+                        <option value="">— Cadastrar clínica nova (preencha abaixo) —</option>
+                        <?php foreach (clinics() as $clinic): ?>
+                            <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?> (já existe — adiciona mais um admin a ela)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <h3>Dados da clínica nova <span class="muted">(ignorado se você escolheu uma já existente acima)</span></h3>
                 <div class="grid two">
-                    <label>Nome da clínica <input name="clinic_name" required></label>
-                    <label>CNPJ <input name="clinic_cnpj" required placeholder="00.000.000/0001-00"></label>
+                    <label>Nome da clínica <input name="clinic_name"></label>
+                    <label>CNPJ <input name="clinic_cnpj" placeholder="00.000.000/0001-00"></label>
                     <label>Telefone <input name="clinic_phone"></label>
                     <label>WhatsApp <input name="clinic_whatsapp" placeholder="55DDDNÚMERO"></label>
                     <label>E-mail da clínica <input type="email" name="clinic_email"></label>

@@ -396,7 +396,11 @@ function handle_post(): void
             $doctorId = (int) ($_POST['doctor_id'] ?? 0);
 
             $patient = repository_find_user($patientId);
-            if (!$patient || $patient['role'] !== 'patient' || !admin_can_access_clinic($adminUser, (int) $patient['clinic_id'])) {
+            // O paciente pode ser de qualquer clínica (é atendido em
+            // mais de uma, potencialmente) — só checa se é mesmo um
+            // paciente de verdade, sem restringir pela clínica do
+            // admin logado.
+            if (!$patient || $patient['role'] !== 'patient') {
                 throw new RuntimeException('Selecione um paciente válido.');
             }
             if (!$doctorId) {
@@ -505,10 +509,10 @@ function handle_post(): void
             $adminUser = require_role('admin');
             $patientId = (int) ($_POST['patient_id'] ?? 0);
             $targetPatient = repository_find_user($patientId);
-            if (!$targetPatient || $targetPatient['role'] !== 'patient' || !admin_can_access_clinic($adminUser, (int) $targetPatient['clinic_id'])) {
-                // Nunca deixa um admin editar um paciente de outra
-                // clínica, mesmo que o ID tenha sido forjado no POST
-                // (super admin é a única exceção prevista).
+            // Pacientes são compartilhados entre clínicas — só garante
+            // que é mesmo um paciente de verdade (não restringe mais
+            // por clínica; só Médicos e Consultas continuam isolados).
+            if (!$targetPatient || $targetPatient['role'] !== 'patient') {
                 throw new RuntimeException('Paciente não encontrado.');
             }
             update_patient_admin($patientId, [
@@ -590,23 +594,37 @@ function handle_post(): void
             if (empty($actor['is_super_admin'])) {
                 abort_forbidden();
             }
-            $cnpj = post_value('clinic_cnpj');
             $email = post_value('invitee_email');
-            if (trim(post_value('clinic_name')) === '' || trim($cnpj) === '') {
-                throw new RuntimeException('Informe o nome e o CNPJ da clínica.');
-            }
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 throw new RuntimeException('Informe um e-mail válido para o convite.');
             }
-            create_admin_invite([
-                'clinic_name' => post_value('clinic_name'),
-                'clinic_cnpj' => $cnpj,
-                'clinic_address' => post_value('clinic_address'),
-                'clinic_phone' => post_value('clinic_phone'),
-                'clinic_whatsapp' => post_value('clinic_whatsapp'),
-                'clinic_email' => post_value('clinic_email'),
-                'invitee_email' => strtolower($email),
-            ], (int) $actor['id']);
+
+            $existingClinicId = (int) ($_POST['existing_clinic_id'] ?? 0);
+            if ($existingClinicId) {
+                // Convite pra uma clínica que já existe — não precisa
+                // (nem deve) criar uma clínica nova nesse caso.
+                if (!repository_find('clinics', $existingClinicId)) {
+                    throw new RuntimeException('Selecione uma clínica válida.');
+                }
+                create_admin_invite([
+                    'existing_clinic_id' => $existingClinicId,
+                    'invitee_email' => strtolower($email),
+                ], (int) $actor['id']);
+            } else {
+                $cnpj = post_value('clinic_cnpj');
+                if (trim(post_value('clinic_name')) === '' || trim($cnpj) === '') {
+                    throw new RuntimeException('Informe o nome e o CNPJ da clínica, ou escolha uma clínica já existente.');
+                }
+                create_admin_invite([
+                    'clinic_name' => post_value('clinic_name'),
+                    'clinic_cnpj' => $cnpj,
+                    'clinic_address' => post_value('clinic_address'),
+                    'clinic_phone' => post_value('clinic_phone'),
+                    'clinic_whatsapp' => post_value('clinic_whatsapp'),
+                    'clinic_email' => post_value('clinic_email'),
+                    'invitee_email' => strtolower($email),
+                ], (int) $actor['id']);
+            }
             flash('success', 'Convite gerado. Copie o link abaixo e envie para o administrador da clínica.');
             redirect(['page' => 'admin_invites']);
 
@@ -1128,6 +1146,7 @@ function render_staff_profile(array $user): void
 {
     $doctor = $user['role'] === 'doctor' ? doctor_by_user((int) $user['id']) : null;
     $title = $doctor ? 'Dr. ' . preg_replace('/^Dr(a)?\.?\s+/i', '', $user['name']) : $user['name'];
+    $ownClinic = !empty($user['clinic_id']) ? repository_find('clinics', (int) $user['clinic_id']) : null;
     ?>
     <section class="page-head">
         <div>
@@ -1148,6 +1167,15 @@ function render_staff_profile(array $user): void
                     <h2><?= h($title) ?></h2>
                     <p><?= h($doctor['specialty_name'] ?? 'Administrador da clínica') ?></p>
                     <p class="muted"><?= h($doctor['crm'] ?? 'Gestão da clínica') ?></p>
+                    <p class="muted">
+                        <?php if (!empty($user['is_super_admin'])): ?>
+                            👑 Super admin — todas as clínicas
+                        <?php elseif ($ownClinic): ?>
+                            Clínica: <?= h($ownClinic['name']) ?>
+                        <?php else: ?>
+                            Sem clínica vinculada
+                        <?php endif; ?>
+                    </p>
                 </div>
             </div>
 

@@ -14,7 +14,7 @@ function render_doctor_patients(array $user): void
     <section class="page-head">
         <div>
             <p class="eyebrow">Médico</p>
-            <h1>Meus pacientes</h1>
+            <h1>Pacientes</h1>
         </div>
     </section>
     <section class="panel">
