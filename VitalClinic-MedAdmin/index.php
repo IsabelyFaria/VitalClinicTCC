@@ -27,6 +27,7 @@ foreach ([
     'pages/auth/login.php',
     'pages/auth/recuperar_senha.php',
     'pages/auth/aceitar_convite.php',
+    'pages/auth/solicitar_acesso.php',
     'pages/admin/dashboard.php',
     'pages/admin/calendario.php',
     'pages/admin/consultas.php',
@@ -95,7 +96,7 @@ function run_app(): void
     }
 
     $page = $_GET['page'] ?? 'dashboard';
-    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password', 'accept_invite'];
+    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password', 'accept_invite', 'solicitar_acesso'];
     $user = current_user();
 
     if (!$user && !in_array($page, $publicPages, true)) {
@@ -423,12 +424,6 @@ function handle_post(): void
                 post_value('modality') === 'teleconsulta' ? 'teleconsulta' : 'presencial',
                 'confirmed'
             );
-
-            // avisa o paciente que uma consulta nova foi marcada pra ele.
-            // Como o app do Paciente lê da mesma tabela "notifications",
-            // basta criar essa linha aqui pra ela aparecer sozinha lá
-            create_notification($patientId, $novoAgendamentoId, 'in_app', 'Consulta confirmada', 'Sua consulta foi confirmada.');
-            
             flash('success', 'Consulta agendada com sucesso.');
             redirect(['page' => 'admin_appointments']);
 
@@ -643,6 +638,51 @@ function handle_post(): void
             flash('success', 'Convite revogado.');
             redirect(['page' => 'admin_invites']);
 
+        case 'submit_clinic_request':
+            // Ação pública — qualquer clínica interessada pode enviar,
+            // sem estar logada. Nunca cria conta nem clínica sozinha;
+            // só registra um pedido pendente pro super admin revisar.
+            $contactEmail = post_value('contact_email');
+            if (trim(post_value('clinic_name')) === '' || trim(post_value('clinic_cnpj')) === '') {
+                throw new RuntimeException('Informe o nome e o CNPJ da clínica.');
+            }
+            if (trim(post_value('contact_name')) === '') {
+                throw new RuntimeException('Informe o nome do responsável.');
+            }
+            if (!filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new RuntimeException('Informe um e-mail válido.');
+            }
+            create_clinic_request([
+                'clinic_name' => post_value('clinic_name'),
+                'clinic_cnpj' => post_value('clinic_cnpj'),
+                'clinic_address' => post_value('clinic_address'),
+                'clinic_phone' => post_value('clinic_phone'),
+                'clinic_whatsapp' => post_value('clinic_whatsapp'),
+                'clinic_email' => post_value('clinic_email'),
+                'contact_name' => post_value('contact_name'),
+                'contact_email' => strtolower($contactEmail),
+                'message' => post_value('message'),
+            ]);
+            redirect(['page' => 'solicitar_acesso', 'enviado' => '1']);
+
+        case 'approve_clinic_request':
+            $actor = require_role('admin');
+            if (empty($actor['is_super_admin'])) {
+                abort_forbidden();
+            }
+            approve_clinic_request((int) ($_POST['request_id'] ?? 0), (int) $actor['id']);
+            flash('success', 'Pedido aprovado — clínica e convite gerados. Copie o link na lista de convites.');
+            redirect(['page' => 'admin_invites']);
+
+        case 'reject_clinic_request':
+            $actor = require_role('admin');
+            if (empty($actor['is_super_admin'])) {
+                abort_forbidden();
+            }
+            reject_clinic_request((int) ($_POST['request_id'] ?? 0), (int) $actor['id']);
+            flash('success', 'Pedido rejeitado.');
+            redirect(['page' => 'admin_invites']);
+
         case 'accept_invite':
             // Ação pública (quem está abrindo o link ainda não tem
             // conta) — a validação de verdade do token acontece dentro
@@ -811,6 +851,7 @@ function render_nav(string $page, ?array $user): void
     }
 
     $unread = unread_notifications_count((int) $user['id']);
+    $pendingRequests = !empty($user['is_super_admin']) ? count(array_filter(clinic_requests_list(), static fn(array $r): bool => $r['status'] === 'pending')) : 0;
     $initial = strtoupper(substr($user['name'], 0, 1));
     ?>
     <div class="topbar-actions">
@@ -838,7 +879,10 @@ function render_nav(string $page, ?array $user): void
     <nav class="nav" id="primary-nav" data-nav>
         <?php foreach ($items as $key => $label): ?>
             <a class="<?= $page === $key ? 'active' : '' ?>" href="<?= h(app_url(['page' => $key])) ?>">
-                <?= h($label) ?><?= $key === 'notifications' && $unread ? ' (' . (int) $unread . ')' : '' ?>
+                <?= h($label) ?><?php
+                    if ($key === 'notifications' && $unread) echo ' (' . (int) $unread . ')';
+                    if ($key === 'admin_invites' && $pendingRequests) echo ' (' . (int) $pendingRequests . ')';
+                ?>
             </a>
         <?php endforeach; ?>
     </nav>
@@ -1066,6 +1110,8 @@ function render_page(string $page, ?array $user): void
             render_reset_password();
         } elseif ($page === 'accept_invite') {
             render_accept_invite();
+        } elseif ($page === 'solicitar_acesso') {
+            render_request_access();
         } else {
             render_login();
         }
@@ -1407,7 +1453,7 @@ function render_install_error(Throwable $e): void
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0c726a">
+    <meta name="theme-color" content="#0f766e">
     <link rel="manifest" href="manifest.webmanifest">
     <title>Erro de conexão</title>
     <link rel="icon" href="<?= asset_url('assets/brand/vital-clinic-mark.svg') ?>" type="image/svg+xml">

@@ -16,7 +16,7 @@ const REPOSITORY_TABLES = [
     'clinics', 'specialties', 'users', 'doctors', 'doctor_schedules',
     'schedule_blocks', 'appointment_slots', 'appointments',
     'medical_records', 'payments', 'notifications', 'password_resets',
-    'admin_invites',
+    'admin_invites', 'clinic_requests',
 ];
  
 function repo_assert_table(string $table): void
@@ -269,6 +269,79 @@ function revoke_admin_invite(int $inviteId): void
 {
     $stmt = db()->prepare('UPDATE admin_invites SET status = "revoked" WHERE id = ? AND status = "pending"');
     $stmt->execute([$inviteId]);
+}
+
+/**
+ * Registra um pedido de acesso vindo do formulário público — NUNCA
+ * cria clínica nem conta sozinho, só fica pendente até o super admin
+ * revisar (ver approve_clinic_request() / reject_clinic_request()).
+ */
+function create_clinic_request(array $data): int
+{
+    return repository_append('clinic_requests', [
+        'clinic_name' => $data['clinic_name'],
+        'clinic_cnpj' => $data['clinic_cnpj'],
+        'clinic_address' => $data['clinic_address'] ?: null,
+        'clinic_phone' => $data['clinic_phone'] ?: null,
+        'clinic_whatsapp' => $data['clinic_whatsapp'] ?: null,
+        'clinic_email' => $data['clinic_email'] ?: null,
+        'contact_name' => $data['contact_name'],
+        'contact_email' => $data['contact_email'],
+        'message' => $data['message'] ?: null,
+        'status' => 'pending',
+        'created_at' => now_sql(),
+    ]);
+}
+
+/** Lista os pedidos de acesso, pendentes primeiro (mais recente de cada grupo primeiro). */
+function clinic_requests_list(): array
+{
+    $sql = 'SELECT * FROM clinic_requests
+            ORDER BY (status = "pending") DESC, created_at DESC';
+    return db()->query($sql)->fetchAll();
+}
+
+/**
+ * Aprova um pedido: cria a clínica de verdade e já gera o convite de
+ * primeiro acesso pra ela (reaproveita create_admin_invite()), tudo
+ * numa transação — se qualquer parte falhar, nada fica pela metade.
+ */
+function approve_clinic_request(int $requestId, int $reviewerId): array
+{
+    $request = repository_find('clinic_requests', $requestId);
+    if (!$request || $request['status'] !== 'pending') {
+        throw new RuntimeException('Pedido não encontrado ou já foi revisado.');
+    }
+
+    return db_transaction(function () use ($request, $requestId, $reviewerId): array {
+        $invite = create_admin_invite([
+            'clinic_name' => $request['clinic_name'],
+            'clinic_cnpj' => $request['clinic_cnpj'],
+            'clinic_address' => $request['clinic_address'],
+            'clinic_phone' => $request['clinic_phone'],
+            'clinic_whatsapp' => $request['clinic_whatsapp'],
+            'clinic_email' => $request['clinic_email'],
+            'invitee_email' => $request['contact_email'],
+        ], $reviewerId);
+
+        $stmt = db()->prepare(
+            'UPDATE clinic_requests
+             SET status = "approved", reviewed_by = ?, reviewed_at = NOW(), resulting_invite_id = ?
+             WHERE id = ?'
+        );
+        $stmt->execute([$reviewerId, $invite['id'], $requestId]);
+
+        return $invite;
+    });
+}
+
+function reject_clinic_request(int $requestId, int $reviewerId): void
+{
+    $stmt = db()->prepare(
+        'UPDATE clinic_requests SET status = "rejected", reviewed_by = ?, reviewed_at = NOW()
+         WHERE id = ? AND status = "pending"'
+    );
+    $stmt->execute([$reviewerId, $requestId]);
 }
 
 function specialties(): array

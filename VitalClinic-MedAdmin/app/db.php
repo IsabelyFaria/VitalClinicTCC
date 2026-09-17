@@ -43,17 +43,29 @@ function db(): PDO
 /**
  * Executa uma função dentro de uma transação, com rollback automático em
  * caso de exceção. Retorna o valor de retorno da função.
+ *
+ * Suporta chamadas aninhadas (uma db_transaction() dentro de outra) —
+ * só o nível mais externo de fato abre/fecha a transação no banco; os
+ * níveis internos só "participam" dela. Isso é necessário porque
+ * approve_clinic_request() chama create_admin_invite(), que também
+ * abre sua própria transação — sem esse cuidado, o PDO recusaria a
+ * segunda chamada com "já existe uma transação ativa".
  */
 function db_transaction(callable $fn)
 {
     $pdo = db();
-    $pdo->beginTransaction();
+    $alreadyInTransaction = $pdo->inTransaction();
+    if (!$alreadyInTransaction) {
+        $pdo->beginTransaction();
+    }
     try {
         $result = $fn($pdo);
-        $pdo->commit();
+        if (!$alreadyInTransaction) {
+            $pdo->commit();
+        }
         return $result;
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
+        if (!$alreadyInTransaction && $pdo->inTransaction()) {
             $pdo->rollBack();
         }
         throw $e;

@@ -10,12 +10,57 @@
 function render_admin_invites(array $user): void
 {
     $invites = admin_invites_list();
+    $requests = clinic_requests_list();
     $validHours = (int) (config('rules.invite_valid_hours') ?: 72);
     ?>
     <section class="page-head">
         <div>
             <p class="eyebrow">Administração</p>
-            <h1>Convites de primeiro acesso</h1>
+            <h1>Convites e pedidos de acesso</h1>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Pedidos de acesso recebidos</h2>
+        <p class="muted">Vindos do formulário público (uma clínica interessada preenche os próprios dados) — aprovar aqui gera automaticamente a clínica e o convite de primeiro acesso; nada fica ativo antes de você revisar.</p>
+        <div class="list">
+            <?php if (!$requests): ?>
+                <p class="muted">Nenhum pedido recebido ainda.</p>
+            <?php endif; ?>
+            <?php foreach ($requests as $request): ?>
+                <?php
+                $reqStatusLabel = ['pending' => 'Aguardando revisão', 'approved' => 'Aprovado', 'rejected' => 'Rejeitado'][$request['status']];
+                $reqStatusClass = ['pending' => 'pending', 'approved' => 'confirmed', 'rejected' => 'cancelled'][$request['status']];
+                ?>
+                <article class="list-row">
+                    <div>
+                        <strong><?= h($request['clinic_name']) ?></strong>
+                        <span>CNPJ <?= h($request['clinic_cnpj']) ?> — <span class="status <?= h($reqStatusClass) ?>"><?= h($reqStatusLabel) ?></span></span>
+                        <span>Responsável: <?= h($request['contact_name']) ?> (<?= h($request['contact_email']) ?>)</span>
+                        <?php if ($request['message']): ?>
+                            <p class="muted"><?= h($request['message']) ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($request['status'] === 'pending'): ?>
+                        <div class="actions">
+                            <form method="post" class="inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="approve_clinic_request">
+                                <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                <input type="hidden" name="page_after" value="admin_invites">
+                                <button class="button small primary" type="submit" data-confirm="Aprovar este pedido e gerar o convite para <?= h($request['clinic_name']) ?>?">Aprovar</button>
+                            </form>
+                            <form method="post" class="inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="reject_clinic_request">
+                                <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                <input type="hidden" name="page_after" value="admin_invites">
+                                <button class="button small danger" type="submit" data-confirm="Rejeitar este pedido?">Rejeitar</button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                </article>
+            <?php endforeach; ?>
         </div>
     </section>
 
@@ -30,12 +75,12 @@ function render_admin_invites(array $user): void
 
                 <label>Clínica
                     <select name="existing_clinic_id">
-                        <option value="">— Escolha a clinica —</option>
+                        <option value="">— Cadastrar clínica nova (preencha abaixo) —</option>
                         <?php foreach (clinics() as $clinic): ?>
                             <option value="<?= (int) $clinic['id'] ?>"><?= h($clinic['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <span class="muted">Caso não encontre a clínica desejada, cadastre uma nova</span>
+                    <span class="muted">Escolhendo uma clínica já existente, o convite adiciona mais um administrador a ela (não cria uma clínica nova).</span>
                 </label>
 
                 <h3>Dados da clínica nova <span class="muted">— só necessário se você optou por cadastrar uma clínica nova acima</span></h3>
