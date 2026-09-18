@@ -183,7 +183,7 @@ function render_dashboard(array $paciente, ?array $proximaConsulta, array $resul
         </div>
     </div>
 
-    <!-- BUSCA que já tínhamos: continua igual, só mudou de lugar na página -->
+    <!-- CAMPO DE BUSCA DA HOME -->
     <div class="search-box" style="margin: 20px 0;">
         <input type="text" id="busca-home" placeholder="Buscar médico, especialidade ou clínica..." autocomplete="off">
     </div>
