@@ -216,6 +216,59 @@ function status_label(string $status): string
     return $labels[$status] ?? ucfirst($status);
 }
 
+/**
+ * Cor do selinho da notificaÃ§Ã£o, a partir do "title" gravado no banco.
+ * Mesma ideia (e as mesmas cores) da tela de NotificaÃ§Ãµes do site do
+ * paciente â sÃ³ que aqui a lista tambÃ©m cobre os tÃ­tulos que sÃ³
+ * existem no painel da clÃ­nica ("Nova consulta agendada", etc.).
+ */
+function notificacao_badge_class(string $titulo): string
+{
+    $classes = [
+        'Consulta confirmada'              => 'badge badge-realizada',
+        'Consulta agendada'                => 'badge badge-realizada',
+        'Nova consulta agendada'           => 'badge badge-realizada',
+        'Nova consulta marcada'            => 'badge badge-realizada',
+        'Consulta realizada'               => 'badge badge-concluida',
+        'Consulta concluída'                => 'badge badge-concluida',
+        'Consulta cancelada'               => 'badge badge-cancelada',
+        'Consulta cancelada pelo paciente' => 'badge badge-cancelada',
+        'Consulta pendente'                => 'badge badge-pendente',
+        'Consulta com ausência'            => 'badge badge-ausencia',
+        'Falta registrada'                 => 'badge badge-ausencia',
+        'Lembrete'                         => 'badge badge-pendente',
+        'Lembrete de consulta'             => 'badge badge-pendente',
+    ];
+
+    return $classes[$titulo] ?? 'badge';
+}
+
+/**
+ * Traduz o "title" cru do banco para a frase em negrito do cartão,
+ * igual à notificacao_titulo_amigavel() do site do paciente â aqui as
+ * frases são escritas do ponto de vista da clínica/médico.
+ */
+function notificacao_titulo_amigavel(string $tituloBanco): string
+{
+    $titulos = [
+        'Consulta confirmada'              => 'Consulta confirmada',
+        'Consulta agendada'                => 'Uma consulta foi agendada',
+        'Nova consulta agendada'           => 'Uma nova consulta foi agendada',
+        'Nova consulta marcada'            => 'Um paciente marcou uma consulta',
+        'Consulta cancelada'               => 'Uma consulta foi cancelada',
+        'Consulta cancelada pelo paciente' => 'O paciente cancelou a consulta',
+        'Consulta pendente'                => 'Consulta aguardando confirmação',
+        'Consulta realizada'               => 'Consulta concluída',
+        'Consulta concluída'                => 'Consulta concluída',
+        'Consulta com ausência'            => 'Ausência registrada na consulta',
+        'Falta registrada'                 => 'Ausência registrada na consulta',
+        'Lembrete'                         => 'Consulta chegando',
+        'Lembrete de consulta'             => 'Você tem uma consulta chegando',
+    ];
+
+    return $titulos[$tituloBanco] ?? $tituloBanco;
+}
+
 function current_date_value(): string
 {
     return (new DateTime())->format('Y-m-d');

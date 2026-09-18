@@ -1296,25 +1296,64 @@ function render_notifications(array $user): void
             <button class="button" type="submit">Marcar lidas</button>
         </form>
     </section>
-    <section class="panel">
-        <div class="list">
-            <?php foreach ($notifications as $notification): ?>
-                <article class="list-row <?= $notification['read_at'] ? '' : 'unread' ?>">
-                    <div>
-                        <strong><?= h($notification['title']) ?></strong>
-                        <span><?= h($notification['message']) ?></span>
-                        <small><?= h(strtoupper($notification['type'])) ?> - <?= h(format_datetime($notification['created_at'])) ?></small>
-                    </div>
-                    <?php if ($notification['type'] === 'whatsapp'): ?>
-                        <a class="button small" target="_blank" rel="noopener" href="https://wa.me/?text=<?= urlencode($notification['message']) ?>">WhatsApp</a>
-                    <?php endif; ?>
-                </article>
-            <?php endforeach; ?>
-            <?php if (!$notifications): ?>
-                <p class="muted">Sem notificações.</p>
-            <?php endif; ?>
-        </div>
-    </section>
+
+    <?php if (empty($notifications)): ?>
+        <section class="panel">
+            <p class="muted">Sem notificações.</p>
+        </section>
+    <?php else: ?>
+        <?php foreach ($notifications as $notificacao): ?>
+            <?php
+            // "Não lida" = nem read_at preenchido, nem status 'read'.
+            // As duas checagens existem porque o site do paciente e este
+            // painel gravam leitura de jeitos diferentes na mesma tabela.
+            $naoLida = empty($notificacao['read_at']) && ($notificacao['status'] ?? '') !== 'read';
+            ?>
+            <div class="appointment-card<?= $naoLida ? ' is-unread' : '' ?>">
+                <div class="appointment-card-top">
+                    <!-- selinho colorido com o título cru do banco, na
+                         esquerda; como o flex é "space-between", a data
+                         de envio vai sozinha pra direita -->
+                    <span class="<?= h(notificacao_badge_class($notificacao['title'])) ?>">
+                        <?= h($notificacao['title']) ?>
+                    </span>
+
+                    <!-- quando ESTE aviso chegou (sent_at), não a data da
+                         consulta, que aparece na linha de baixo -->
+                    <span class="muted" style="font-size: 13px;">
+                        <?= h(format_datetime($notificacao['sent_at'] ?: $notificacao['created_at'])) ?>
+                    </span>
+                </div>
+
+                <!-- frase amigável em negrito, no lugar do "message" cru -->
+                <div class="appointment-doctor"><?= h(notificacao_titulo_amigavel($notificacao['title'])) ?></div>
+
+                <?php if (!empty($notificacao['slot_start'])): ?>
+                    <?php
+                    // Só entra aqui quando a notificação está ligada a uma
+                    // consulta de verdade. Paciente, médico, clínica e data
+                    // numa linha só — a versão "da clínica" da linha que o
+                    // site do paciente monta com médico/clínica/data.
+                    $partes = [];
+                    if (!empty($notificacao['patient_name'])) {
+                        $partes[] = 'Paciente: ' . $notificacao['patient_name'];
+                    }
+                    if (!empty($notificacao['doctor_name'])) {
+                        $partes[] = $notificacao['doctor_name'];
+                    }
+                    if (!empty($notificacao['clinic_name'])) {
+                        $partes[] = $notificacao['clinic_name'];
+                    }
+                    $partes[] = format_datetime($notificacao['slot_start']);
+                    ?>
+                    <div class="appointment-meta"><?= h(implode(' · ', $partes)) ?></div>
+                <?php else: ?>
+                    <!-- aviso geral, sem consulta ligada: mostra o texto original -->
+                    <div class="appointment-meta"><?= h($notificacao['message']) ?></div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
     <?php
 }
 

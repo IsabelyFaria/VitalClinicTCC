@@ -2088,3 +2088,87 @@ code {
         print-color-adjust: exact;
     }
 }
+
+/* ===== CARTÕES DE NOTIFICAÇÃO =====
+   Mesma estrutura visual da tela de Notificações do site do paciente
+   (.appointment-card + .badge), só que usando as variáveis de cor
+   deste painel. Cada aviso é o SEU PRÓPRIO cartão, em lista. */
+.appointment-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+}
+
+/* aviso ainda não lido ganha destaque, mesma ideia do .list-row.unread
+   que já existia aqui antes */
+.appointment-card.is-unread {
+    border-color: rgba(10, 166, 189, 0.55);
+    background: var(--surface-alt);
+}
+
+.appointment-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    /* selinho na esquerda, data de envio na direita */
+}
+
+.appointment-doctor {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.appointment-meta {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+/* selo arredondado padrão; as variantes abaixo só trocam as cores */
+.badge {
+    display: inline-block;
+    background: var(--surface-alt);
+    color: var(--primary-strong);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.badge-realizada {
+    background: #e6f6ea;
+    color: #1c7c3c;
+}
+
+.badge-concluida {
+    background: #e3ecfd;
+    color: #1d4ed8;
+}
+
+.badge-cancelada {
+    background: #fdecea;
+    color: #c0392b;
+}
+
+.badge-ausencia,
+.badge-pendente {
+    background: #fff4e0;
+    color: #b7791f;
+}
+
+/* em tela estreita o selo e a data empilham, pra o título da
+   notificação não ser espremido */
+@media (max-width: 480px) {
+    .appointment-card-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}

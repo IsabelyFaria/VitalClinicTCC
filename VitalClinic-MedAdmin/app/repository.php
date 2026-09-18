@@ -612,12 +612,52 @@ function create_notification(int $userId, ?int $appointmentId, string $type, str
     ]);
 }
  
+/**
+ * IDs de usuário dos administradores ativos de uma clínica. Usado pra
+ * mandar pro painel da clínica (e não só pro médico) toda notificação
+ * de agenda: quem fica de olho na tela de Notificações do MedAdmin
+ * normalmente é a recepção/administração, não o médico.
+ */
+function clinic_admin_user_ids(int $clinicId): array
+{
+    if (!$clinicId) {
+        return [];
+    }
+    $stmt = db()->prepare("SELECT id FROM users WHERE role = 'admin' AND status = 'active' AND clinic_id = ?");
+    $stmt->execute([$clinicId]);
+    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+}
+
+/**
+ * Cria a MESMA notificação para todos os admins da clínica de uma vez.
+ */
+function notify_clinic_admins(int $clinicId, ?int $appointmentId, string $title, string $message): void
+{
+    foreach (clinic_admin_user_ids($clinicId) as $adminId) {
+        create_notification($adminId, $appointmentId, 'in_app', $title, $message);
+    }
+}
+
 function notifications_for_user(int $userId): array
 {
-    $sql = 'SELECT n.*, a.status AS appointment_status, s.slot_start AS slot_start
+    // Mesmo JOIN da tela de Notificações do site do paciente
+    // (notifications_for_patient()): além da notificação em si,
+    // trazemos paciente, médico, clínica e horário da consulta ligada,
+    // pra o cartão conseguir montar a linha "Paciente · Médico ·
+    // Clínica · Data" sem precisar de nada escrito na mensagem.
+    $sql = 'SELECT n.*,
+                a.status AS appointment_status,
+                s.slot_start AS slot_start,
+                paciente.name AS patient_name,
+                medico.name AS doctor_name,
+                clin.name AS clinic_name
             FROM notifications n
             LEFT JOIN appointments a ON a.id = n.appointment_id
             LEFT JOIN appointment_slots s ON s.id = a.slot_id
+            LEFT JOIN users paciente ON paciente.id = a.patient_id
+            LEFT JOIN doctors doc ON doc.id = a.doctor_id
+            LEFT JOIN users medico ON medico.id = doc.user_id
+            LEFT JOIN clinics clin ON clin.id = a.clinic_id
             WHERE n.user_id = ?
             ORDER BY n.created_at DESC
             LIMIT 80';
@@ -628,14 +668,19 @@ function notifications_for_user(int $userId): array
  
 function unread_notifications_count(int $userId): int
 {
-    $stmt = db()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL');
+    // "Não lida" = ainda não tem read_at E o status não é 'read' — a
+    // segunda condição existe porque o site do paciente marca leitura
+    // mexendo no status, e as duas telas gravam na MESMA tabela.
+    $stmt = db()->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL AND status <> 'read'");
     $stmt->execute([$userId]);
     return (int) $stmt->fetchColumn();
 }
  
 function mark_notifications_read(int $userId): void
 {
-    $stmt = db()->prepare('UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL');
+    // Grava read_at e também status = 'read', igual o site do paciente
+    // faz, pra as duas telas enxergarem o mesmo "já li isso".
+    $stmt = db()->prepare("UPDATE notifications SET read_at = ?, status = 'read' WHERE user_id = ? AND read_at IS NULL");
     $stmt->execute([now_sql(), $userId]);
 }
  
@@ -725,6 +770,10 @@ function create_appointment(
         );
         create_notification(
             (int) $doctor['user_id'], $appointmentId, 'in_app', 'Nova consulta agendada',
+            'Uma nova consulta foi agendada para ' . $formattedSlot . '.'
+        );
+        notify_clinic_admins(
+            (int) $doctor['clinic_id'], $appointmentId, 'Nova consulta agendada',
             'Uma nova consulta foi agendada para ' . $formattedSlot . '.'
         );
 
@@ -838,7 +887,15 @@ function cancel_appointment(int $appointmentId, array $actor, string $reason = '
             repository_replace('appointment_slots', (int) $slot['id'], ['status' => 'available']);
         }
  
-        create_notification((int) $appointment['doctor_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
+        // Atenção: a notificação do médico vai pro USER dele, não pro id
+        // da linha em `doctors` — sem doctor_user_id() o aviso ia parar
+        // na caixa de outra pessoa (o usuário que por acaso tivesse
+        // aquele mesmo id).
+        $doctorUserId = doctor_user_id((int) $appointment['doctor_id']);
+        if ($doctorUserId) {
+            create_notification($doctorUserId, $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
+        }
+        notify_clinic_admins((int) $appointment['clinic_id'], $appointmentId, 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
         create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'Sua consulta foi cancelada.' . ($reason !== '' ? ' Motivo: ' . $reason : ''));
     });
 }
@@ -887,6 +944,14 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
     ];
     [$statusTitle, $statusMessage] = $statusMessages[$status];
     create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', $statusTitle, $statusMessage);
+
+    // A clínica também fica sabendo do desfecho, pra a tela de
+    // Notificações do painel refletir o que aconteceu na agenda.
+    $staffMessages = [
+        'completed' => 'A consulta foi marcada como realizada.',
+        'no_show' => 'O paciente não compareceu à consulta.',
+    ];
+    notify_clinic_admins((int) $appointment['clinic_id'], $appointmentId, $statusTitle, $staffMessages[$status]);
 }
  
 /* ---------------------------------------------------------------------
