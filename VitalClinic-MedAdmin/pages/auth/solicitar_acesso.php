@@ -11,13 +11,13 @@ function render_request_access(): void
 {
     $submitted = isset($_GET['enviado']);
     ?>
-    <section class="auth-grid">
-        <div class="auth-copy">
-            <img class="auth-logo" src="<?= asset_url('assets/brand/vital-clinic-logo.svg') ?>" alt="Vital Clinic">
-            <h1>Leve o Vital Clinic para a sua clínica</h1>
-            <p>Preencha os dados abaixo — nossa equipe analisa o pedido e, se aprovado, envia um link para você ativar o acesso de administrador.</p>
-        </div>
+    <section class="request-hero">
+        <img class="request-hero-logo" src="<?= asset_url('assets/brand/vital-clinic-logo.svg') ?>" alt="Vital Clinic">
+        <h1>Leve o Vital Clinic para a sua clínica</h1>
+        <p>Preencha os dados abaixo — nossa equipe analisa o pedido e, se aprovado, envia um link para você ativar o acesso de administrador.</p>
+    </section>
 
+    <section class="request-form-wrap">
         <?php if ($submitted): ?>
             <div class="panel form-card">
                 <h2>Pedido enviado!</h2>

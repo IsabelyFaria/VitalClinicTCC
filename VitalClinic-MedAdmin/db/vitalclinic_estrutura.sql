@@ -23,6 +23,13 @@ CREATE TABLE clinics (
     phone       VARCHAR(20)         NULL,
     whatsapp    VARCHAR(20)         NULL,
     email       VARCHAR(150)        NULL,
+    -- Controle de assinatura: só clínicas com acesso liberado (trial ou
+    -- active) conseguem logar — 'suspended' bloqueia o login de todo
+    -- admin/médico dela (exceto o super admin, que sempre acessa).
+    -- Não há cobrança automática integrada: o super admin muda esse
+    -- status manualmente (ver tela "Clínicas") ao confirmar o
+    -- pagamento por fora do sistema.
+    subscription_status ENUM('trial','active','suspended') NOT NULL DEFAULT 'trial',
     created_at  TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP           NULL     ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -298,39 +305,6 @@ CREATE TABLE admin_invites (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------------
--- 13. clinic_requests — pedidos de acesso vindos de fora (formulário
--- público, sem login nenhum): uma clínica interessada preenche os
--- próprios dados; isso NUNCA cria conta nem clínica sozinho — fica
--- como um pedido pendente até o super admin revisar e aprovar (o que
--- então cria a clínica + o convite de primeiro acesso de verdade,
--- reaproveitando admin_invites acima). Evita que qualquer pessoa na
--- internet crie uma clínica ativa sem ninguém checar antes.
--- ---------------------------------------------------------------------
-CREATE TABLE clinic_requests (
-    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_name     VARCHAR(150)        NOT NULL,
-    clinic_cnpj     VARCHAR(20)         NOT NULL,
-    clinic_address  VARCHAR(255)        NULL,
-    clinic_phone    VARCHAR(20)         NULL,
-    clinic_whatsapp VARCHAR(20)         NULL,
-    clinic_email    VARCHAR(150)        NULL,
-    contact_name    VARCHAR(150)        NOT NULL, -- responsável, que vai virar o admin
-    contact_email   VARCHAR(150)        NOT NULL, -- e-mail que recebe o convite, se aprovado
-    message         TEXT                NULL,     -- observação livre de quem pediu
-    status          ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
-    reviewed_by     INT UNSIGNED        NULL,
-    reviewed_at     TIMESTAMP           NULL,
-    resulting_invite_id INT UNSIGNED    NULL,      -- convite gerado, quando aprovado
-    created_at      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_requests_reviewer
-        FOREIGN KEY (reviewed_by) REFERENCES users(id)
-        ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT fk_requests_invite
-        FOREIGN KEY (resulting_invite_id) REFERENCES admin_invites(id)
-        ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
 -- Observação: a antiga tabela `password_resets` (códigos de verificação
 -- por e-mail) foi REMOVIDA deste schema. A recuperação de senha agora
 -- usa exclusivamente a Pergunta de Segurança (colunas `security_question`
@@ -345,4 +319,3 @@ CREATE INDEX idx_appt_doctor_status      ON appointments(doctor_id, status);
 CREATE INDEX idx_payments_status         ON payments(status);
 CREATE INDEX idx_notifications_user      ON notifications(user_id, status);
 CREATE INDEX idx_invites_token           ON admin_invites(token);
-CREATE INDEX idx_requests_status         ON clinic_requests(status);

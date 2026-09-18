@@ -92,6 +92,49 @@ textarea {
     gap: 12px;
 }
 
+/* Sininho de notificações — mesmo lugar/tamanho da bolinha de perfil,
+   ao lado dela, com a contagem de não lidas num selo redondo. */
+.topbar-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.topbar-bell:hover {
+    background: var(--surface-alt);
+}
+
+.topbar-bell svg {
+    width: 20px;
+    height: 20px;
+}
+
+.topbar-bell-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .topbar-profile {
     position: relative;
     z-index: 1002;
@@ -261,6 +304,19 @@ textarea {
     margin-bottom: 18px;
 }
 
+/* Variação do page-head só pra quando o botão precisa ficar pequeno,
+   do lado do título (ex.: "Voltar") — em vez do padrão do site, que é
+   um botão de ação grande, ocupando a largura toda, embaixo do
+   título. Não mexe no .page-head original pra não afetar as outras
+   telas que já usam esse padrão. */
+.page-head-inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .page-head h1,
 .auth-copy h1,
 .form-card h1 {
@@ -349,6 +405,46 @@ small {
     max-width: 540px;
     color: rgba(255, 255, 255, 0.86);
     font-size: 18px;
+}
+
+/* Tela pública "Solicitar acesso" — formulário bem mais longo que o de
+   login, então em vez do layout lado a lado (.auth-grid, pensado pra
+   conteúdo curto), a faixa azul fica em cima, em toda a largura, e o
+   formulário vem embaixo, centralizado — sem risco de um lado cortar
+   o outro por serem de alturas muito diferentes. */
+.request-hero {
+    padding: 32px 24px;
+    text-align: center;
+    background: linear-gradient(135deg, #173a70 0%, #0b6f91 58%, #0aa6bd 130%);
+    color: #fff;
+    border-radius: 12px;
+}
+
+.request-hero-logo {
+    display: block;
+    width: min(220px, 60%);
+    margin: 0 auto 20px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.request-hero h1 {
+    margin: 0 0 10px;
+    color: #fff;
+}
+
+.request-hero p {
+    max-width: 640px;
+    margin: 0 auto;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 17px;
+}
+
+.request-form-wrap {
+    width: min(760px, calc(100% - 32px));
+    margin: 28px auto 40px;
 }
 
 .mini-list {

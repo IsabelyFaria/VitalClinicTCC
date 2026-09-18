@@ -21,6 +21,18 @@ function current_user(): ?array
     }
 
     $user = repository_user_with_clinic($candidate);
+
+    // Corta o acesso NA HORA se a assinatura da clínica for suspensa
+    // enquanto a pessoa já está logada — não espera a sessão expirar
+    // sozinha nem depende de barrar só na tela de login. Super admin
+    // nunca é afetado por isso.
+    if (empty($user['is_super_admin']) && $user['clinic_subscription_status'] === 'suspended') {
+        unset($_SESSION['user_id']);
+        flash('error', 'O acesso da sua clínica está suspenso (assinatura em atraso ou cancelada). Entre em contato com o suporte para regularizar.');
+        $user = null;
+        return null;
+    }
+
     return $user;
 }
 
@@ -93,6 +105,16 @@ function attempt_login(string $email, string $password, string $expectedRole = '
     }
     if (!password_verify($password, $candidate['password_hash'])) {
         return 'wrong_password';
+    }
+    if (empty($candidate['is_super_admin']) && !empty($candidate['clinic_id'])) {
+        // O site funciona por assinatura: só clínicas com acesso
+        // liberado (trial ou active) conseguem logar. O super admin
+        // nunca é bloqueado por isso (é quem gerencia o status de
+        // todo mundo, inclusive quando o pagamento está em atraso).
+        $clinic = repository_find('clinics', (int) $candidate['clinic_id']);
+        if ($clinic && $clinic['subscription_status'] === 'suspended') {
+            return 'subscription_suspended';
+        }
     }
 
     $_SESSION['user_id'] = (int) $candidate['id'];

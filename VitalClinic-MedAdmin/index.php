@@ -27,7 +27,6 @@ foreach ([
     'pages/auth/login.php',
     'pages/auth/recuperar_senha.php',
     'pages/auth/aceitar_convite.php',
-    'pages/auth/solicitar_acesso.php',
     'pages/admin/dashboard.php',
     'pages/admin/calendario.php',
     'pages/admin/consultas.php',
@@ -35,6 +34,7 @@ foreach ([
     'pages/admin/medicos.php',
     'pages/admin/relatorios.php',
     'pages/admin/convites.php',
+    'pages/admin/clinicas.php',
     'pages/medico/dashboard.php',
     'pages/medico/calendario.php',
     'pages/medico/consultas.php',
@@ -96,7 +96,7 @@ function run_app(): void
     }
 
     $page = $_GET['page'] ?? 'dashboard';
-    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password', 'accept_invite', 'solicitar_acesso'];
+    $publicPages = ['login', 'forgot_password', 'reset_security_question', 'reset_password', 'accept_invite'];
     $user = current_user();
 
     if (!$user && !in_array($page, $publicPages, true)) {
@@ -308,6 +308,7 @@ function handle_post(): void
                     'inactive' => 'Esta conta está inativa. Fale com um administrador da clínica.',
                     'wrong_role' => 'Esse e-mail existe, mas não é desse perfil. Tente entrar pelo outro botão (Clínica/Médico).',
                     'wrong_password' => 'Senha incorreta para esse e-mail.',
+                    'subscription_suspended' => 'O acesso da sua clínica está suspenso (assinatura em atraso ou cancelada). Entre em contato com o suporte para regularizar.',
                 ];
                 throw new RuntimeException($loginMessages[$loginFailure] ?? 'E-mail ou senha invalidos.');
             }
@@ -638,50 +639,14 @@ function handle_post(): void
             flash('success', 'Convite revogado.');
             redirect(['page' => 'admin_invites']);
 
-        case 'submit_clinic_request':
-            // Ação pública — qualquer clínica interessada pode enviar,
-            // sem estar logada. Nunca cria conta nem clínica sozinha;
-            // só registra um pedido pendente pro super admin revisar.
-            $contactEmail = post_value('contact_email');
-            if (trim(post_value('clinic_name')) === '' || trim(post_value('clinic_cnpj')) === '') {
-                throw new RuntimeException('Informe o nome e o CNPJ da clínica.');
-            }
-            if (trim(post_value('contact_name')) === '') {
-                throw new RuntimeException('Informe o nome do responsável.');
-            }
-            if (!filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
-                throw new RuntimeException('Informe um e-mail válido.');
-            }
-            create_clinic_request([
-                'clinic_name' => post_value('clinic_name'),
-                'clinic_cnpj' => post_value('clinic_cnpj'),
-                'clinic_address' => post_value('clinic_address'),
-                'clinic_phone' => post_value('clinic_phone'),
-                'clinic_whatsapp' => post_value('clinic_whatsapp'),
-                'clinic_email' => post_value('clinic_email'),
-                'contact_name' => post_value('contact_name'),
-                'contact_email' => strtolower($contactEmail),
-                'message' => post_value('message'),
-            ]);
-            redirect(['page' => 'solicitar_acesso', 'enviado' => '1']);
-
-        case 'approve_clinic_request':
+        case 'admin_set_clinic_status':
             $actor = require_role('admin');
             if (empty($actor['is_super_admin'])) {
                 abort_forbidden();
             }
-            approve_clinic_request((int) ($_POST['request_id'] ?? 0), (int) $actor['id']);
-            flash('success', 'Pedido aprovado — clínica e convite gerados. Copie o link na lista de convites.');
-            redirect(['page' => 'admin_invites']);
-
-        case 'reject_clinic_request':
-            $actor = require_role('admin');
-            if (empty($actor['is_super_admin'])) {
-                abort_forbidden();
-            }
-            reject_clinic_request((int) ($_POST['request_id'] ?? 0), (int) $actor['id']);
-            flash('success', 'Pedido rejeitado.');
-            redirect(['page' => 'admin_invites']);
+            set_clinic_subscription_status((int) ($_POST['clinic_id'] ?? 0), post_value('status'));
+            flash('success', 'Status da assinatura atualizado.');
+            redirect(['page' => 'admin_clinics']);
 
         case 'accept_invite':
             // Ação pública (quem está abrindo o link ainda não tem
@@ -822,9 +787,11 @@ function render_nav(string $page, ?array $user): void
 
     $items = [];
     if ($user['role'] === 'patient') {
-        $items = [
-            'notifications' => 'Notificações',
-        ];
+        // Pacientes não usam este painel na prática (o acesso deles é
+        // por outro projeto) — este branch existe só como segurança;
+        // sem "Notificações" (que virou o sininho no topo), não sobra
+        // nenhum item de menu específico pra esse perfil aqui.
+        $items = [];
     } elseif ($user['role'] === 'admin') {
         $items = [
             'dashboard' => 'Geral',
@@ -833,12 +800,11 @@ function render_nav(string $page, ?array $user): void
             'admin_patients' => 'Pacientes',
             'admin_doctors' => 'Médicos',
             'admin_reports' => 'Relatórios',
-            'notifications' => 'Notificações',
         ];
         if (!empty($user['is_super_admin'])) {
-            // "Convites" só existe pro super admin — é como uma clínica
-            // nova ganha o primeiro acesso (ver render_admin_invites()).
+            // "Convites" e "Clínicas" só existem pro super admin.
             $items['admin_invites'] = 'Convites';
+            $items['admin_clinics'] = 'Clínicas';
         }
     } else {
         $items = [
@@ -846,15 +812,19 @@ function render_nav(string $page, ?array $user): void
             'doctor_calendar' => 'Calendário',
             'doctor_appointments' => 'Consultas',
             'doctor_patients' => 'Pacientes',
-            'notifications' => 'Notificações',
         ];
     }
 
     $unread = unread_notifications_count((int) $user['id']);
-    $pendingRequests = !empty($user['is_super_admin']) ? count(array_filter(clinic_requests_list(), static fn(array $r): bool => $r['status'] === 'pending')) : 0;
     $initial = strtoupper(substr($user['name'], 0, 1));
     ?>
     <div class="topbar-actions">
+        <a class="topbar-bell" href="<?= h(app_url(['page' => 'notifications'])) ?>" aria-label="Notificações<?= $unread ? ' — ' . (int) $unread . ' não lida(s)' : '' ?>" title="Notificações">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <?php if ($unread): ?>
+                <span class="topbar-bell-badge"><?= $unread > 9 ? '9+' : (int) $unread ?></span>
+            <?php endif; ?>
+        </a>
         <div class="topbar-profile" data-profile-menu>
             <button type="button" class="topbar-profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false" aria-label="Menu do perfil">
                 <span class="avatar avatar-sm"><?= h($initial) ?></span>
@@ -879,10 +849,7 @@ function render_nav(string $page, ?array $user): void
     <nav class="nav" id="primary-nav" data-nav>
         <?php foreach ($items as $key => $label): ?>
             <a class="<?= $page === $key ? 'active' : '' ?>" href="<?= h(app_url(['page' => $key])) ?>">
-                <?= h($label) ?><?php
-                    if ($key === 'notifications' && $unread) echo ' (' . (int) $unread . ')';
-                    if ($key === 'admin_invites' && $pendingRequests) echo ' (' . (int) $pendingRequests . ')';
-                ?>
+                <?= h($label) ?>
             </a>
         <?php endforeach; ?>
     </nav>
@@ -1110,8 +1077,6 @@ function render_page(string $page, ?array $user): void
             render_reset_password();
         } elseif ($page === 'accept_invite') {
             render_accept_invite();
-        } elseif ($page === 'solicitar_acesso') {
-            render_request_access();
         } else {
             render_login();
         }
@@ -1146,6 +1111,8 @@ function render_page(string $page, ?array $user): void
             render_admin_reports($user);
         } elseif ($page === 'admin_invites' && !empty($user['is_super_admin'])) {
             render_admin_invites($user);
+        } elseif ($page === 'admin_clinics' && !empty($user['is_super_admin'])) {
+            render_admin_clinics($user);
         } elseif ($page === 'profile') {
             render_staff_profile($user);
         } else {

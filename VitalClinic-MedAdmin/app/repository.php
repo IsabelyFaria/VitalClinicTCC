@@ -16,7 +16,7 @@ const REPOSITORY_TABLES = [
     'clinics', 'specialties', 'users', 'doctors', 'doctor_schedules',
     'schedule_blocks', 'appointment_slots', 'appointments',
     'medical_records', 'payments', 'notifications', 'password_resets',
-    'admin_invites', 'clinic_requests',
+    'admin_invites',
 ];
  
 function repo_assert_table(string $table): void
@@ -86,6 +86,7 @@ function repository_user_with_clinic(array $user): array
 {
     $clinic = !empty($user['clinic_id']) ? repository_find('clinics', (int) $user['clinic_id']) : null;
     $user['clinic_name'] = $clinic['name'] ?? null;
+    $user['clinic_subscription_status'] = $clinic['subscription_status'] ?? null;
     return $user;
 }
  
@@ -182,6 +183,38 @@ function clinics(): array
     return db()->query('SELECT * FROM clinics ORDER BY name')->fetchAll();
 }
 
+/** Clínicas com contagem de administradores/médicos, pra tela
+ * "Clínicas" (só super admin) — dá contexto na hora de decidir se
+ * suspende ou reativa uma assinatura. */
+function clinics_with_stats(): array
+{
+    $sql = 'SELECT c.*,
+                   SUM(CASE WHEN u.role = "admin" THEN 1 ELSE 0 END) AS admin_count,
+                   SUM(CASE WHEN u.role = "doctor" THEN 1 ELSE 0 END) AS doctor_count
+            FROM clinics c
+            LEFT JOIN users u ON u.clinic_id = c.id AND u.role IN ("admin", "doctor")
+            GROUP BY c.id
+            ORDER BY c.name';
+    $rows = db()->query($sql)->fetchAll();
+    return array_map(static function (array $row): array {
+        $row['admin_count'] = (int) $row['admin_count'];
+        $row['doctor_count'] = (int) $row['doctor_count'];
+        return $row;
+    }, $rows);
+}
+
+/** Muda o status de assinatura de uma clínica ('trial'/'active'/
+ * 'suspended') — só o super admin pode fazer isso (checado no
+ * chamador, em index.php). */
+function set_clinic_subscription_status(int $clinicId, string $status): void
+{
+    if (!in_array($status, ['trial', 'active', 'suspended'], true)) {
+        throw new RuntimeException('Status de assinatura inválido.');
+    }
+    $stmt = db()->prepare('UPDATE clinics SET subscription_status = ? WHERE id = ?');
+    $stmt->execute([$status, $clinicId]);
+}
+
 /**
  * Cria uma clínica nova e já gera o convite de primeiro acesso pra ela
  * — usado só pelo super admin, na tela "Convites". O e-mail do
@@ -269,79 +302,6 @@ function revoke_admin_invite(int $inviteId): void
 {
     $stmt = db()->prepare('UPDATE admin_invites SET status = "revoked" WHERE id = ? AND status = "pending"');
     $stmt->execute([$inviteId]);
-}
-
-/**
- * Registra um pedido de acesso vindo do formulário público — NUNCA
- * cria clínica nem conta sozinho, só fica pendente até o super admin
- * revisar (ver approve_clinic_request() / reject_clinic_request()).
- */
-function create_clinic_request(array $data): int
-{
-    return repository_append('clinic_requests', [
-        'clinic_name' => $data['clinic_name'],
-        'clinic_cnpj' => $data['clinic_cnpj'],
-        'clinic_address' => $data['clinic_address'] ?: null,
-        'clinic_phone' => $data['clinic_phone'] ?: null,
-        'clinic_whatsapp' => $data['clinic_whatsapp'] ?: null,
-        'clinic_email' => $data['clinic_email'] ?: null,
-        'contact_name' => $data['contact_name'],
-        'contact_email' => $data['contact_email'],
-        'message' => $data['message'] ?: null,
-        'status' => 'pending',
-        'created_at' => now_sql(),
-    ]);
-}
-
-/** Lista os pedidos de acesso, pendentes primeiro (mais recente de cada grupo primeiro). */
-function clinic_requests_list(): array
-{
-    $sql = 'SELECT * FROM clinic_requests
-            ORDER BY (status = "pending") DESC, created_at DESC';
-    return db()->query($sql)->fetchAll();
-}
-
-/**
- * Aprova um pedido: cria a clínica de verdade e já gera o convite de
- * primeiro acesso pra ela (reaproveita create_admin_invite()), tudo
- * numa transação — se qualquer parte falhar, nada fica pela metade.
- */
-function approve_clinic_request(int $requestId, int $reviewerId): array
-{
-    $request = repository_find('clinic_requests', $requestId);
-    if (!$request || $request['status'] !== 'pending') {
-        throw new RuntimeException('Pedido não encontrado ou já foi revisado.');
-    }
-
-    return db_transaction(function () use ($request, $requestId, $reviewerId): array {
-        $invite = create_admin_invite([
-            'clinic_name' => $request['clinic_name'],
-            'clinic_cnpj' => $request['clinic_cnpj'],
-            'clinic_address' => $request['clinic_address'],
-            'clinic_phone' => $request['clinic_phone'],
-            'clinic_whatsapp' => $request['clinic_whatsapp'],
-            'clinic_email' => $request['clinic_email'],
-            'invitee_email' => $request['contact_email'],
-        ], $reviewerId);
-
-        $stmt = db()->prepare(
-            'UPDATE clinic_requests
-             SET status = "approved", reviewed_by = ?, reviewed_at = NOW(), resulting_invite_id = ?
-             WHERE id = ?'
-        );
-        $stmt->execute([$reviewerId, $invite['id'], $requestId]);
-
-        return $invite;
-    });
-}
-
-function reject_clinic_request(int $requestId, int $reviewerId): void
-{
-    $stmt = db()->prepare(
-        'UPDATE clinic_requests SET status = "rejected", reviewed_by = ?, reviewed_at = NOW()
-         WHERE id = ? AND status = "pending"'
-    );
-    $stmt->execute([$reviewerId, $requestId]);
 }
 
 function specialties(): array
@@ -753,7 +713,21 @@ function create_appointment(
             'created_at' => now_sql(),
             'updated_at' => null,
         ]);
- 
+
+        // Notifica os dois lados assim que a consulta é marcada — mesmo
+        // padrão do site do paciente (notificar_paciente()), só que
+        // aqui também avisa o médico, já que quem agenda normalmente é
+        // o admin/recepção, não o próprio médico.
+        $formattedSlot = format_datetime($slot['slot_start']);
+        create_notification(
+            $patientId, $appointmentId, 'in_app', 'Consulta agendada',
+            'Sua consulta foi agendada para ' . $formattedSlot . '.'
+        );
+        create_notification(
+            (int) $doctor['user_id'], $appointmentId, 'in_app', 'Nova consulta agendada',
+            'Uma nova consulta foi agendada para ' . $formattedSlot . '.'
+        );
+
         return $appointmentId;
     });
 }
@@ -865,6 +839,7 @@ function cancel_appointment(int $appointmentId, array $actor, string $reason = '
         }
  
         create_notification((int) $appointment['doctor_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'O cancelamento da consulta foi registrado.');
+        create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', 'Consulta cancelada', 'Sua consulta foi cancelada.' . ($reason !== '' ? ' Motivo: ' . $reason : ''));
     });
 }
  
@@ -901,6 +876,17 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
         'completed_at' => now_sql(),
         'updated_at' => now_sql(),
     ]);
+
+    // Avisa o paciente do desfecho da consulta — mesma lógica de
+    // notificação usada em toda a agenda (create_appointment,
+    // cancel_appointment), agora também pra quando ela é marcada como
+    // realizada ou como falta.
+    $statusMessages = [
+        'completed' => ['Consulta concluída', 'Sua consulta foi concluída. Obrigado pela confiança!'],
+        'no_show' => ['Falta registrada', 'Consta que você não compareceu à sua consulta.'],
+    ];
+    [$statusTitle, $statusMessage] = $statusMessages[$status];
+    create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', $statusTitle, $statusMessage);
 }
  
 /* ---------------------------------------------------------------------

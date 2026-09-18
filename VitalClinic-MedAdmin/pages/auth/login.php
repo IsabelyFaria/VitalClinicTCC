@@ -26,7 +26,6 @@ function render_login(): void
             <button class="button primary" type="submit">Entrar</button>
             <a class="muted-link" href="<?= h(app_url(['page' => 'forgot_password'])) ?>">Esqueci minha senha</a>
             <p class="muted">Acesso exclusivo para administradores e médicos.</p>
-            <p class="muted">Sua clínica ainda não tem acesso? <a href="<?= h(app_url(['page' => 'solicitar_acesso'])) ?>">Solicite aqui</a>.</p>
         </form>
     </section>
     <?php
