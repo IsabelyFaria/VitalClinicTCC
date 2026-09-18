@@ -345,7 +345,7 @@ function cancel_appointment_patient(int $consultaId, int $pacienteId): void
     // appointment_slots, lembra do JOIN). Precisamos desse horário
     // pra conferir a regra das 24 horas mais abaixo.
     $sql = "
-        SELECT a.id, a.status, a.patient_id, a.slot_id, slot.slot_start
+        SELECT a.id, a.status, a.patient_id, a.slot_id, a.doctor_id, a.clinic_id, slot.slot_start
         FROM appointments a
         JOIN appointment_slots slot ON slot.id = a.slot_id
         WHERE a.id = ?
@@ -420,6 +420,15 @@ function cancel_appointment_patient(int $consultaId, int $pacienteId): void
 
         // avisa o paciente que o cancelamento foi registrado
         notificar_paciente($pacienteId, $consultaId, 'Consulta cancelada', 'Sua consulta foi cancelada.');
+
+        // e avisa a clínica, que precisa saber que aquele horário caiu
+        notificar_equipe_clinica(
+            (int) $consulta['doctor_id'],
+            (int) $consulta['clinic_id'],
+            $consultaId,
+            'Consulta cancelada pelo paciente',
+            'O paciente cancelou a consulta pelo site.'
+        );
 
         // as duas mudanças deram certo, então agora manda gravar de verdade no
         // banco, "assina embaixo do rascunho"
@@ -825,7 +834,7 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
             throw new RuntimeException('Esse horário não está mais disponível. Escolha outro.');
         }
 
-        $stmtMedico = $pdo->prepare('SELECT clinic_id, specialty_id FROM doctors WHERE id = ?');
+        $stmtMedico = $pdo->prepare('SELECT clinic_id, specialty_id, user_id FROM doctors WHERE id = ?');
         $stmtMedico->execute([$slot['doctor_id']]);
         $medico = $stmtMedico->fetch();
 
@@ -903,6 +912,17 @@ function book_appointment_patient(int $pacienteId, int $slotId): void
         // a tela de Notificações já busca isso sozinha através do
         // appointment_id, sempre que a notificação tiver um vinculado
         notificar_paciente($pacienteId, $appointmentId, 'Consulta confirmada', 'Sua consulta foi confirmada.');
+
+        // ...e avisa também o outro lado (médico + administração da
+        // clínica), pra a consulta recém-marcada aparecer na tela de
+        // Notificações do painel MedAdmin na mesma hora.
+        notificar_equipe_clinica(
+            (int) $slot['doctor_id'],
+            (int) $medico['clinic_id'],
+            $appointmentId,
+            'Nova consulta marcada',
+            'Um paciente marcou uma consulta pelo site.'
+        );
 
         $pdo->commit();
     } catch (Exception $e) {
@@ -1031,6 +1051,50 @@ function mark_notifications_as_read(int $pacienteId): void
 // Atalho pra criar uma notificação nova, sem repetir o mesmo array de 9
 // campos toda vez, usada ao marcar consulta, ao cancelar, e também no
 // lembrete automático logo abaixo
+// Mesma ideia do notificar_paciente(), mas mandando o aviso pro OUTRO
+// lado: o médico da consulta e os administradores daquela clínica. É o
+// que faz a tela de Notificações do painel MedAdmin acender quando o
+// paciente marca ou cancela uma consulta aqui — sem isso, o paciente
+// recebia o aviso e a clínica não ficava sabendo de nada.
+function notificar_equipe_clinica(int $doctorId, ?int $clinicId, ?int $appointmentId, string $titulo, string $mensagem): void
+{
+    $destinatarios = [];
+
+    // 1) o próprio médico. Cuidado: doctors.id NÃO é o id do usuário —
+    // o aviso tem que ir pro users.id ligado àquele médico.
+    $stmt = db()->prepare('SELECT user_id, clinic_id FROM doctors WHERE id = ?');
+    $stmt->execute([$doctorId]);
+    $medico = $stmt->fetch();
+    if ($medico) {
+        $destinatarios[] = (int) $medico['user_id'];
+        if (!$clinicId) {
+            $clinicId = (int) $medico['clinic_id'];
+        }
+    }
+
+    // 2) todos os administradores ativos daquela clínica — e também os
+    // SUPER admins (is_super_admin = 1), que enxergam todas as
+    // clínicas e por isso têm clinic_id = NULL no cadastro. Sem o "OR
+    // is_super_admin = 1" aqui, um "clinic_id = ?" sozinho nunca
+    // encontra o super admin (mesmo bug corrigido do lado do MedAdmin
+    // em clinic_admin_user_ids()).
+    $stmt = db()->prepare(
+        "SELECT id FROM users
+         WHERE role = 'admin' AND status = 'active'
+           AND (clinic_id = ? OR is_super_admin = 1)"
+    );
+    $stmt->execute([$clinicId]);
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $adminId) {
+        $destinatarios[] = (int) $adminId;
+    }
+
+    // array_unique evita mandar duas vezes pra mesma pessoa (um médico
+    // que também seja admin da clínica, por exemplo)
+    foreach (array_unique($destinatarios) as $userId) {
+        notificar_paciente($userId, $appointmentId, $titulo, $mensagem);
+    }
+}
+
 function notificar_paciente(int $pacienteId, ?int $appointmentId, string $titulo, string $mensagem): void
 {
     repository_append('notifications', [

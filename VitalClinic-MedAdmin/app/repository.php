@@ -617,13 +617,22 @@ function create_notification(int $userId, ?int $appointmentId, string $type, str
  * mandar pro painel da clínica (e não só pro médico) toda notificação
  * de agenda: quem fica de olho na tela de Notificações do MedAdmin
  * normalmente é a recepção/administração, não o médico.
+ *
+ * Inclui também os SUPER admins (is_super_admin = 1): eles enxergam
+ * todas as clínicas e por isso, diferente de um admin comum, o
+ * cadastro deles tem clinic_id = NULL — um simples "clinic_id = ?"
+ * nunca ia encontrá-los, então eles ficavam de fora de qualquer
+ * notificação (era exatamente esse o bug: super admin não recebia
+ * nada). Por isso a busca vira duas condições, com OR: admin comum
+ * DAQUELA clínica, OU super admin (de qualquer clínica).
  */
 function clinic_admin_user_ids(int $clinicId): array
 {
-    if (!$clinicId) {
-        return [];
-    }
-    $stmt = db()->prepare("SELECT id FROM users WHERE role = 'admin' AND status = 'active' AND clinic_id = ?");
+    $stmt = db()->prepare(
+        "SELECT id FROM users
+         WHERE role = 'admin' AND status = 'active'
+           AND (clinic_id = ? OR is_super_admin = 1)"
+    );
     $stmt->execute([$clinicId]);
     return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 }
@@ -1468,25 +1477,41 @@ function age_from_birth(?string $birthDate): string
  
 function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?int $clinicId = null): array
 {
-    $prefix = sprintf('%04d-%02d-', $year, $month);
-    $days = [];
-    // Quando $doctorId é informado, a busca já sai filtrada no repositório
-    // (mesmo filtro usado em appointments_for_admin), garantindo que um
-    // médico nunca receba, nem carregado em memória, compromissos de
-    // outro profissional. $clinicId faz o mesmo isolamento para o
-    // calendário do administrador, por clínica.
-    $filters = [];
+    // IMPORTANTE: não reaproveitar appointments_for_admin() aqui — ela
+    // tem um "LIMIT 300, mais recentes primeiro" pensado pra tela de
+    // listagem, não pro calendário. Pra um admin comum (uma clínica só)
+    // isso quase nunca estoura, mas pro super admin (que soma as
+    // consultas de TODAS as clínicas) é fácil passar de 300 no total —
+    // e como o LIMIT corta ANTES do filtro de mês ser aplicado, meses
+    // inteiros "somem" do calendário mesmo tendo consulta marcada
+    // (foi exatamente o bug que já tinha acontecido no relatório, ver
+    // nota em report_data()). Por isso, igual lá, buscamos direto no
+    // banco já filtrando pelo mês, sem limite nenhum.
+    $monthStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+    $monthEnd = (new DateTime($monthStart))->modify('+1 month')->format('Y-m-d H:i:s');
+
+    $sql = 'SELECT a.id FROM appointments a
+            JOIN appointment_slots s ON s.id = a.slot_id
+            WHERE s.slot_start >= ? AND s.slot_start < ?';
+    $params = [$monthStart, $monthEnd];
+
     if ($doctorId !== null) {
-        $filters['doctor_id'] = $doctorId;
+        $sql .= ' AND a.doctor_id = ?';
+        $params[] = $doctorId;
     }
     if ($clinicId !== null) {
-        $filters['clinic_id'] = $clinicId;
+        $sql .= ' AND a.clinic_id = ?';
+        $params[] = $clinicId;
     }
-    foreach (appointments_for_admin($filters) as $appointment) {
-        if (str_starts_with((string) $appointment['slot_start'], $prefix)) {
-            $day = (int) (new DateTime($appointment['slot_start']))->format('j');
-            $days[$day][] = $appointment;
-        }
+
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+
+    $days = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $appointmentId) {
+        $appointment = repository_appointment_row(repository_find_appointment((int) $appointmentId));
+        $day = (int) (new DateTime($appointment['slot_start']))->format('j');
+        $days[$day][] = $appointment;
     }
     return $days;
 }
