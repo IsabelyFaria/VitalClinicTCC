@@ -473,6 +473,11 @@ small {
     grid-template-columns: minmax(0, 1fr);
 }
 
+/* Sempre uma coluna só (painéis empilhados, cada um na largura toda). */
+.grid.one {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .stats {
     grid-template-columns: minmax(0, 1fr);
     margin-bottom: 18px;
@@ -834,23 +839,32 @@ textarea:focus {
     background: var(--surface-alt);
 }
 
+/* A tabela sempre se ajusta ao espaço onde está (sem min-width fixo), então
+   nenhuma coluna fica escondida. O layout (tabela normal, compacta ou
+   cartões empilhados) é escolhido pela largura do PRÓPRIO .table-wrap
+   (container query) e não pela largura da janela: assim funciona igual
+   quando a tabela está num painel de largura total ou de meia largura.
+   O overflow-x abaixo é só uma rede de segurança: a barra de rolagem só
+   aparece se, por algum motivo, um conteúdo realmente não couber. */
 .table-wrap {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    container-type: inline-size;
 }
 
 table {
     width: 100%;
-    min-width: 760px;
     border-collapse: collapse;
 }
 
 /* Alternativa "cartão empilhado" para telas pequenas: ativada via JS
    (setupResponsiveTables em app.js), que adiciona a classe abaixo e um
    atributo data-label em cada célula com o texto do <th> correspondente.
-   Sem JS, a tabela cai no fallback de rolagem horizontal acima. */
-@media (max-width: 639.98px) {
+   Vale quando o espaço da tabela é menor que 700px; a partir daí ela
+   cabe inteira em formato de tabela (ver blocos "tabela compacta" logo
+   abaixo de .actions). Sem JS, a tabela simplesmente se comprime. */
+@container (max-width: 699.98px) {
     .table-wrap table.responsive-cards {
         min-width: 0;
     }
@@ -883,6 +897,7 @@ table {
         border-bottom: 1px solid var(--bg);
         padding: 8px 0;
         text-align: right;
+        overflow-wrap: anywhere;
     }
 
     .table-wrap table.responsive-cards td:last-child {
@@ -910,6 +925,7 @@ td {
     padding: 11px 10px;
     text-align: left;
     vertical-align: top;
+    overflow-wrap: break-word;
 }
 
 th {
@@ -920,6 +936,7 @@ th {
 
 td small {
     display: block;
+    overflow-wrap: anywhere;
 }
 
 .actions {
@@ -927,6 +944,46 @@ td small {
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+}
+
+/* Tabela compacta (espaço da tabela entre 700px e 880px): cabe as 7
+   colunas sem rolagem horizontal: menos espaçamento, letra um pouco
+   menor e os botões de "Ações" empilhados (um embaixo do outro, todos
+   com a mesma largura) em vez de lado a lado, que é o que deixava a
+   coluna larga demais. Acima de 880px há espaço de sobra e o layout
+   normal (botões lado a lado) volta. */
+@container (min-width: 700px) and (max-width: 879.98px) {
+    .table-wrap th,
+    .table-wrap td {
+        padding: 10px 6px;
+        font-size: 13px;
+    }
+
+    .table-wrap th {
+        font-size: 11px;
+    }
+
+    .table-wrap .actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+
+    .table-wrap .actions form {
+        display: flex;
+    }
+
+    .table-wrap .actions .button {
+        width: 100%;
+        min-height: 32px;
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    .table-wrap .status {
+        font-size: 12px;
+        padding: 3px 8px;
+    }
 }
 
 /* Esconde visualmente um texto, mas mantém ele legível por leitor de
@@ -1502,6 +1559,13 @@ td small {
     gap: 8px;
     max-height: 620px;
     overflow-y: auto;
+}
+
+/* "Linha do dia" ocupando a largura toda (dashboard do médico): os
+   horários se distribuem em colunas (quantas couberem, mínimo 260px cada)
+   em vez de uma lista comprida de uma coluna só. */
+.timeline.timeline-wide {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .timeline-row {

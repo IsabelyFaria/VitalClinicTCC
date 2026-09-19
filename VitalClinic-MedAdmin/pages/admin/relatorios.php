@@ -13,12 +13,6 @@ function render_admin_reports(array $user): void
     $noShows = (int) ($summary['no_shows'] ?? 0);
     $noShowRate = $total ? round(($noShows / $total) * 100, 1) : 0;
 
-    // Card "Movimentação mensal" — independente do filtro De/Até acima
-    // (aquele filtra um período livre; este é sempre um mês inteiro).
-    // Calculamos aqui o mês atual só pra o gráfico já nascer preenchido
-    // na tela; trocar de mês depois é feito via AJAX, sem recarregar a
-    // página (ver setupMovementChart() em app.js e monthly_movement_
-    // endpoint() em index.php).
     $currentMonth = (new DateTime('first day of this month'))->format('Y-m');
     $movementReport = report_data(
         (new DateTime('first day of this month'))->format('Y-m-d'),
@@ -27,8 +21,8 @@ function render_admin_reports(array $user): void
     );
     $movementTotal = (int) ($movementReport['summary']['total'] ?? 0);
     $movementNoShows = (int) ($movementReport['summary']['no_shows'] ?? 0);
-    $movementLow = (int) (config('rules.movement_low') ?: 40);
-    $movementHigh = (int) (config('rules.movement_high') ?: 120);
+    $movementLow = (int) (config('rules.movement_low') ?: 3);
+    $movementHigh = (int) (config('rules.movement_high') ?: 10);
     if ($movementTotal >= $movementHigh) {
         $movementClass = 'high';
         $movementLabel = 'Alta movimentação';

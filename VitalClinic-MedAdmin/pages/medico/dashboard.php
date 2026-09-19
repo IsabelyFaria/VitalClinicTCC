@@ -25,14 +25,11 @@ function render_doctor_dashboard(array $user): void
         </form>
     </section>
 
-    <section class="grid two">
-        <div class="panel">
-            <h2>Consultas</h2>
-            <?php render_appointment_table($appointments, $user, 'dashboard'); ?>
-        </div>
+
+    <section class="grid one">
         <div class="panel">
             <h2>Linha do dia</h2>
-            <div class="timeline">
+            <div class="timeline timeline-wide">
                 <?php foreach ($slots as $slot): ?>
                     <div class="timeline-row <?= h($slot['status']) ?>">
                         <time><?= h(format_time($slot['slot_start'])) ?></time>
@@ -43,6 +40,10 @@ function render_doctor_dashboard(array $user): void
                     </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+        <div class="panel">
+            <h2>Consultas</h2>
+            <?php render_appointment_table($appointments, $user, 'dashboard'); ?>
         </div>
     </section>
     <?php

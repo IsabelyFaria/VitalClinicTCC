@@ -220,11 +220,11 @@
 
     /**
      * Ativa o modo "cartão empilhado" das tabelas em telas pequenas
-     * (< 640px, ver styles.css): copia o texto de cada <th> para um
+     * (< 768px, ver styles.css): copia o texto de cada <th> para um
      * atributo data-label na célula correspondente, sem precisar tocar
-     * em nenhuma página PHP que renderiza tabelas. Em telas >= 640px o
-     * CSS ignora essa classe e a tabela usa a rolagem horizontal normal
-     * (.table-wrap { overflow-x: auto }).
+     * em nenhuma página PHP que renderiza tabelas. Em telas >= 768px o
+     * CSS ignora essa classe e a tabela aparece normal, ajustada à
+     * largura do cartão (sem rolagem horizontal).
      */
     function setupResponsiveTables() {
         qsa('.table-wrap table').forEach(function (table) {

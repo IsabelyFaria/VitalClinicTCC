@@ -39,7 +39,7 @@ function app_url(array $params = []): string
 }
 
 /**
- * Igual a app_url(), mas devolve o endereço COMPLETO (com domínio) —
+ * Igual a app_url(), mas devolve o endereço COMPLETO (com ctormínio) —
  * necessário para o link de convite de admin, que é copiado e enviado
  * por fora do site (WhatsApp, e-mail) e precisa funcionar sozinho,
  * sem depender de estar navegando dentro do site no momento do clique.
