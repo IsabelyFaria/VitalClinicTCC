@@ -376,6 +376,7 @@ body {
   border-radius: 10px;
   margin-bottom: 16px;
   font-weight: 600;
+  display: none;
 }
 
 .flash-error {
