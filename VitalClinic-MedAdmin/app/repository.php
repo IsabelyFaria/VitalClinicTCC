@@ -1080,11 +1080,6 @@ function verify_user_security_answer(int $userId, string $answer): bool
     repository_update_user($userId, ['tutorial_seen' => 1]);
 }
  
-/**
- * Registra o aceite dos Termos de Uso e Política de Privacidade
- * (chamado ao clicar "Prosseguir" no modal bloqueante — ver
- * render_terms_modal() em index.php).
- */
 function accept_terms(int $userId): void
 {
     repository_update_user($userId, ['terms_accepted' => 1]);
@@ -1292,15 +1287,13 @@ function patient_list(string $search = '', ?int $clinicId = null): array
     $params = [];
  
     if ($clinicId !== null) {
-        // Isola por clínica: só pacientes cadastrados na mesma clínica
-        // do administrador logado.
+
         $sql .= ' AND u.clinic_id = ?';
         $params[] = $clinicId;
     }
  
     if ($search !== '') {
-        // Busca por nome, e-mail, telefone ou CPF — cobre os jeitos
-        // mais comuns de alguém procurar um paciente na lista.
+
         $sql .= ' AND (u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR u.document LIKE ?)';
         $term = '%' . $search . '%';
         $params[] = $term;
@@ -1319,16 +1312,7 @@ function patient_list(string $search = '', ?int $clinicId = null): array
         return $row;
     }, $rows);
 }
- 
-/**
- * Pacientes são compartilhados pelo sistema inteiro — essa lista NÃO
- * fica mais restrita a quem já foi atendido por ESTE médico
- * especificamente; mostra todo mundo cadastrado, com a última/próxima
- * consulta COM ESTE médico (fica em branco se esse paciente nunca foi
- * atendido por ele, mas ele continua aparecendo e pode ser achado na
- * busca — útil, por exemplo, pra abrir o histórico de um paciente
- * novo que ainda não teve consulta nenhuma com este médico).
- */
+
 function doctor_patient_list(int $doctorId, string $search = ''): array
 {
     $sql = 'SELECT id FROM users WHERE role = "patient"';
