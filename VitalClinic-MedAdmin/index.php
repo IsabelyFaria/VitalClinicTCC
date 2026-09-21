@@ -461,9 +461,7 @@ function handle_post(): void
             $adminUser = require_role('admin');
             $patientId = (int) ($_POST['patient_id'] ?? 0);
             $targetPatient = repository_find_user($patientId);
-            // Pacientes são compartilhados entre clínicas — só garante
-            // que é mesmo um paciente de verdade (não restringe mais
-            // por clínica; só Médicos e Consultas continuam isolados).
+
             if (!$targetPatient || $targetPatient['role'] !== 'patient') {
                 throw new RuntimeException('Paciente não encontrado.');
             }
@@ -485,14 +483,11 @@ function handle_post(): void
                 $initialPassword = '123456';
             }
             if (!empty($adminUser['is_super_admin'])) {
-                // Super admin escolhe a clínica no formulário — ainda
-                // assim validamos que o ID enviado é de uma clínica
-                // real, nunca confiando cegamente no POST.
+       
                 $chosenClinicId = (int) ($_POST['clinic_id'] ?? 0);
                 $patientClinicId = repository_find('clinics', $chosenClinicId) ? $chosenClinicId : 0;
             } else {
-                // Admin comum: sempre a própria clínica, nunca o que
-                // vier do formulário.
+
                 $patientClinicId = (int) $adminUser['clinic_id'];
             }
             $patientId = register_patient([
