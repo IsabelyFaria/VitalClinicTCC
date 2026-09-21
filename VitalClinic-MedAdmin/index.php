@@ -188,15 +188,7 @@ function doctor_weekdays_endpoint(): void
     echo json_encode(['weekdays' => doctor_working_weekdays($doctorId)]);
 }
 
-/**
- * Gráfico de "movimentação mensal" da tela de Relatórios: recebe um
- * mês (?month=YYYY-MM, padrão o mês atual) e devolve o total de
- * consultas, o total de faltas e uma classificação de movimentação
- * (Alta/Boa/Baixa), calculada a partir dos limites configurados em
- * app/config.php (rules.movement_low / rules.movement_high).
- * Reaproveita report_data() — a mesma função usada no resto da tela —
- * só que sempre para o intervalo de um mês inteiro.
- */
+
 function monthly_movement_endpoint(): void
 {
     $user = current_user();
@@ -340,9 +332,7 @@ function handle_post(): void
                 (string) ($_POST['new_password'] ?? ''),
                 (string) ($_POST['confirm_password'] ?? '')
             );
-            // Igual à troca de senha: só grava se uma nova resposta foi
-            // digitada, para não sobrescrever a pergunta/resposta já
-            // cadastradas sempre que o formulário de perfil é salvo.
+
             $securityAnswer = (string) ($_POST['security_answer'] ?? '');
             if ($securityAnswer !== '') {
                 set_user_security_question(
@@ -367,20 +357,14 @@ function handle_post(): void
             $doctorId = (int) ($_POST['doctor_id'] ?? 0);
 
             $patient = repository_find_user($patientId);
-            // O paciente pode ser de qualquer clínica (é atendido em
-            // mais de uma, potencialmente) — só checa se é mesmo um
-            // paciente de verdade, sem restringir pela clínica do
-            // admin logado.
+
             if (!$patient || $patient['role'] !== 'patient') {
                 throw new RuntimeException('Selecione um paciente válido.');
             }
             if (!$doctorId) {
                 throw new RuntimeException('Selecione o médico.');
             }
-            // Confirma que o médico escolhido é mesmo da clínica deste
-            // admin — sem isso, seria possível agendar (ou consultar
-            // horários de) um médico de outra clínica manipulando o
-            // formulário diretamente.
+
             require_admin_owns_doctor($adminUser, $doctorId);
             if (!$slotId) {
                 throw new RuntimeException('Selecione um horário disponível para a consulta.');
@@ -401,13 +385,10 @@ function handle_post(): void
             $adminUser = require_role('admin');
             $doctorData = doctor_form_data();
             if (!empty($adminUser['is_super_admin'])) {
-                // Super admin escolhe a clínica no formulário — ainda
-                // validamos que é uma clínica real antes de confiar.
+
                 $doctorData['clinic_id'] = repository_find('clinics', $doctorData['clinic_id']) ? $doctorData['clinic_id'] : 0;
             } else {
-                // Nunca confia no clinic_id do formulário — um médico
-                // cadastrado por um admin comum sempre entra na MESMA
-                // clínica desse admin.
+
                 $doctorData['clinic_id'] = (int) $adminUser['clinic_id'];
             }
             create_doctor($doctorData);
