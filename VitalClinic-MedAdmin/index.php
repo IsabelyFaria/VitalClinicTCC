@@ -125,9 +125,6 @@ function slots_endpoint(): void
         return;
     }
 
-    // Um admin só pode ver os horários de um médico da própria
-    // clínica — impede consultar/agendar horários de outra clínica
-    // manipulando o doctor_id direto na URL.
     if ($user['role'] === 'admin') {
         $doctor = repository_find_doctor($doctorId);
         if (!$doctor || !admin_can_access_clinic($user, (int) $doctor['clinic_id'])) {
@@ -158,14 +155,7 @@ function slots_endpoint(): void
     ]);
 }
 
-/**
- * Devolve os dias da semana (0=domingo ... 6=sábado) em que o médico
- * tem agenda cadastrada (doctor_schedules). Usado pelo calendário
- * visual do modal "Nova consulta" para esmaecer, com antecedência, os
- * dias em que aquele médico normalmente não atende — antes mesmo de
- * o usuário escolher uma data e disparar a busca de horários daquele
- * dia específico.
- */
+
 function doctor_weekdays_endpoint(): void
 {
     $user = current_user();
