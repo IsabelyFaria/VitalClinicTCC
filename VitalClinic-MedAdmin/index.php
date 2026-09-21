@@ -524,8 +524,7 @@ function handle_post(): void
             $targetUserId = (int) ($_POST['user_id'] ?? 0);
             $targetUser = repository_find_user($targetUserId);
             if (!$targetUser || !admin_can_access_clinic($actor, (int) $targetUser['clinic_id'])) {
-                // Um admin só pode conceder/revogar acesso ADM de gente
-                // da própria clínica (super admin é exceção).
+
                 throw new RuntimeException('Usuário não encontrado.');
             }
             update_user_role(
@@ -548,8 +547,7 @@ function handle_post(): void
 
             $existingClinicId = (int) ($_POST['existing_clinic_id'] ?? 0);
             if ($existingClinicId) {
-                // Convite pra uma clínica que já existe — não precisa
-                // (nem deve) criar uma clínica nova nesse caso.
+
                 if (!repository_find('clinics', $existingClinicId)) {
                     throw new RuntimeException('Selecione uma clínica válida.');
                 }
@@ -594,14 +592,7 @@ function handle_post(): void
             redirect(['page' => 'admin_clinics']);
 
         case 'accept_invite':
-            // Ação pública (quem está abrindo o link ainda não tem
-            // conta) — a validação de verdade do token acontece dentro
-            // de complete_admin_invite(), não aqui. Trata o erro aqui
-            // mesmo (em vez de deixar subir pro catch genérico lá em
-            // cima) porque aquele só sabe redirecionar de volta pra
-            // ?page=X — perderia o token da URL, e a pessoa cairia de
-            // novo na tela de "link inválido" mesmo com um convite
-            // válido, só por ter digitado uma senha curta, por exemplo.
+
             $token = (string) ($_POST['token'] ?? '');
             try {
                 $result = complete_admin_invite(
