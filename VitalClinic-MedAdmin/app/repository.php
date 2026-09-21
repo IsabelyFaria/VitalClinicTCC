@@ -1,17 +1,5 @@
 <?php
- 
-/**
- * Repositório de dados — versão MySQL.
- *
- * Esta camada substitui o antigo armazenamento em JSON
- * (data/demo-state.json) por consultas reais ao banco "vitalclinic"
- * (ver vitalclinic_schema.sql), usando PDO (app/db.php).
- *
- * As assinaturas de todas as funções públicas foram mantidas idênticas
- * às da versão anterior, então nenhuma página em pages/ precisou ser
- * alterada — apenas a origem dos dados mudou.
- */
- 
+
 const REPOSITORY_TABLES = [
     'clinics', 'specialties', 'users', 'doctors', 'doctor_schedules',
     'schedule_blocks', 'appointment_slots', 'appointments',
@@ -26,10 +14,6 @@ function repo_assert_table(string $table): void
     }
 }
  
-/* ---------------------------------------------------------------------
- * Helpers genéricos de CRUD (usados pelas funções de negócio abaixo e,
- * por compatibilidade, também por app/auth.php).
- * ------------------------------------------------------------------- */
  
 function repository_find(string $table, int $id): ?array
 {
@@ -943,10 +927,6 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
         'updated_at' => now_sql(),
     ]);
 
-    // Avisa o paciente do desfecho da consulta — mesma lógica de
-    // notificação usada em toda a agenda (create_appointment,
-    // cancel_appointment), agora também pra quando ela é marcada como
-    // realizada ou como falta.
     $statusMessages = [
         'completed' => ['Consulta concluída', 'Sua consulta foi concluída. Obrigado pela confiança!'],
         'no_show' => ['Falta registrada', 'Consta que você não compareceu à sua consulta.'],
@@ -954,8 +934,6 @@ function mark_appointment(int $appointmentId, array $actor, string $status): voi
     [$statusTitle, $statusMessage] = $statusMessages[$status];
     create_notification((int) $appointment['patient_id'], $appointmentId, 'in_app', $statusTitle, $statusMessage);
 
-    // A clínica também fica sabendo do desfecho, pra a tela de
-    // Notificações do painel refletir o que aconteceu na agenda.
     $staffMessages = [
         'completed' => 'A consulta foi marcada como realizada.',
         'no_show' => 'O paciente não compareceu à consulta.',
@@ -982,16 +960,6 @@ function email_in_use(string $email): bool
     return (int) $stmt->fetchColumn() > 0;
 }
  
-/* ---------------------------------------------------------------------
- * Recuperação de senha ("Esqueci minha senha")
- * ------------------------------------------------------------------- */
- 
-/**
- * Define a nova senha do usuário (já com a identidade confirmada via
- * pergunta de segurança — ver password_reset_can_set_new_password() em
- * app/auth.php). A senha é sempre persistida com password_hash() —
- * nunca em texto puro.
- */
 function reset_user_password(int $userId, string $newPassword): void
 {
     if (strlen($newPassword) < 6) {
@@ -1004,17 +972,6 @@ function reset_user_password(int $userId, string $newPassword): void
     ]);
 }
  
-/* ---------------------------------------------------------------------
- * Pergunta de segurança (rota alternativa de verificação em
- * "Esqueci minha senha", além do código enviado por e-mail).
- * ------------------------------------------------------------------- */
- 
-/**
- * Normaliza a resposta antes de gerar/validar o hash: remove espaços nas
- * pontas, colapsa espaços internos repetidos e ignora maiúsculas/minúsculas
- * e acentuação. Isso evita que "São Paulo", "sao paulo " ou "SÃO  PAULO"
- * sejam tratadas como respostas diferentes.
- */
 function normalize_security_answer(string $answer): string
 {
     $answer = trim($answer);
@@ -1029,11 +986,7 @@ function normalize_security_answer(string $answer): string
     return trim($answer);
 }
  
-/**
- * Cadastra ou atualiza a pergunta de segurança do usuário. A resposta é
- * normalizada e, em seguida, armazenada apenas como hash — nunca em
- * texto puro — usando o mesmo password_hash() já usado para a senha.
- */
+
 function set_user_security_question(int $userId, string $question, string $answer): void
 {
     $question = trim($question);
@@ -1049,11 +1002,6 @@ function set_user_security_question(int $userId, string $question, string $answe
     ]);
 }
  
-/**
- * Retorna a pergunta de segurança cadastrada por um usuário (texto puro,
- * sem a resposta) — usada para exibi-la na etapa 2 alternativa do fluxo
- * de recuperação de senha. Retorna null se o usuário não cadastrou uma.
- */
 function get_user_security_question(int $userId): ?string
 {
     $user = repository_find_user($userId);
@@ -1061,10 +1009,6 @@ function get_user_security_question(int $userId): ?string
     return $question !== null && $question !== '' ? $question : null;
 }
  
-/**
- * Verifica a resposta informada contra o hash salvo, usando a mesma
- * normalização (case/acentos/espaços) aplicada no cadastro.
- */
 function verify_user_security_answer(int $userId, string $answer): bool
 {
     $user = repository_find_user($userId);
