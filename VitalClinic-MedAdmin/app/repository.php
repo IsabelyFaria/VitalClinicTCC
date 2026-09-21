@@ -1477,16 +1477,6 @@ function age_from_birth(?string $birthDate): string
  
 function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?int $clinicId = null): array
 {
-    // IMPORTANTE: não reaproveitar appointments_for_admin() aqui — ela
-    // tem um "LIMIT 300, mais recentes primeiro" pensado pra tela de
-    // listagem, não pro calendário. Pra um admin comum (uma clínica só)
-    // isso quase nunca estoura, mas pro super admin (que soma as
-    // consultas de TODAS as clínicas) é fácil passar de 300 no total —
-    // e como o LIMIT corta ANTES do filtro de mês ser aplicado, meses
-    // inteiros "somem" do calendário mesmo tendo consulta marcada
-    // (foi exatamente o bug que já tinha acontecido no relatório, ver
-    // nota em report_data()). Por isso, igual lá, buscamos direto no
-    // banco já filtrando pelo mês, sem limite nenhum.
     $monthStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
     $monthEnd = (new DateTime($monthStart))->modify('+1 month')->format('Y-m-d H:i:s');
 
