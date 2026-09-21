@@ -1470,11 +1470,7 @@ function age_from_birth(?string $birthDate): string
 {
     return $birthDate ? (new DateTime($birthDate))->diff(new DateTime())->y . ' anos' : '-';
 }
- 
-/* ---------------------------------------------------------------------
- * Calendário, relatórios e dashboard
- * ------------------------------------------------------------------- */
- 
+
 function calendar_appointments(int $year, int $month, ?int $doctorId = null, ?int $clinicId = null): array
 {
     $monthStart = sprintf('%04d-%02d-01 00:00:00', $year, $month);
@@ -1510,13 +1506,6 @@ function report_data(string $fromDate, string $toDate, ?int $clinicId = null): a
 {
     ensure_slots_for_all($fromDate, $toDate);
  
-    // IMPORTANTE: não reaproveitar appointments_for_admin() aqui — ela
-    // tem um "LIMIT 300, mais recentes primeiro" pensado pra tela de
-    // listagem, não pra relatório. Com mais de 300 consultas no banco
-    // (o que já é o caso), esse limite cortaria o conjunto ANTES do
-    // filtro de data ser aplicado, fazendo qualquer mês fora das ~300
-    // consultas mais recentes "sumir" do relatório. Aqui buscamos
-    // direto do banco, já filtrando pela data — sem limite nenhum.
     $sql = 'SELECT a.doctor_id, a.status, s.slot_start
             FROM appointments a
             JOIN appointment_slots s ON s.id = a.slot_id
@@ -1537,8 +1526,6 @@ function report_data(string $fromDate, string $toDate, ?int $clinicId = null): a
         if (in_array($row['status'], ['pending', 'confirmed'], true)) $summary['active']++;
     }
  
-    // appointment_slots não tem clinic_id direto (só doctor_id) — filtra
-    // por clínica através da tabela doctors.
     $slotSql = 'SELECT COUNT(*) AS total_slots,
                        SUM(CASE WHEN s.status = "booked" THEN 1 ELSE 0 END) AS booked_slots,
                        SUM(CASE WHEN s.status = "blocked" THEN 1 ELSE 0 END) AS blocked_slots
@@ -1590,9 +1577,6 @@ function dashboard_metrics(?int $clinicId = null): array
     $doctorsParams = [];
  
     if ($clinicId !== null) {
-        // Todo indicador do painel principal fica restrito à clínica do
-        // administrador logado — sem isso, os números mostrados
-        // somavam TODAS as clínicas do sistema, não só a dele.
         $todaySql .= ' AND a.clinic_id = ?';
         $todayParams[] = $clinicId;
         $pendingSql .= ' AND clinic_id = ?';
