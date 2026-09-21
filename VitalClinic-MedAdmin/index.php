@@ -1,14 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
-// Inicia o buffer de saída ANTES de qualquer outro código rodar. Isso
-// permite que send_json() (em app/helpers.php) descarte com segurança
-// qualquer coisa impressa por engano antes da resposta JSON (avisos do
-// PHP, espaço em branco antes de alguma tag <?php, etc.) — sem isso,
-// esse tipo de "vazamento" quebra silenciosamente o fetch() do
-// formulário de nova consulta, fazendo o JSON.parse() falhar no
-// navegador mesmo com a internet funcionando normalmente.
 ob_start();
 
 session_start();
@@ -74,20 +66,11 @@ function run_app(): void
         try {
             handle_post();
         } catch (RuntimeException $e) {
-            // Erro "esperado" de validação (ex: campo obrigatório
-            // faltando, horário indisponível). O redirect() abaixo já
-            // detecta sozinho se a requisição é AJAX e responde com
-            // JSON + status 400 nesse caso, sem precisar de um branch
-            // separado aqui.
+
             flash('error', $e->getMessage());
             redirect(['page' => $_POST['page_after'] ?? ($_GET['page'] ?? 'dashboard')]);
         } catch (Throwable $e) {
-            // Qualquer outro erro não previsto (ex: falha de conexão
-            // com o banco, bug de programação) -> HTTP 500. Só entra
-            // nesse ramo especial para requisições AJAX, pra não mudar
-            // o comportamento de telas tradicionais (que continuam
-            // mostrando a tela de erro padrão do PHP durante o
-            // desenvolvimento).
+
             if (is_ajax_request()) {
                 send_json(['success' => false, 'message' => 'Erro interno do servidor. Tente novamente em instantes.'], 500);
             }
@@ -107,10 +90,6 @@ function run_app(): void
         $page = 'dashboard';
     }
 
-    // Guarda de fluxo do "Esqueci minha senha": impede acesso direto por
-    // URL a uma etapa sem ter concluído a etapa anterior. Precisa ser
-    // resolvido aqui (antes de qualquer HTML ser enviado), pois
-    // redirect() usa header('Location: ...').
     if (!$user) {
         if ($page === 'reset_security_question' && !password_reset_pending()) {
             flash('error', 'Informe seu e-mail para continuar a recuperação de senha.');
